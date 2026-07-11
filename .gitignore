@@ -1,0 +1,11 @@
+# Originals may be confidential; they never enter version control.
+_sources/*
+!_sources/README.md
+
+# Local credentials (reviewer APIs, reference manager)
+.env
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
