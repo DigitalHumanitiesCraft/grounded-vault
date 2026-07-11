@@ -40,3 +40,7 @@ Humans read the vault in Obsidian, following wikilinks from a deliverable footno
 2. Follow `SETUP.md` to set the project parameters (topic backbone, active source types, deliverable genre, language, verification role, check mechanisms).
 3. Read `examples/minimal/` for a complete worked instance; `examples/broken/` shows the defect classes the validator catches.
 4. Run `python tools/validate.py .` on every change.
+
+## License
+
+Documentation, templates and examples are CC BY 4.0; code in `tools/` and `tests/` is MIT. See [LICENSE](LICENSE).
