@@ -41,6 +41,6 @@ Humans read the vault in Obsidian, following wikilinks from a deliverable footno
 3. Read `examples/minimal/` for a complete worked instance; `examples/broken/` shows the defect classes the validator catches.
 4. Run `python tools/validate.py .` on every change.
 
-## License
+## Licence
 
-Documentation, templates and examples are CC BY 4.0; code in `tools/` and `tests/` is MIT. See [LICENSE](LICENSE).
+Code is licensed under the MIT License (see [LICENSE](LICENSE)). Documentation and knowledge documents are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0). Third-party research data is excluded from these terms; rights remain with their respective holders.
