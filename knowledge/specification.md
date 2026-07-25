@@ -10,6 +10,7 @@ status: draft
 language: en
 created: "{{DATE}}"
 updated: "{{DATE}}"
+expected-warnings: []
 related: [index, schema, operations]
 ---
 

@@ -39,7 +39,7 @@ Humans read the vault in Obsidian, following wikilinks from a deliverable footno
 1. Create a repository from this template.
 2. Follow `SETUP.md` to set the project parameters (topic backbone, active source types, deliverable genre, language, verification role, check mechanisms).
 3. Read `examples/minimal/` for a complete worked instance; `examples/broken/` shows the defect classes the validator catches.
-4. Run `python tools/validate.py .` on every change.
+4. Run `python tools/validate.py .` on every change, and `python -m pytest tests` when you touch the validator. A run without errors is not the whole criterion; warnings say that a check found no subject, and the instance declares the ones it expects under `expected-warnings` in `knowledge/specification.md`.
 
 ## Licence
 

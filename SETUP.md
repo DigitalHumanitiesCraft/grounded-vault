@@ -19,8 +19,8 @@ Decide these before filling anything:
 2. Fill the remaining placeholders in `knowledge/index.md`, `state.md`, `journal.md`, `CLAUDE.md`, `HOME.md` (project name, repository, date, language).
 3. Create one `MOC-<Topic>.md` per backbone topic in `20_claims/` (schema in `knowledge/schema.md` § Topic map).
 4. Write the chapter register into `knowledge/state.md`.
-5. Delete `examples/` and, if unwanted, `docs/`.
-6. Run `python tools/validate.py .` — an empty, correctly instantiated vault passes clean.
+5. Keep `examples/`, because `tests/test_validate.py` runs against those fixtures and proves the validator catches anything at all; delete `docs/` if unwanted.
+6. Run `python tools/validate.py .` and `python -m pytest tests`. A fresh instance raises two warnings, `W-NO-INVENTORY` until the register lists its first documents and `W-NO-DELIVERABLE` until the first chapter exists. Once you know which of them your instance will keep, enter them under `expected-warnings` in `knowledge/specification.md`, so that any further warning stands out as a finding.
 7. Commit as the instantiation milestone; note it in `knowledge/journal.md`.
 
 ## First production cycle

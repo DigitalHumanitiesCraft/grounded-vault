@@ -77,7 +77,8 @@ Three instances check the vault. The architecture fixes their contracts; the mec
 - Authority: gates everything; no other check runs on a file that fails validation. Sets no status by itself except enforcing the discipline.
 - Conditions: deterministic, same input, same verdict. Runs on every change.
 - Record: `checked.validation: <date>` on every file that passes.
-- Reference mechanism: `python tools/validate.py .` (checks frontmatter per type, anchor resolution, statement IDs, quotation identity where a source text is available, computation declarations, MOC reachability, bidirectional contested links, chapter mirror and footnote keywords, status discipline). `--run-computations` re-runs data anchors and compares results.
+- Reference mechanism: `python tools/validate.py .` (checks frontmatter per type, anchor resolution, statement IDs, quotation identity where a source text is available, computation declarations, MOC reachability, bidirectional contested links, chapter mirror and footnote keywords, status discipline, inventory completeness). `--run-computations` re-runs data anchors and compares results.
+- A run without errors is not by itself the success criterion. A warning states that a check found no subject, which is the failure mode a silent green run hides. The instance declares the warnings it expects under `expected-warnings` in the frontmatter of `knowledge/specification.md`; every other warning is printed with an asterisk and counted separately, and a declaration that no longer fires is reported as `W-STALE-EXPECTATION`.
 
 ### Contract: machine review
 

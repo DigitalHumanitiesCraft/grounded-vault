@@ -25,7 +25,7 @@ Read in this order: `knowledge/index.md` (terminology), `knowledge/state.md` (wh
 - Anchors are minted only at their own layer; never invent a block or statement ID that does not exist.
 - A status is set only after its check ran; record the date in `checked`. Never set `verified`; that is the human verification role's alone.
 - Own conclusions become posits in the deliverable, never claims.
-- Run `python tools/validate.py .` before reporting any production task as done.
+- Run `python tools/validate.py .` before reporting any production task as done. Zero errors alone is not the criterion; a warning marked `*` is undeclared and is a finding, not background noise.
 - Volatile state goes to `knowledge/state.md`, decisions to `knowledge/journal.md` (append-only).
 - Working language of content: {{LANGUAGE}}. This action layer and `knowledge/` stay English.
 

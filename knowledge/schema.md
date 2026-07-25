@@ -30,6 +30,8 @@ This document is the stable rulebook of the vault. It defines the layer model, t
 | Claims | `20_claims/` | atomic cross-source statements, topic maps | grounding anchors into distillate statements |
 | Deliverable | `30_deliverable/` | one file per chapter | footnote anchors into claims, posits marked |
 
+Every representation and every distillate is also listed in an inventory register, `knowledge/state.md` by default, and the validator raises `E-INVENTORY` on one that is not. Without the register row a document is invisible to every check and every overview that reads a register, so it can be complete and conformant and still be missed. An instance that keeps more than one register declares them in `INVENTORY_REGISTERS` in `tools/validate.py`.
+
 Two rules keep the chain honest. Anchors are minted only at the layer they belong to; a representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the deliverable binds to claims, claims bind to distillate statements, distillates bind to representation blocks.
 
 ## Controlled vocabularies

@@ -3,8 +3,14 @@
 Implements the validation contract from knowledge/operations.md: frontmatter
 conformance per document type, anchor resolution, statement IDs, quotation
 recording, computation declarations, MOC reachability, bidirectional contested
-links, chapter mirror and footnote keywords, and status discipline. The rules
-themselves are defined in knowledge/schema.md; this script only enforces them.
+links, chapter mirror and footnote keywords, status discipline, and the
+inventory obligation of representations and distillates. The rules themselves
+are defined in knowledge/schema.md; this script only enforces them.
+
+Warnings report that a check found nothing to check rather than passing
+silently. An instance declares the warnings it expects under `expected-warnings`
+in the frontmatter of knowledge/specification.md; every other warning is marked
+unexpected, and a declaration that no longer fires is reported in turn.
 
 Usage:
     python tools/validate.py <vault-root> [--run-computations]
@@ -40,6 +46,10 @@ TYPE_FOLDER = {
     "chapter": "30_deliverable",
     "glossary": "glossary",
 }
+
+INVENTORY_REGISTERS = ("knowledge/state.md",)
+INVENTORIED_FOLDERS = ("00_representation", "10_distillates")
+SPECIFICATION = "knowledge/specification.md"
 
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
@@ -92,6 +102,7 @@ class Doc:
 class Report:
     errors: list[tuple[str, str, str]] = field(default_factory=list)
     warnings: list[tuple[str, str, str]] = field(default_factory=list)
+    expected_warnings: frozenset[str] = frozenset()
 
     def error(self, code: str, rel: str, message: str) -> None:
         self.errors.append((code, rel, message))
@@ -101,6 +112,9 @@ class Report:
 
     def codes(self) -> set[str]:
         return {code for code, _, _ in self.errors}
+
+    def unexpected_warnings(self) -> list[tuple[str, str, str]]:
+        return [w for w in self.warnings if w[0] not in self.expected_warnings]
 
 
 def _parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
@@ -454,10 +468,77 @@ def _check_moc_reachability(docs: dict[str, Doc], report: Report) -> None:
 _RUN_COMPUTATIONS = False
 
 
+def _read_expected_warnings(root: Path) -> frozenset[str]:
+    """The warning codes this instance has declared as its known baseline."""
+    path = root / SPECIFICATION
+    if not path.is_file():
+        return frozenset()
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return frozenset()
+    end = text.find("\n---", 4)
+    fm = yaml.safe_load(text[4 : end if end > 0 else None]) or {}
+    declared = fm.get("expected-warnings") or []
+    if isinstance(declared, str):
+        declared = [part.strip() for part in declared.split(",")]
+    return frozenset(str(code).strip() for code in declared if str(code).strip())
+
+
+def _check_inventory(root: Path, docs: dict[str, Doc], report: Report) -> None:
+    """Every representation and distillate is named in an inventory register.
+
+    A document listed in no register is invisible to every overview and every
+    check that reads one, so it can be complete and conformant and still be
+    missed. An instance may keep more than one register; any of them counts as
+    proof of record.
+    """
+    registers = [root / name for name in INVENTORY_REGISTERS if (root / name).is_file()]
+    if not registers:
+        report.warn(
+            "W-NO-INVENTORY",
+            "knowledge/",
+            "no inventory register found; the inventory obligation was not checked",
+        )
+        return
+    listed = {
+        target
+        for path in registers
+        for target, _ in _link_targets(path.read_text(encoding="utf-8"))
+    }
+    for doc in docs.values():
+        if doc.rel.startswith(INVENTORIED_FOLDERS) and doc.rel not in listed:
+            report.error(
+                "E-INVENTORY",
+                doc.rel,
+                f"named in no inventory register ({', '.join(INVENTORY_REGISTERS)})",
+            )
+
+
+def _check_deliverable_present(docs: dict[str, Doc], report: Report) -> None:
+    """A validator must not report green on a contract that had no subject."""
+    if not any(doc.fm.get("type") == "chapter" for doc in docs.values()):
+        report.warn(
+            "W-NO-DELIVERABLE",
+            "30_deliverable/",
+            "no chapter document; the footnote contract does not take effect in this instance",
+        )
+
+
+def _check_expectations(report: Report) -> None:
+    """A declared warning that no longer fires is a stale declaration."""
+    raised = {code for code, _, _ in report.warnings}
+    for code in sorted(report.expected_warnings - raised):
+        report.warn(
+            "W-STALE-EXPECTATION",
+            SPECIFICATION,
+            f"{code} is declared as expected but was not raised",
+        )
+
+
 def validate(root: Path, run_computations: bool = False) -> Report:
     global _RUN_COMPUTATIONS
     _RUN_COMPUTATIONS = run_computations
-    report = Report()
+    report = Report(expected_warnings=_read_expected_warnings(root))
     docs: dict[str, Doc] = {}
     for folder in CONTENT_FOLDERS:
         for path in sorted((root / folder).rglob("*.md")):
@@ -485,6 +566,9 @@ def validate(root: Path, run_computations: bool = False) -> Report:
             if block is not None or any(target.startswith(f) for f in CONTENT_FOLDERS):
                 _resolve_anchor(target, block, docs, root, doc, report)
     _check_moc_reachability(docs, report)
+    _check_inventory(root, docs, report)
+    _check_deliverable_present(docs, report)
+    _check_expectations(report)
     return report
 
 
@@ -505,8 +589,13 @@ def main() -> None:
     for code, rel, message in report.errors:
         print(f"ERROR {code} {rel}: {message}", file=sys.stderr)
     for code, rel, message in report.warnings:
-        print(f"WARN  {code} {rel}: {message}", file=sys.stderr)
-    print(f"{len(report.errors)} error(s), {len(report.warnings)} warning(s)")
+        mark = " " if code in report.expected_warnings else "*"
+        print(f"WARN{mark} {code} {rel}: {message}", file=sys.stderr)
+    undeclared = len(report.unexpected_warnings())
+    summary = f"{len(report.errors)} error(s), {len(report.warnings)} warning(s)"
+    if report.expected_warnings:
+        summary += f", {undeclared} of them undeclared (marked *)"
+    print(summary)
     if not report.errors:
         print("OK vault conforms to its schema")
     sys.exit(1 if report.errors else 0)
