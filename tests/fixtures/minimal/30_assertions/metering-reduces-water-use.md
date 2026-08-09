@@ -1,5 +1,5 @@
 ---
-type: claim
+type: assertion
 topics: ["[[Water]]"]
 status: grounded
 checked: {}

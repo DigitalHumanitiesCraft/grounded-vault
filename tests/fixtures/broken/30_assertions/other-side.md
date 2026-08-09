@@ -1,5 +1,5 @@
 ---
-type: claim
+type: assertion
 topics: ["[[Broken]]"]
 status: grounded
 checked: {}
@@ -10,11 +10,11 @@ created: 2026-07-11
 updated: 2026-07-11
 ---
 
-# This claim is reachable from no topic map
+# The counterpart that fails to link back
 
 ## Statement
 
-Fixture: no MOC lists this claim (defect: orphan claim).
+Fixture counterpart for the one-sided contested relation.
 
 ## Support
 

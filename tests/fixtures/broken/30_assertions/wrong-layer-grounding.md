@@ -1,5 +1,5 @@
 ---
-type: claim
+type: assertion
 topics: ["[[Broken]]"]
 status: grounded
 checked: {}
@@ -10,7 +10,7 @@ created: 2026-08-09
 updated: 2026-08-09
 ---
 
-# This claim grounds itself in the wrong layer
+# This assertion grounds itself in the wrong layer
 
 ## Statement
 

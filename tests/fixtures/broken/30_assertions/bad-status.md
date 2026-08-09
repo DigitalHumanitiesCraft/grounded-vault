@@ -1,20 +1,20 @@
 ---
-type: claim
+type: assertion
 topics: ["[[Broken]]"]
-status: contested
+status: approved
 checked: {}
 grounding:
   - "[[20_distillates/documents/note#^s1]]"
-contested-with: ["[[30_claims/other-side]]"]
+contested-with: []
 created: 2026-07-11
 updated: 2026-07-11
 ---
 
-# This contested claim is linked from one side only
+# This assertion carries an illegal status value
 
 ## Statement
 
-Fixture: the counterpart does not link back (defect: one-sided contested relation).
+Fixture: `approved` is outside the controlled vocabulary (defect: frontmatter violation).
 
 ## Support
 

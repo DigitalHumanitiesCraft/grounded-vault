@@ -36,17 +36,17 @@ import yaml
 CONTENT_FOLDERS = (
     "10_markdown",
     "20_distillates",
-    "30_claims",
-    "40_deliverable",
+    "30_assertions",
+    "40_output",
     "glossary",
 )
 
 TYPE_FOLDER = {
     "representation": "10_markdown",
     "distillate": "20_distillates",
-    "claim": "30_claims",
-    "moc": "30_claims",
-    "chapter": "40_deliverable",
+    "assertion": "30_assertions",
+    "moc": "30_assertions",
+    "chapter": "40_output",
     "glossary": "glossary",
 }
 
@@ -56,10 +56,10 @@ SPECIFICATION = "knowledge/specification.md"
 
 REPRESENTATION_LAYER = "10_markdown/"
 DISTILLATE_LAYER = "20_distillates/"
-CLAIM_LAYER = "30_claims/"
+ASSERTION_LAYER = "30_assertions/"
 FRONTMATTER_LINK_FIELDS = (
     "grounding",
-    "claims",
+    "assertions",
     "representation",
     "superseded-by",
     "contested-with",
@@ -70,7 +70,7 @@ SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
 STATUS_VOCAB = {
     "distillate": frozenset({"grounded", "validated", "verified", "superseded"}),
-    "claim": frozenset({"grounded", "validated", "verified", "contested"}),
+    "assertion": frozenset({"grounded", "validated", "verified", "contested"}),
     "chapter": frozenset({"grounded", "validated", "verified"}),
 }
 REQUIRED_FIELDS = {
@@ -91,9 +91,25 @@ REQUIRED_FIELDS = {
         "created",
         "updated",
     ),
-    "claim": ("type", "topics", "status", "checked", "grounding", "created", "updated"),
+    "assertion": (
+        "type",
+        "topics",
+        "status",
+        "checked",
+        "grounding",
+        "created",
+        "updated",
+    ),
     "moc": ("type", "topic", "created", "updated"),
-    "chapter": ("type", "status", "checked", "claims", "posits", "created", "updated"),
+    "chapter": (
+        "type",
+        "status",
+        "checked",
+        "assertions",
+        "posits",
+        "created",
+        "updated",
+    ),
     "glossary": ("type", "term", "created", "updated"),
 }
 
@@ -450,14 +466,16 @@ def _check_topics(doc: Doc, topic_names: set[str], report: Report) -> None:
             )
 
 
-def _check_claim(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
+def _check_assertion(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
     grounding = [
         (target, block)
         for raw in doc.fm.get("grounding") or []
         for target, block in _link_targets(str(raw))
     ]
     if not grounding:
-        report.error("E-GROUNDING", doc.rel, "claim without a single grounding anchor")
+        report.error(
+            "E-GROUNDING", doc.rel, "assertion without a single grounding anchor"
+        )
     for target, block in grounding:
         if block is None:
             report.error(
@@ -471,7 +489,7 @@ def _check_claim(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
     ]
     if doc.fm.get("status") == "contested" and not contested:
         report.error(
-            "E-CONTESTED", doc.rel, "contested claim without contested-with links"
+            "E-CONTESTED", doc.rel, "contested assertion without contested-with links"
         )
     for target in contested:
         other = docs.get(target)
@@ -509,18 +527,18 @@ def _check_chapter(doc: Doc, report: Report) -> None:
             "E-FOOTNOTE", doc.rel, f"footnote [^{unused}] defined but never used"
         )
 
-    grounded_claims: set[str] = set()
+    grounded_assertions: set[str] = set()
     posit_count = 0
     for key, text in defs.items():
         if text.startswith("Grounded in"):
             targets = [t for t, _ in _link_targets(text)]
             if not targets:
                 report.error(
-                    "E-FOOTNOTE", doc.rel, f"footnote [^{key}] grounds in no claim"
+                    "E-FOOTNOTE", doc.rel, f"footnote [^{key}] grounds in no assertion"
                 )
             for target in targets:
-                grounded_claims.add(target)
-                _check_layer(target, CLAIM_LAYER, "chapter footnote", doc, report)
+                grounded_assertions.add(target)
+                _check_layer(target, ASSERTION_LAYER, "chapter footnote", doc, report)
         elif text.startswith("Posit:"):
             posit_count += 1
         else:
@@ -531,13 +549,13 @@ def _check_chapter(doc: Doc, report: Report) -> None:
             )
 
     mirror = {
-        t for raw in doc.fm.get("claims") or [] for t, _ in _link_targets(str(raw))
+        t for raw in doc.fm.get("assertions") or [] for t, _ in _link_targets(str(raw))
     }
-    if mirror != grounded_claims:
+    if mirror != grounded_assertions:
         report.error(
             "E-MIRROR",
             doc.rel,
-            f"frontmatter claims {sorted(mirror)} != footnote claims {sorted(grounded_claims)}",
+            f"frontmatter assertions {sorted(mirror)} != footnote assertions {sorted(grounded_assertions)}",
         )
     if doc.fm.get("posits") != posit_count:
         report.error(
@@ -565,8 +583,8 @@ def _check_moc_reachability(docs: dict[str, Doc], report: Report) -> None:
     mocs = [d for d in docs.values() if d.fm.get("type") == "moc"]
     listed = {target for moc in mocs for target, _ in _link_targets(moc.body)}
     for doc in docs.values():
-        if doc.fm.get("type") == "claim" and doc.rel not in listed:
-            report.error("E-ORPHAN", doc.rel, "claim reachable from no topic map")
+        if doc.fm.get("type") == "assertion" and doc.rel not in listed:
+            report.error("E-ORPHAN", doc.rel, "assertion reachable from no topic map")
 
 
 _RUN_COMPUTATIONS = False
@@ -618,12 +636,12 @@ def _check_inventory(root: Path, docs: dict[str, Doc], report: Report) -> None:
             )
 
 
-def _check_deliverable_present(docs: dict[str, Doc], report: Report) -> None:
+def _check_output_present(docs: dict[str, Doc], report: Report) -> None:
     """A validator must not report green on a contract that had no subject."""
     if not any(doc.fm.get("type") == "chapter" for doc in docs.values()):
         report.warn(
-            "W-NO-DELIVERABLE",
-            "40_deliverable/",
+            "W-NO-OUTPUT",
+            "40_output/",
             "no chapter document; the footnote contract does not take effect in this instance",
         )
 
@@ -658,14 +676,14 @@ def validate(root: Path, run_computations: bool = True) -> Report:
         _check_frontmatter_links(doc, docs, root, report)
         _check_duplicate_ids(doc, report)
         doctype = doc.fm.get("type")
-        if doctype in ("distillate", "claim", "chapter"):
+        if doctype in ("distillate", "assertion", "chapter"):
             _check_status_discipline(doc, report)
-        if doctype in ("distillate", "claim"):
+        if doctype in ("distillate", "assertion"):
             _check_topics(doc, topic_names, report)
         if doctype == "distillate":
             _check_distillate(doc, docs, reference_ids, root, report)
-        elif doctype == "claim":
-            _check_claim(doc, docs, report)
+        elif doctype == "assertion":
+            _check_assertion(doc, docs, report)
         elif doctype == "chapter":
             _check_chapter(doc, report)
         for target, block in _link_targets(doc.body):
@@ -674,7 +692,7 @@ def validate(root: Path, run_computations: bool = True) -> Report:
     _check_moc_reachability(docs, report)
     _check_inventory(root, docs, report)
     _check_placeholders(root, report)
-    _check_deliverable_present(docs, report)
+    _check_output_present(docs, report)
     _check_expectations(report)
     return report
 

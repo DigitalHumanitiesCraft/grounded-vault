@@ -27,7 +27,7 @@ One row per source. Processing status: `new` → `ingested` → `distilled`.
 
 ## Chapter register
 
-One row per chapter of the deliverable. Writing status mirrors the chapter's frontmatter.
+One row per chapter of the output. Writing status mirrors the chapter's frontmatter.
 
 | Chapter | File | Status | Notes |
 |---|---|---|---|

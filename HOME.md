@@ -5,21 +5,21 @@ Human entry point of this vault. What this vault produces and on what topic is s
 ## The chain
 
 ```
-00_sources → 10_markdown → 20_distillates → 30_claims → 40_deliverable
+00_sources → 10_markdown → 20_distillates → 30_assertions → 40_output
 ```
 
 `00_sources/` holds the originals as they arrived and stays unchecked, because it is the material every layer above it is checked against. `10_markdown/` holds the Markdown representations with their block anchors, and every anchor above binds downward from there.
 
-## Read the deliverable
+## Read the output
 
-- [[40_deliverable/]] — the chapters. Footnotes lead to claims; click through to the supporting passages.
+- [[40_output/]] — the chapters. Footnotes lead to assertions; click through to the supporting passages.
 
 ## Explore the knowledge
 
 <!-- Instantiation: replace the line below with one wikilink per topic of the controlled
-     topic set, in the same order as the MOC files created in 30_claims/. -->
+     topic set, in the same order as the MOC files created in 30_assertions/. -->
 
-- Topic maps: one per topic of the controlled topic set, in `30_claims/`.
+- Topic maps: one per topic of the controlled topic set, in `30_assertions/`.
 - [[glossary/]] — the project's terms.
 
 ## Understand the machine room

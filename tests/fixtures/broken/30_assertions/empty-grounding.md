@@ -1,5 +1,5 @@
 ---
-type: claim
+type: assertion
 topics: ["[[Broken]]"]
 status: grounded
 checked: {}
@@ -9,11 +9,11 @@ created: 2026-08-09
 updated: 2026-08-09
 ---
 
-# This claim rests on nothing at all
+# This assertion rests on nothing at all
 
 ## Statement
 
-Fixture: `grounding` is present but empty, so the claim carries no anchor (defect: empty grounding).
+Fixture: `grounding` is present but empty, so the assertion carries no anchor (defect: empty grounding).
 
 ## Support
 

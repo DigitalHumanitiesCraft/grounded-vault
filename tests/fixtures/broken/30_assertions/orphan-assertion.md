@@ -1,7 +1,7 @@
 ---
-type: claim
+type: assertion
 topics: ["[[Broken]]"]
-status: validated
+status: grounded
 checked: {}
 grounding:
   - "[[20_distillates/documents/note#^s1]]"
@@ -10,11 +10,11 @@ created: 2026-07-11
 updated: 2026-07-11
 ---
 
-# This claim asserts a status no check has earned
+# This assertion is reachable from no topic map
 
 ## Statement
 
-Fixture: `validated` without `checked.validation` and `checked.machine-review` (defect: status discipline).
+Fixture: no MOC lists this assertion (defect: orphan assertion).
 
 ## Support
 

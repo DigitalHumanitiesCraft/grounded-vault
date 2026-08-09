@@ -10,7 +10,7 @@ status: draft
 language: en
 created: "{{DATE}}"
 updated: "{{DATE}}"
-expected-warnings: [W-NO-DELIVERABLE, W-PLACEHOLDER]
+expected-warnings: [W-NO-OUTPUT, W-PLACEHOLDER]
 related: [index, schema, operations]
 ---
 
@@ -21,7 +21,7 @@ Purpose, parameters and settled decisions of this vault instance. The invariant 
 ## Purpose
 
 <!-- One paragraph, whose first sentence names the overall topic of the vault: what
-     deliverable this vault produces, on what, for whom, under which evidence obligation. -->
+     output this vault produces, on what, for whom, under which evidence obligation. -->
 
 {{PURPOSE}}
 
@@ -29,9 +29,9 @@ Purpose, parameters and settled decisions of this vault instance. The invariant 
 
 | Parameter | Value |
 |---|---|
-| Controlled topic set | {{TOPICS}} <!-- becomes the MOC set in 30_claims/ --> |
+| Controlled topic set | {{TOPICS}} <!-- becomes the MOC set in 30_assertions/ --> |
 | Active source types | {{SOURCE_TYPES}} <!-- document, publication, data --> |
-| Deliverable genre | {{GENRE}} <!-- strategy, proposal, report, scholarly synthesis --> |
+| Output genre | {{GENRE}} <!-- strategy, proposal, report, scholarly synthesis --> |
 | Chapter register | see [[knowledge/state]] |
 | Working language of content | {{LANGUAGE}} |
 | Verification role | {{VERIFICATION_ROLE}} <!-- role and institution --> |
@@ -40,7 +40,7 @@ Purpose, parameters and settled decisions of this vault instance. The invariant 
 
 ## Style sheet
 
-<!-- Rules for the deliverable prose: register, citation display, terminology choices. -->
+<!-- Rules for the output prose: register, citation display, terminology choices. -->
 
 {{STYLE_SHEET}}
 

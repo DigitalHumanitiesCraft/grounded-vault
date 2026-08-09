@@ -1,7 +1,7 @@
 ---
-type: claim
+type: assertion
 topics: ["[[Broken]]"]
-status: grounded
+status: validated
 checked: {}
 grounding:
   - "[[20_distillates/documents/note#^s1]]"
@@ -10,11 +10,11 @@ created: 2026-07-11
 updated: 2026-07-11
 ---
 
-# The counterpart that fails to link back
+# This assertion holds a status no check has earned
 
 ## Statement
 
-Fixture counterpart for the one-sided contested relation.
+Fixture: `validated` without `checked.validation` and `checked.machine-review` (defect: status discipline).
 
 ## Support
 

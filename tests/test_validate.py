@@ -1,9 +1,9 @@
-"""Fixture tests for tools/validate.py against the shipped example instances.
+"""Fixture tests for tools/validate.py against the shipped fixture vaults.
 
-examples/minimal is the positive fixture and must pass clean; examples/broken
-carries one specimen per defect class and every class must be caught. The
-warning tests use temporary vaults, because a warning states that a check found
-no subject, which neither shipped fixture can show.
+tests/fixtures/minimal is the positive fixture and must pass clean;
+tests/fixtures/broken carries one specimen per defect class and every class must
+be caught. The warning tests use temporary vaults, because a warning states that
+a check found no subject, which neither shipped fixture can show.
 """
 
 import sys
@@ -14,16 +14,16 @@ sys.path.insert(0, str(REPO / "tools"))
 
 from validate import validate  # noqa: E402
 
-MINIMAL = REPO / "examples" / "minimal"
-BROKEN = REPO / "examples" / "broken"
+MINIMAL = REPO / "tests" / "fixtures" / "minimal"
+BROKEN = REPO / "tests" / "fixtures" / "broken"
 
 EXPECTED_BROKEN_CODES = {
     "E-ANCHOR",  # dead block reference and dead frontmatter target
     "E-TOPIC",  # topic outside the controlled topic set
     "E-LAYER",  # anchor pointing past or beside its grounding layer
-    "E-GROUNDING",  # claim without a single grounding anchor
+    "E-GROUNDING",  # assertion without a single grounding anchor
     "E-DUPLICATE",  # duplicate block and statement IDs
-    "E-ORPHAN",  # claim in no topic map
+    "E-ORPHAN",  # assertion in no topic map
     "E-CONTESTED",  # one-sided contested relation
     "E-FRONTMATTER",  # illegal status value
     "E-STATUS",  # status without recorded checks
@@ -89,15 +89,15 @@ def test_broken_reports_no_false_alarms_outside_expected_classes() -> None:
 def test_every_layer_violation_is_caught_at_its_own_layer() -> None:
     report = validate(BROKEN)
     assert _rels(report.errors, "E-LAYER") == {
-        "30_claims/wrong-layer-grounding",
-        "40_deliverable/02-layer",
+        "30_assertions/wrong-layer-grounding",
+        "40_output/02-layer",
         "20_distillates/documents/sideways",
     }
 
 
 def test_an_empty_grounding_list_is_an_error() -> None:
     report = validate(BROKEN)
-    assert "30_claims/empty-grounding" in _rels(report.errors, "E-GROUNDING")
+    assert "30_assertions/empty-grounding" in _rels(report.errors, "E-GROUNDING")
 
 
 def test_duplicate_block_and_statement_ids_are_caught() -> None:
@@ -145,12 +145,12 @@ def test_an_empty_vault_says_which_checks_had_no_subject(tmp_path: Path) -> None
     assert report.errors == []
     assert {code for code, _, _ in report.warnings} == {
         "W-NO-INVENTORY",
-        "W-NO-DELIVERABLE",
+        "W-NO-OUTPUT",
     }
 
 
 def test_a_declared_warning_is_not_reported_as_unexpected(tmp_path: Path) -> None:
-    _declare_expected_warnings(tmp_path, "W-NO-INVENTORY, W-NO-DELIVERABLE")
+    _declare_expected_warnings(tmp_path, "W-NO-INVENTORY, W-NO-OUTPUT")
     report = validate(tmp_path)
     assert report.unexpected_warnings() == []
 
@@ -158,10 +158,10 @@ def test_a_declared_warning_is_not_reported_as_unexpected(tmp_path: Path) -> Non
 def test_an_undeclared_warning_stays_unexpected(tmp_path: Path) -> None:
     _declare_expected_warnings(tmp_path, "W-NO-INVENTORY")
     report = validate(tmp_path)
-    assert [code for code, _, _ in report.unexpected_warnings()] == ["W-NO-DELIVERABLE"]
+    assert [code for code, _, _ in report.unexpected_warnings()] == ["W-NO-OUTPUT"]
 
 
 def test_a_declaration_that_no_longer_fires_is_reported(tmp_path: Path) -> None:
-    _declare_expected_warnings(tmp_path, "W-NO-INVENTORY, W-NO-DELIVERABLE, W-GONE")
+    _declare_expected_warnings(tmp_path, "W-NO-INVENTORY, W-NO-OUTPUT, W-GONE")
     report = validate(tmp_path)
     assert "W-STALE-EXPECTATION" in {code for code, _, _ in report.warnings}

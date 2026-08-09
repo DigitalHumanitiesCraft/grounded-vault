@@ -11,7 +11,7 @@ updated: 2026-08-09
 
 # Distillate: Duplicate statement IDs
 
-Fixture: two core statements carry the same statement ID, so a claim anchoring into it cannot say which one it means (defect: duplicate statement ID).
+Fixture: two core statements carry the same statement ID, so an assertion anchoring into it cannot say which one it means (defect: duplicate statement ID).
 
 ## Core statements
 

@@ -39,6 +39,13 @@ How a source enters the vault is orthogonal to its type; the channel is recorded
 
 Per source, produce the Markdown representation. The operation is the **Markdown conversion**, and it runs in two steps. The first step converts the original into structure-preserving Markdown, so that headings, lists, tables and paragraph boundaries survive as the original had them. The second step stamps a block ID onto every anchor-relevant paragraph. After the second step the file is never edited again, because every later layer anchors into these blocks and an edit would move them.
 
+Which converter performs the first step is decided per source, along this list. The chosen converter is recorded in the `converter` field of the Markdown representation as before, so that a later run can be reproduced or repeated with a different tool.
+
+- Short, simply structured texts are converted by the agent itself, because a tool adds nothing where the structure is already flat.
+- Standard office and PDF formats go through MarkItDown or pandoc.
+- Complex layouts and scanned documents go through Docling, which works markedly faster when a GPU is available.
+- Image sources that require OCR are a named extension point of this profile and are not yet worked out.
+
 1. **document**: run the Markdown conversion into `10_markdown/documents/`, note the converter in the frontmatter, set the H1 from the original, fill the metadata block.
 2. **data**: place the data file in `10_markdown/data/`, write the schema description of the same slug, fill the metadata block.
 3. **publication**: no Markdown representation, because the CSL JSON record in `references/` is the root of this source type.
@@ -53,19 +60,61 @@ One distillate per source, produced as a three-stage chain:
 2. **Formatting**: deterministic pass that enforces the section skeleton, statement IDs and anchor syntax from [[knowledge/schema]].
 3. **Fidelity check**: compare each statement against its anchor; for publications run the quotation check now, while the source text is at hand, and record it as `checked.quote`.
 
+### Canonical extraction prompt skeleton
+
+> Extract the core statements of the source **{source short title}**, and of this
+> source alone. Work only from the text given below.
+> One statement per anchor. Each statement stands on its own, is understandable
+> without its neighbours, and stays within the literal sense of the source.
+> Do not evaluate, do not interpret, do not infer, and do not merge this source
+> with any other; the vault synthesizes at a later layer.
+> No statement without a nameable source location. Where you cannot name one,
+> drop the statement.
+> Deliver per statement the statement itself and its source location, in the form
+> the source type requires: for a document the block it was taken from, for a
+> publication the verbatim quotation with page, for data the computation that
+> yields the stated result.
+>
+> SOURCE: {Markdown representation, quotation set, or data schema description}
+
+The chain iterates. A statement that fails the fidelity check is reformulated or discarded, and the check runs again, until every remaining statement passes.
+
 The distillate enters at `status: grounded`. Update the inventory row to `distilled`.
 
-## Build claims
+## Build assertions
 
-Read the distillates of a topic, synthesize atomic statements that the deliverable will need, one file per claim. Every claim grounds in at least one distillate statement; a claim spanning several sources lists every anchor. Irreconcilable statements become two claims, both `contested`, linked in both directions. Register every claim in its topic map. A conclusion without source support is noted for the deliverable as a posit candidate and never becomes a claim.
+Assertions are where the vault synthesizes, one file per assertion, and the work proceeds by topic in these steps.
+
+1. **Read in**: enter through the topic map of the topic and read every distillate registered there, so that synthesis covers the sources the topic actually holds rather than the ones at hand.
+2. **Group**: gather the distillate statements that concern the same matter, across sources and across source types. A group is the unit an assertion is written from.
+3. **Formulate**: write one atomic assertion per group, carried jointly by the sources of that group. Atomic means one statement that cannot be split without losing its point.
+4. **Ground**: list in `grounding` every statement ID that supports the assertion, one per supporting source, and say in the Support section what each anchor contributes.
+5. **Contradictions**: where a group holds statements that cannot be reconciled, write two assertions instead of one, set both to `contested`, and link them to each other in `contested-with` on both sides.
+6. **Posit candidates**: a conclusion that no distillate statement carries is noted for the output as a posit candidate and never becomes an assertion.
+7. **Register**: enter every assertion in its topic map with a half-sentence of orientation, and record questions the sources leave open under the map's open questions.
+
+Machine review then runs over every pair of assertion and supporting statement, under the contract below. A verdict below *fully supports* means the assertion is reformulated to the width its sources actually carry, or the grounding is corrected by dropping the anchor that does not carry it and naming one that does. Review repeats on the changed pair.
+
+### Assertion review prompt skeleton
+
+> You are an adversarial reviewer. Below are a distillate statement and an
+> assertion that claims to be supported by it. Your task is to refute the
+> assertion. Judge only whether this statement supports this assertion; whether
+> the assertion is true is out of scope. Answer with exactly one verdict: fully supports
+> | partially supports | overreaches | contradicts | not in the text. Then give
+> one sentence of justification, and where the verdict is not *fully supports*,
+> name the part of the assertion that the statement does not carry.
+>
+> STATEMENT: {distillate statement, without its own grounding anchor}
+> ASSERTION: {assertion as one sentence}
 
 ## Write chapters
 
-Write per chapter, in the working language and style sheet set in [[knowledge/specification]]. Every load-bearing sentence gets a footnote `Grounded in [[claim]]`; every own conclusion gets a footnote `Posit: <rationale>. Open evidence question: <question>`. Mirror the referenced claims and the posit count in the frontmatter. Update the chapter register in [[knowledge/state]].
+Write per chapter, in the working language and style sheet set in [[knowledge/specification]]. Every load-bearing sentence gets a footnote `Grounded in [[assertion]]`; every own conclusion gets a footnote `Posit: <rationale>. Open evidence question: <question>`. Mirror the referenced assertions and the posit count in the frontmatter. Update the chapter register in [[knowledge/state]].
 
 ## Query
 
-To answer a question from the vault, enter through the topic maps, follow claims to their distillate statements and, where exactness matters, down to the source passage. Quote claims by wikilink so the answer stays anchored. Questions the vault cannot answer are recorded as open questions in the topic's map.
+To answer a question from the vault, enter through the topic maps, follow assertions to their distillate statements and, where exactness matters, down to the source passage. Quote assertions by wikilink so the answer stays anchored. Questions the vault cannot answer are recorded as open questions in the topic's map.
 
 ## Check
 
@@ -109,4 +158,4 @@ Three instances check the vault. The architecture fixes their contracts; the mec
 
 ### Status discipline
 
-`grounded` → (validation and machine review passed) → `validated` → (expert passed) → `verified`. `contested` is set by claim building or review when sources conflict, and resolved only by verification. A document's status is the minimum of its anchors' states.
+`grounded` → (validation and machine review passed) → `validated` → (expert passed) → `verified`. `contested` is set by assertion building or review when sources conflict, and resolved only by verification. A document's status is the minimum of its anchors' states.
