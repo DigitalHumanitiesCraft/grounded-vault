@@ -6,6 +6,7 @@ be caught. The warning tests use temporary vaults, because a warning states that
 a check found no subject, which neither shipped fixture can show.
 """
 
+import shutil
 import sys
 from pathlib import Path
 
@@ -190,3 +191,165 @@ def test_a_document_without_any_check_date_is_not_stale() -> None:
     """Absent check dates are status grounded, which is a state and not a defect."""
     report = validate(MINIMAL)
     assert _rels(report.warnings, "W-STALE") == set()
+
+
+CHAPTER = "40_output/01-findings"
+
+SIDE_DISTILLATE = """---
+type: distillate
+source-type: document
+representation: "[[10_markdown/documents/report-garden-water-2026]]"
+topics: ["[[Water]]"]
+status: grounded
+checked: {}
+created: 2026-07-11
+updated: 2026-07-11
+---
+
+# Distillate: side branch
+
+## Core statements
+
+- A statement whose anchor does not resolve. [[10_markdown/documents/report-garden-water-2026#^nope]] ^s1
+"""
+
+SIDE_ASSERTION = """---
+type: assertion
+topics: ["[[Water]]"]
+status: grounded
+checked: {}
+grounding:
+  - "[[20_distillates/documents/side-branch#^s1]]"
+created: 2026-07-11
+updated: 2026-07-11
+---
+
+# A side branch assertion
+
+## Support
+
+- [[20_distillates/documents/side-branch#^s1]] — what the side branch contributes.
+"""
+
+SIDE_CHAPTER = """---
+type: chapter
+status: grounded
+checked: {}
+assertions: ["[[30_assertions/side-branch]]"]
+posits: 0
+created: 2026-07-11
+updated: 2026-07-11
+---
+
+# Side branch
+
+A sentence of the side branch.[^1]
+
+[^1]: Grounded in [[30_assertions/side-branch]].
+"""
+
+
+def _vault_with_side_branch(tmp_path: Path) -> Path:
+    """A copy of the clean fixture plus a second chain that carries a dead anchor."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "20_distillates" / "documents" / "side-branch.md").write_text(
+        SIDE_DISTILLATE, encoding="utf-8"
+    )
+    (root / "30_assertions" / "side-branch.md").write_text(
+        SIDE_ASSERTION, encoding="utf-8"
+    )
+    (root / "40_output" / "02-side.md").write_text(SIDE_CHAPTER, encoding="utf-8")
+    return root
+
+
+def test_a_chapter_stays_clean_while_the_rest_of_the_vault_is_broken(
+    tmp_path: Path,
+) -> None:
+    root = _vault_with_side_branch(tmp_path)
+    assert validate(root).errors != []
+    report = validate(root, chapter=CHAPTER)
+    assert report.errors == [], report.errors
+    assert report.unexpected_warnings() == [], report.warnings
+
+
+def test_a_defect_in_a_branch_the_chapter_does_not_hang_on_stays_out(
+    tmp_path: Path,
+) -> None:
+    root = _vault_with_side_branch(tmp_path)
+    report = validate(root, chapter=CHAPTER)
+    assert not [rel for _, rel, _ in report.errors if "side-branch" in rel]
+    other = validate(root, chapter="40_output/02-side")
+    assert "20_distillates/documents/side-branch" in _rels(other.errors, "E-ANCHOR")
+
+
+def test_a_defect_in_a_distillate_under_the_chapter_reaches_the_verdict(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    distillate = root / "20_distillates" / "documents" / "report-garden-water-2026.md"
+    distillate.write_text(
+        distillate.read_text(encoding="utf-8").replace("#^c3d4", "#^gone"),
+        encoding="utf-8",
+    )
+    report = validate(root, chapter=CHAPTER)
+    assert "20_distillates/documents/report-garden-water-2026" in _rels(
+        report.errors, "E-ANCHOR"
+    )
+
+
+def test_a_defect_in_a_representation_under_the_chapter_reaches_the_verdict(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    representation = root / "10_markdown" / "documents" / "report-garden-water-2026.md"
+    representation.write_text(
+        representation.read_text(encoding="utf-8").replace("channel: handover", ""),
+        encoding="utf-8",
+    )
+    report = validate(root, chapter=CHAPTER)
+    assert "10_markdown/documents/report-garden-water-2026" in _rels(
+        report.errors, "E-FRONTMATTER"
+    )
+
+
+def test_the_chapter_is_named_by_slug_or_by_path() -> None:
+    for spec in ("01-findings", CHAPTER, f"{CHAPTER}.md"):
+        report = validate(MINIMAL, chapter=spec)
+        assert report.errors == [], (spec, report.errors)
+
+
+def test_an_unknown_chapter_is_a_finding() -> None:
+    report = validate(MINIMAL, chapter="40_output/does-not-exist")
+    assert "E-SCOPE" in report.codes()
+
+
+def test_only_a_chapter_can_be_the_scope() -> None:
+    report = validate(MINIMAL, chapter="30_assertions/metering-reduces-water-use")
+    assert "E-SCOPE" in report.codes()
+
+
+def test_the_vault_wide_checks_stay_out_of_the_chapter_mode(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "knowledge" / "state.md").unlink()
+    assert "W-NO-INVENTORY" in {code for code, _, _ in validate(root).warnings}
+    report = validate(root, chapter=CHAPTER)
+    assert report.errors == [], report.errors
+    assert report.warnings == [], report.warnings
+
+
+def test_a_placeholder_under_the_chapter_is_reported(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    distillate = root / "20_distillates" / "documents" / "report-garden-water-2026.md"
+    distillate.write_text(
+        distillate.read_text(encoding="utf-8") + "\n{{OPEN_QUESTION}}\n",
+        encoding="utf-8",
+    )
+    report = validate(root, chapter=CHAPTER)
+    assert _rels(report.warnings, "W-PLACEHOLDER") == {
+        "20_distillates/documents/report-garden-water-2026.md"
+    }

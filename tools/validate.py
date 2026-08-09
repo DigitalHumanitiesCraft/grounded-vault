@@ -16,10 +16,18 @@ unexpected, and a declaration that no longer fires is reported in turn.
 
 Usage:
     python tools/validate.py <vault-root> [--no-computations]
+    python tools/validate.py <vault-root> --chapter 40_output/<slug>
 
 Data anchors are re-run and compared by default; --no-computations skips that.
 
-Exit code 0 when no errors were found; warnings alone do not fail the run.
+--chapter narrows the run to one chapter of the output and, transitively, the
+assertions, distillates and representations it hangs on, so that the state of the
+rest of the vault does not enter its verdict. The checks that are decidable only
+over the whole vault stay out of that mode and are named in its closing lines.
+
+Exit code 0 when no errors were found; warnings alone do not fail the run. In
+chapter mode an undeclared warning fails the run as well, because there the run
+answers whether this chapter is ready for acceptance.
 """
 
 from __future__ import annotations
@@ -69,6 +77,20 @@ FRONTMATTER_LINK_FIELDS = (
     "contested-with",
 )
 PLACEHOLDER_SCAN_FILES = ("CLAUDE.md", "HOME.md")
+
+# The layer a document type grounds in; the chapter scope walks down this chain.
+LAYER_BELOW = {
+    "chapter": ASSERTION_LAYER,
+    "assertion": DISTILLATE_LAYER,
+    "distillate": REPRESENTATION_LAYER,
+}
+VAULT_WIDE_CHECKS = (
+    "E-INVENTORY",
+    "W-EMPTY",
+    "W-NO-INVENTORY",
+    "W-NO-OUTPUT",
+    "W-STALE-EXPECTATION",
+)
 
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
@@ -352,13 +374,18 @@ def _check_duplicate_ids(doc: Doc, report: Report) -> None:
         report.error("E-DUPLICATE", doc.rel, f"duplicate {label}: ^{dup}")
 
 
-def _check_placeholders(root: Path, report: Report) -> None:
+def _check_placeholders(
+    root: Path, report: Report, paths: list[Path] | None = None
+) -> None:
     """Template tokens that survived instantiation, in content and in the layers around it."""
-    paths = [
-        p for folder in CONTENT_FOLDERS for p in sorted((root / folder).rglob("*.md"))
-    ]
-    paths += sorted((root / "knowledge").glob("*.md"))
-    paths += [root / name for name in PLACEHOLDER_SCAN_FILES]
+    if paths is None:
+        paths = [
+            p
+            for folder in CONTENT_FOLDERS
+            for p in sorted((root / folder).rglob("*.md"))
+        ]
+        paths += sorted((root / "knowledge").glob("*.md"))
+        paths += [root / name for name in PLACEHOLDER_SCAN_FILES]
     for path in paths:
         if not path.is_file():
             continue
@@ -612,10 +639,12 @@ def _check_chapter(doc: Doc, report: Report) -> None:
         paragraph = []
 
 
-def _check_moc_reachability(docs: dict[str, Doc], report: Report) -> None:
+def _check_moc_reachability(
+    docs: dict[str, Doc], report: Report, scope: dict[str, Doc] | None = None
+) -> None:
     mocs = [d for d in docs.values() if d.fm.get("type") == "moc"]
     listed = {target for moc in mocs for target, _ in _link_targets(moc.body)}
-    for doc in docs.values():
+    for doc in (scope if scope is not None else docs).values():
         if doc.fm.get("type") == "assertion" and doc.rel not in listed:
             report.error("E-ORPHAN", doc.rel, "assertion reachable from no topic map")
 
@@ -701,7 +730,53 @@ def _check_expectations(report: Report) -> None:
         )
 
 
-def validate(root: Path, run_computations: bool = True) -> Report:
+def _resolve_chapter(spec: str, root: Path, docs: dict[str, Doc]) -> Doc | None:
+    """A chapter named by root-relative path, by absolute path, or by bare slug."""
+    raw = str(spec).replace("\\", "/").strip()
+    if Path(raw).is_absolute():
+        try:
+            raw = Path(raw).resolve().relative_to(root).as_posix()
+        except ValueError:
+            return None
+    raw = raw.removesuffix(".md").strip("/")
+    for rel in (raw, f"{TYPE_FOLDER['chapter']}/{raw}"):
+        doc = docs.get(rel)
+        if doc is not None and doc.fm.get("type") == "chapter":
+            return doc
+    return None
+
+
+def _links_below(doc: Doc) -> set[str]:
+    """The link targets of a document that point into the layer it grounds in."""
+    below = LAYER_BELOW.get(doc.fm.get("type"))
+    if below is None:
+        return set()
+    targets = {target for _, target, _ in _frontmatter_links(doc)}
+    targets |= {target for target, _ in _link_targets(doc.body)}
+    return {target for target in targets if target.startswith(below)}
+
+
+def _chapter_scope(chapter: Doc, docs: dict[str, Doc]) -> dict[str, Doc]:
+    """The chapter plus, transitively, the documents it grounds in.
+
+    Traversal follows only anchors that point one layer down, the direction the
+    schema allows, so a sideways link into a neighbouring branch does not widen
+    the scope.
+    """
+    scope = {chapter.rel: chapter}
+    queue = [chapter]
+    while queue:
+        current = queue.pop()
+        for target in sorted(_links_below(current)):
+            if target in docs and target not in scope:
+                scope[target] = docs[target]
+                queue.append(docs[target])
+    return scope
+
+
+def validate(
+    root: Path, run_computations: bool = True, chapter: str | None = None
+) -> Report:
     global _RUN_COMPUTATIONS
     _RUN_COMPUTATIONS = run_computations
     report = Report(expected_warnings=_read_expected_warnings(root))
@@ -715,7 +790,24 @@ def validate(root: Path, run_computations: bool = True) -> Report:
         str(d.fm.get("topic")) for d in docs.values() if d.fm.get("type") == "moc"
     }
 
-    for doc in docs.values():
+    scope = docs
+    if chapter is not None:
+        target_doc = _resolve_chapter(chapter, root, docs)
+        if target_doc is None:
+            report.errors.clear()
+            report.warnings.clear()
+            report.error("E-SCOPE", str(chapter), "no chapter document of this name")
+            return report
+        scope = _chapter_scope(target_doc, docs)
+        # A document that failed to parse is in no scope, so keep the parse
+        # findings of those the scope anchors into.
+        reachable = set(scope) | {
+            t for doc in scope.values() for t in _links_below(doc)
+        }
+        report.errors = [e for e in report.errors if e[1] in reachable]
+        report.warnings = [w for w in report.warnings if w[1] in reachable]
+
+    for doc in scope.values():
         _check_frontmatter(doc, report)
         _check_frontmatter_links(doc, docs, root, report)
         _check_duplicate_ids(doc, report)
@@ -734,12 +826,15 @@ def validate(root: Path, run_computations: bool = True) -> Report:
         for target, block in _link_targets(doc.body):
             if block is not None or any(target.startswith(f) for f in CONTENT_FOLDERS):
                 _resolve_anchor(target, block, docs, root, doc, report)
-    _check_moc_reachability(docs, report)
-    _check_inventory(root, docs, report)
-    _check_placeholders(root, report)
-    _check_chain_populated(docs, report)
-    _check_output_present(docs, report)
-    _check_expectations(report)
+    _check_moc_reachability(docs, report, scope)
+    if chapter is None:
+        _check_inventory(root, docs, report)
+        _check_placeholders(root, report)
+        _check_chain_populated(docs, report)
+        _check_output_present(docs, report)
+        _check_expectations(report)
+    else:
+        _check_placeholders(root, report, [doc.path for doc in scope.values()])
     return report
 
 
@@ -759,9 +854,18 @@ def main() -> None:
         action="store_true",
         help="no-op, kept for documented invocations; computations run by default",
     )
+    parser.add_argument(
+        "--chapter",
+        metavar="40_output/<slug>",
+        help="judge one chapter and the chain it hangs on, path or slug",
+    )
     args = parser.parse_args()
 
-    report = validate(args.root.resolve(), run_computations=not args.no_computations)
+    report = validate(
+        args.root.resolve(),
+        run_computations=not args.no_computations,
+        chapter=args.chapter,
+    )
     for code, rel, message in report.errors:
         print(f"ERROR {code} {rel}: {message}", file=sys.stderr)
     for code, rel, message in report.warnings:
@@ -772,6 +876,12 @@ def main() -> None:
     if report.expected_warnings:
         summary += f", {undeclared} of them undeclared (marked *)"
     print(summary)
+    if args.chapter:
+        print(f"not decidable per chapter, left out: {', '.join(VAULT_WIDE_CHECKS)}")
+        ready = not report.errors and not undeclared
+        verdict = "READY" if ready else "NOT READY"
+        print(f"CHAPTER {verdict} {args.chapter}")
+        sys.exit(0 if ready else 1)
     if not report.errors:
         print("OK vault conforms to its schema")
     sys.exit(1 if report.errors else 0)
