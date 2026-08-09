@@ -405,7 +405,45 @@ KISUG = Mapping(
     status_grounded_prefixes=("20_distillates/extern/",),
 )
 
-INSTANCES = {mapping.name: mapping for mapping in (KISUG,)}
+# The Promptotyping paper vault (DigitalHumanitiesCraft/Promptotyping, vault/)
+# was instantiated from the pre-rename template and is already English with the
+# template's key names and status vocabulary; the migration is the folder chain
+# and the claim-to-assertion rename. Its sources are kept out of git by the
+# repository-root .gitignore, which lies outside the vault root and is updated
+# by hand, as are the site files that read the vault.
+PROMPTOTYPING = Mapping(
+    name="promptotyping",
+    folders=(
+        ("_sources", "00_sources"),
+        ("00_representation", "10_markdown"),
+        ("10_distillates", "20_distillates"),
+        ("20_claims", "30_assertions"),
+        ("30_deliverable", "40_output"),
+    ),
+    # Source originals stay byte-identical (the YAML re-dump would reformat
+    # them); the pre-rename example fixtures are replaced by the template's
+    # tests/fixtures rather than migrated.
+    skip_dirs=(
+        ".git",
+        ".obsidian",
+        "__pycache__",
+        "node_modules",
+        "00_sources",
+        "examples",
+        "tests",
+    ),
+    # Identity rows declare the types that already carry template names, so
+    # the summary flags only a genuinely unknown type.
+    type_map={
+        "claim": "assertion",
+        "representation": "representation",
+        "distillate": "distillate",
+        "moc": "moc",
+        "glossary": "glossary",
+    },
+)
+
+INSTANCES = {mapping.name: mapping for mapping in (KISUG, PROMPTOTYPING)}
 
 
 def main() -> None:
