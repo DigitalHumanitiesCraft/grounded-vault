@@ -1,0 +1,5 @@
+# Originals may be confidential; they never enter version control. The root
+# .gitignore anchors its own 00_sources rule to the repository root, so this
+# instance repeats the rule for its own source folder.
+00_sources/*
+!00_sources/README.md
