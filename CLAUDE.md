@@ -13,6 +13,7 @@ Read in this order: `knowledge/index.md` (terminology), `knowledge/state.md` (wh
 
 | Task | Read first | Chain |
 |---|---|---|
+| Instantiate the vault | `SETUP.md` | setup |
 | Add a source | `knowledge/operations.md` § Acquire, Ingest | acquire → ingest |
 | Distill a source | `knowledge/schema.md` § Distillate, `operations.md` § Distill | three-stage chain |
 | Build or revise claims | `schema.md` § Claim, `operations.md` § Build claims | claims |

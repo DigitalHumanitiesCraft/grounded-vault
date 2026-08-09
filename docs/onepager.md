@@ -8,7 +8,7 @@ Von Sprachmodellen erzeugter Text ist in seiner Rohform nicht auditierbar. Ein g
 
 ## Kernidee
 
-Grounded Vault ist eine Repository-Architektur aus portablen Markdown-Dateien, in der jede tragende Aussage einen maschinell prüfbaren Anker zu ihrem Quellmaterial trägt, vom fertigen Deliverable bis hinunter zur einzelnen Passage, Datenzeile oder Berechnung. AI Agents erzeugen diese Struktur skaliert; die Architektur behauptet an keiner Stelle, ihr Inhalt sei wahr. Ein fertiger Vault ist ein vollständig vorbereiteter Prüfgegenstand, in dem Expertenprüfung passagengenau ansetzen kann, statt bei null zu beginnen. AI-Output wird dadurch auditierbar, und der Prüfstand jeder einzelnen Aussage bleibt jederzeit ablesbar.
+Grounded Vault ist eine Repository-Architektur aus portablen Markdown-Dateien, in der jede tragende Aussage einen maschinell auflösbaren Anker zu ihrem Quellmaterial trägt, vom fertigen Deliverable bis hinunter zur einzelnen Passage, Datenzeile oder Berechnung. AI Agents erzeugen diese Struktur skaliert; die Architektur behauptet an keiner Stelle, ihr Inhalt sei wahr. Ein fertiger Vault ist ein vollständig vorbereiteter Prüfgegenstand, in dem Expertenprüfung passagengenau ansetzen kann, statt bei null zu beginnen. AI-Output wird dadurch auditierbar, und der Prüfstand jeder einzelnen Aussage bleibt jederzeit ablesbar.
 
 ## Aufbau
 
@@ -28,13 +28,13 @@ Die nummerierte Kette lautet `00_sources → 10_markdown → 20_distillates → 
 references/       bibliografische Wurzeln (CSL-JSON)
 ```
 
-Jede Schicht ist für sich prüfbar und lieferfähig. Quellen gehören zu Source Types, je definiert durch Repräsentation, Distillationsoperation und Ankertyp. Jede Markdown Representation trägt einen kompakten, Dublin-Core-kompatiblen Metadatenblock samt Lizenzfeld; Vertraulichkeit und Lizenz sind Metadaten der einzelnen Quelle, keine Architekturentscheidung. Archivierbare Dokumente ankern per Block-Referenz auf den Volltext, nur zitierbare Publikationen per buchstabengetreuem Zitat samt DOI, strukturierte Daten per reproduzierbarer Berechnung. Beschaffungskanäle sind dazu orthogonal; der ausgearbeitete Referenzkanal ist Deep Research mit Spiegelung über Zotero, wobei der Research-Report selbst nie Quelle wird und alle Anker an die aufgefundenen Publikationen binden. Widersprüche zwischen Quellen bleiben als `contested` sichtbar und sind für das Deliverable selbst Information.
+Jede Schicht ist für sich prüfbar und lieferfähig. Quellen gehören zu Source Types, je definiert durch Repräsentation, Distillationsoperation und Ankertyp. Jede Markdown Representation trägt einen kompakten, Dublin-Core-kompatiblen Metadatenblock samt Lizenzfeld; Vertraulichkeit und Lizenz sind Metadaten der einzelnen Quelle, keine Architekturentscheidung. Ob eine Quelle als Dokument, Publikation oder Daten geführt wird, entscheidet sich daran, ob ihr Inhalt im Vault gespeichert werden darf. Dokumente ankern per Block-Referenz auf den gespeicherten Volltext, nur zitierbare Publikationen per buchstabengetreuem Zitat samt DOI, strukturierte Daten per reproduzierbarer Berechnung. Beschaffungskanäle sind dazu orthogonal; der ausgearbeitete Referenzkanal ist Deep Research mit Spiegelung über Zotero, wobei der Research-Report selbst nie Quelle wird und alle Anker an die aufgefundenen Publikationen binden. Widersprüche zwischen Quellen bleiben als `contested` sichtbar und sind für das Deliverable selbst Information.
 
 ## Prüfung
 
 Drei Instanzen prüfen mit klar getrennter Autorität:
 
-- **Validation**, die deterministische Konformitätsprüfung des Vaults gegen sein eigenes Schema. Jeder Anker löst auf, jedes Zitat stimmt Zeichen für Zeichen, jede Berechnung rechnet nach, jedes Frontmatter entspricht seinem Typ.
+- **Validation**, die deterministische Konformitätsprüfung des Vaults gegen sein eigenes Schema. Jeder Anker löst auf, jede Berechnung rechnet nach, jedes Frontmatter entspricht seinem Typ. Zitate aus nur zitierbaren Publikationen werden zur Intake-Zeit Zeichen für Zeichen geprüft und mit Datum protokolliert, weil der Volltext späteren Läufen nicht vorliegt.
 - **Machine Review**, die adversariale LLM-Prüfung mit Anti-Anchoring. Der Prüfer sieht nur Quellstelle und Behauptung und filtert für die menschliche Prüfung vor.
 - **Verification**, die Expertenprüfung durch Menschen, allein autorisiert, Evidenz festzustellen.
 
@@ -42,8 +42,8 @@ Fest ist je Instanz der Prüfvertrag, also Gegenstand, Autoritätsgrenze, Beding
 
 ## Steuerung und duale Lesbarkeit
 
-Ein `knowledge/`-Ordner regiert die Produktion mit sechs Dokumenten, index (Navigation, Begriffe), specification (Zweck, Entscheidungen), schema (deklaratives Regelwerk), operations (prozedurales Playbook aller Ketten), state (alles Volatile) und journal (Genese, append-only). Diese Governance-Schicht ist Promptotyping; Grounded Vault ist dessen Profil für belegpflichtige Wissensarbeit. Dieselben Dateien lesen zwei Leser, der Mensch in Obsidian über Wikilinks entlang der Provenance Chain, der Agent über einen imperativen Action-Layer (`CLAUDE.md`), der jede Aufgabe auf das deklarative Regelwerk routet.
+Ein `knowledge/`-Ordner regiert die Produktion mit sechs Dokumenten, index (Navigation, Begriffe), specification (Zweck, Entscheidungen), schema (deklaratives Regelwerk), operations (die Prozeduren aller Ketten), state (alles Volatile) und journal (Genese, append-only). Diese Governance-Schicht ist Promptotyping; Grounded Vault ist dessen Profil für belegpflichtige Wissensarbeit. Dieselben Dateien lesen zwei Leser, der Mensch in Obsidian über Wikilinks entlang der Provenance Chain, der Agent über einen imperativen Action-Layer (`CLAUDE.md`), der jede Aufgabe auf das deklarative Regelwerk routet.
 
 ## Instanziierung
 
-Ein Projekt setzt wenige Parameter, Thema und Themen-Rückgrat, aktive Source Types, Deliverable-Genre, Sprache und Verifikationsrolle. Schichtenmodell, Ankermechanik, Prüfverträge und Statusprogression sind invariant. Ausgeliefert wird das Template als GitHub-Repository mit ausfüllbaren Vorlagen und einem generischen Validierungsskript.
+Ein Projekt setzt wenige Parameter, Zweck samt Thema, kontrolliertes Themenset, aktive Source Types, Deliverable-Genre, Sprache und Verifikationsrolle. Schichtenmodell, Ankermechanik, Prüfverträge und Statusprogression sind invariant. Ausgeliefert wird das Template als GitHub-Repository mit ausfüllbaren Vorlagen und einem generischen Validierungsskript.

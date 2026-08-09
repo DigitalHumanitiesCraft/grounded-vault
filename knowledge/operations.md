@@ -15,7 +15,7 @@ related: [schema, state, journal]
 
 # Operations
 
-This document is the procedural playbook of the vault, one section per chain. Every chain produces or checks artifacts defined in [[knowledge/schema]] and updates the registers in [[knowledge/state]]. Decisions made along the way go to [[knowledge/journal]].
+This document defines the procedures of the vault, one section per chain. Every chain produces or checks artifacts defined in [[knowledge/schema]] and updates the registers in [[knowledge/state]]. Decisions made along the way go to [[knowledge/journal]].
 
 ## Acquire
 
@@ -27,7 +27,7 @@ How a source enters the vault is orthogonal to its type; the channel is recorded
 
 ### Deep research prompt skeleton
 
-> Research the topic **{topic from the backbone}** for the project **{project}**.
+> Research the topic **{topic from the controlled topic set}** for the project **{project}**.
 > Search broadly, then prioritize: peer-reviewed and official sources first;
 > exclude: {project exclusion list}. Evaluate candidates at full text.
 > Counter-check adversarially: for each candidate finding, search for sources
@@ -77,7 +77,8 @@ Three instances check the vault. The architecture fixes their contracts; the mec
 - Authority: gates everything; no other check runs on a file that fails validation. Sets no status by itself except enforcing the discipline.
 - Conditions: deterministic, same input, same verdict. Runs on every change.
 - Record: `checked.validation: <date>` on every file that passes.
-- Reference mechanism: `python tools/validate.py .` (checks frontmatter per type, anchor resolution, statement IDs, quotation identity where a source text is available, computation declarations, MOC reachability, bidirectional contested links, chapter mirror and footnote keywords, status discipline, inventory completeness). `--run-computations` re-runs data anchors and compares results.
+- Reference mechanism: `python tools/validate.py .` (checks frontmatter per type, anchor resolution, statement IDs, quotation identity where a source text is available, computation declarations, MOC reachability, bidirectional contested links, chapter mirror and footnote keywords, status discipline, inventory completeness). Data anchors are re-run and compared by default; `--no-computations` switches that off for a fast run.
+- The checks with their own codes are these. `E-ANCHOR` fires when an anchor does not resolve, and it resolves the frontmatter targets `representation`, `superseded-by` and `contested-with` as well as the anchors in the body. `E-LAYER` fires when an anchor skips a layer instead of binding to the layer directly beneath its own. `E-GROUNDING` fires when a document that owes grounding carries an empty grounding. `E-DUPLICATE` fires when a block ID or a statement ID occurs more than once in one file. `W-PLACEHOLDER` fires while an unreplaced template placeholder in double braces remains anywhere in the vault.
 - A run without errors is not by itself the success criterion. A warning states that a check found no subject, which is the failure mode a silent green run hides. The instance declares the warnings it expects under `expected-warnings` in the frontmatter of `knowledge/specification.md`; every other warning is printed with an asterisk and counted separately, and a declaration that no longer fires is reported as `W-STALE-EXPECTATION`.
 
 ### Contract: machine review

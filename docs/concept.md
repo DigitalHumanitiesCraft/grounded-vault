@@ -2,7 +2,7 @@
 
 A provenance-complete knowledge base architecture for humans and AI agents. A Promptotyping profile for evidence-grounded knowledge work.
 
-Status of this document: concept draft, terminology settled, repository template not yet built.
+This document describes the concept. The repository around it is the reference implementation of that concept.
 
 ## 1. Problem
 
@@ -12,7 +12,7 @@ The problem is structural. Trust in a statement requires a checkable path from t
 
 ## 2. Core idea
 
-Grounded Vault is a repository architecture in which every substantive statement carries a machine-checkable anchor to the source material that supports it, from the finished deliverable down to the individual passage, dataset row or computation. The knowledge base is built in layers. Source material enters at the bottom, statements condense upward through defined transformations, and each transformation preserves the anchor chain.
+Grounded Vault is a repository architecture in which every substantive statement carries a machine-resolvable anchor to the source material that supports it, from the finished deliverable down to the individual passage, dataset row or computation. The three checking instances divide the work along that anchor. Validation decides whether an anchor resolves and whether its form conforms, machine review judges whether the resolved location actually supports the statement, and human verification alone establishes evidence. The knowledge base is built in layers. Source material enters at the bottom, statements condense upward through defined transformations, and each transformation preserves the anchor chain.
 
 AI agents produce most of this structure. The architecture therefore never asserts that its content is true. What a finished vault delivers is a fully prepared audit object. Every claim is anchored to its source passages, every anchor has passed deterministic validation and an adversarial machine check, and human expert review can proceed passage by passage instead of starting from zero. The value of the architecture is that it makes agent output auditable at low cost and makes the state of auditing explicit at every point.
 
@@ -52,7 +52,7 @@ The vault is organized in ascending layers. Each layer is checkable on its own, 
 | Claims | Atomic statements plus topic maps (MOCs) and glossary | grounding anchors into distillates |
 | Deliverable | The synthesized output text | footnote anchors into claims, own conclusions marked as posits |
 
-Two rules keep the chain honest. Anchors are created only at the layer they belong to, so a distillate references existing block IDs and has no authority to mint new ones. And each layer references only the layer directly beneath it; the deliverable binds to claims, and every statement therefore passes through the synthesis and checking machinery before it can reach a source.
+Two rules constrain the chain. Anchors are created only at the layer they belong to, so a distillate references existing block IDs and has no authority to mint new ones. And each layer references only the layer directly beneath it; the deliverable binds to claims, and every statement therefore passes through the synthesis and checking machinery before it can reach a source.
 
 A conclusion that emerges during synthesis without source support does not enter a claim. It enters the deliverable as an explicitly marked posit, with its rationale and its open evidence question. The vault thereby shows exactly where it leaves its sources.
 
@@ -60,11 +60,11 @@ Contradictions between sources are preserved. Claims that cannot be reconciled a
 
 ## 5. Source types
 
-The initial typology covers three source types, with a fourth sketched. Each is defined by its representation in the repository, its distillation operation and its grounding anchor.
+The initial typology covers three source types, with a fourth sketched. Each is defined by its representation in the repository, its distillation operation and its grounding anchor. The criterion that assigns a source to a type is whether its content may be stored in the vault, and the publication status of a source decides nothing by itself, so an open-access article that may be stored is treated as a document.
 
 Every Markdown representation carries a compact metadata block in its frontmatter, with Dublin-Core-compatible field names (title, creator, date, type, identifier, license) plus the acquisition channel as a provenance note. Licensing and confidentiality are thereby metadata of the individual source; whether a full text may be archived, versioned or published is read off the license field instead of being wired into the architecture. For publications the bibliographic substance lives in the CSL JSON record, which the metadata block references instead of duplicating.
 
-**Archivable documents.** Material that may be stored in full, typically documents produced by or for the project owner.
+**Documents.** Sources whose full text may be stored in the vault and is therefore converted into a Markdown representation, typically material produced by or for the project owner, but equally any externally published text whose license permits storage.
 
 - Markdown representation: a Markdown full text, converted once from the original and never edited afterwards, so that its anchors stay stable.
 - Anchor: a block reference, a short stable ID attached to each passage, addressable per passage.
@@ -72,13 +72,13 @@ Every Markdown representation carries a compact metadata block in its frontmatte
 
 Whether the originals and full texts may be versioned or published is read off the source's license and confidentiality metadata, independent of the mechanics.
 
-**Citable-only publications.** Works whose full text is not archived in the vault, whether for licensing or practical reasons. This is the fallback case; where a full text may be stored, the archivable type is preferred because its anchors are stronger.
+**Publications.** Sources that are only cited, because their full text may not or cannot be stored, whether for licensing or practical reasons. What lies in the vault is the bibliographic record, and the anchor is the verbatim quotation. This is the fallback case; where a full text may be stored, the document type is preferred, because its anchors resolve inside the vault.
 
 - Representation: a bibliographic record (CSL JSON) with a persistent identifier, DOI preferred.
-- Anchor: a verbatim quotation together with the identifier; the quotation must appear character for character in the source.
+- Anchor: a verbatim quotation together with the identifier; the quotation must appear character for character in the source, which is checked at intake time, while the full text is at hand, and recorded with its date on the distillate.
 - Distillation: extraction of core statements, each carrying its quotation.
 
-**Structured data.** Datasets such as CSV, spreadsheets or XML.
+**Data.** Datasets such as CSV, spreadsheets or XML, whose anchor is a deterministic computation over the file.
 
 - Markdown representation: the data file plus a description of its schema.
 - Anchor: a reproducible computation, meaning the data file, a versioned script or documented query, and its deterministic result. A statement like an aggregate or a statistical finding exists nowhere as a passage, so its anchor is the computation that yields it.
@@ -96,15 +96,15 @@ Sources are versioned by replacement. A Markdown representation is converted onc
 
 How a source enters the vault is a dimension orthogonal to its type. The type fixes the anchor mechanics; the channel describes the intake. The same publication type can be filled by handover from a project partner, by manual collection, by import from an existing reference library, or by agent-driven deep research. Channels are recorded as a provenance note on the source and change nothing else.
 
-The elaborated reference channel is deep research for citable-only publications. A reusable prompt, parameterized with a topic from the project's topic backbone, searches and prioritizes candidate publications, evaluates them at full text, counter-checks adversarially and synthesizes. Priority rules favor peer-reviewed and official sources; an explicit exclusion list names unreliable ones. Every located source is captured in a reference manager, Zotero in the reference implementation, and exported as a CSL JSON record into the vault; credentials and library identifiers stay outside the repository. Each source then receives an ordinary distillate with verbatim quotations as anchors.
+The elaborated reference channel is deep research for citable-only publications. A reusable prompt, parameterized with a topic from the project's controlled topic set, searches and prioritizes candidate publications, evaluates them at full text, counter-checks adversarially and synthesizes. Priority rules favor peer-reviewed and official sources; an explicit exclusion list names unreliable ones. Every located source is captured in a reference manager, Zotero in the reference implementation, and exported as a CSL JSON record into the vault; credentials and library identifiers stay outside the repository. Each source then receives an ordinary distillate with verbatim quotations as anchors.
 
-Two rules keep the channel compatible with the architecture. First, the research report itself never becomes a source. A deep research run produces synthesized, agent-generated text; the sources are the located publications, and all anchors bind to those. Treating the report as a source would launder generated text into the ground layer. Second, the channel does not change the checking. Character-for-character quotation validation runs regardless of how a source arrived, which is precisely what catches the typical weakness of automated research, fabricated or inexact citations. Acquisition may therefore be automated to any degree, because quality control does not depend on it.
+Two rules keep the channel compatible with the architecture. First, the research report itself never becomes a source. A deep research run produces synthesized, agent-generated text; the sources are the located publications, and all anchors bind to those. If the report were treated as a source, generated text would enter the source layer and from then on count as source material. Second, the channel does not change the checking. The character-for-character quotation check runs regardless of how a source arrived, which is precisely what catches the typical weakness of automated research, fabricated or inexact citations. For a publication the check happens at intake, while the full text is at hand, and its date is recorded on the distillate, because the full text is not available to later validation runs.
 
 ## 6. Checking instances and the audit trail
 
 Three instances check the vault, distinguished by who or what judges and with what reliability.
 
-**Validation** is deterministic conformance checking of the vault against its own schema. A rule set defines what a well-formed artifact is, in machine-decidable terms, and a checker reports every violation with its location. The same input always yields the same verdict. Concretely it checks, per source type, that every core statement carries an anchor, that every block reference resolves to an existing passage, that every quotation matches its source character for character, that every computation re-runs to the stated result, that every claim is reachable from a topic map, and that frontmatter conforms to the document type schema. The mechanism is an ordinary one, the same principle as schema validation in XML workflows, constraint languages, automated tests or referential integrity in databases. Validation runs on every change and gates everything above it.
+**Validation** is deterministic conformance checking of the vault against its own schema. A rule set defines what a well-formed artifact is, in machine-decidable terms, and a checker reports every violation with its location. The same input always yields the same verdict. Concretely it checks, per source type, that every core statement carries an anchor, that every block reference resolves to an existing passage, that every quotation whose source text lies in the vault matches it character for character and that every quotation to an external publication carries a recorded intake-time check, that every computation re-runs to the stated result, that every claim is reachable from a topic map, and that frontmatter conforms to the document type schema. The mechanism is an ordinary one, the same principle as schema validation in XML workflows, constraint languages, automated tests or referential integrity in databases. Validation runs on every change and gates everything above it.
 
 **Machine review** is adversarial checking by a language model. A reviewer model judges whether a source location actually supports the statement built on it, using a fixed verdict vocabulary (fully supports, partially supports, overreaches, contradicts, not in the text). Anti-anchoring is mandatory, meaning the reviewer sees only the source location and the statement, while the producing agent's reasoning stays hidden from it, so that it cannot be led. Machine review is probabilistic and is therefore its own instance. Classifying it as validation would blur the line between deterministic and judged, and classifying it as verification would claim human authority it does not have. Its role is to pre-filter for verification, so that human attention lands on the cases that survive an adversarial pass.
 
@@ -116,7 +116,7 @@ The audit trail records the progression. A grounding relation moves through the 
 
 ## 7. Governance layer and Promptotyping
 
-The vault separates meta-knowledge from content. A `knowledge/` folder carries the documents that govern production. The template starts with a compact core of six, separated by what an agent loads together and by how fast content ages. `index.md` holds navigation, reading paths and the project's terminology. `specification.md` holds purpose, requirements and settled decisions. `schema.md` is the stable rulebook, covering layers, folders, document types with their frontmatter, anchor mechanics per source type, the topic backbone and the deliverable's style sheet. `operations.md` is the procedural playbook, one section per chain, covering acquisition (including the deep research channel), intake, distillation, claim building, chapter writing, query answering and checking. `state.md` gathers everything volatile in one place, the source inventory with processing status and the chapter register with writing status, so that the rule documents stay stable. `journal.md` holds the chronological decision history, append-only.
+The vault separates meta-knowledge from content. A `knowledge/` folder carries the documents that govern production. The template starts with a compact core of six, separated by what an agent loads together and by how fast content ages. `index.md` holds navigation, reading paths and the project's terminology. `specification.md` holds purpose, requirements and settled decisions. `schema.md` defines the rules of the vault, covering layers, folders, document types with their frontmatter, anchor mechanics per source type, the controlled topic set and the deliverable's style sheet. `operations.md` defines the procedures, one section per chain, covering acquisition (including the deep research channel), intake, distillation, claim building, chapter writing, query answering and checking. `state.md` gathers everything volatile in one place, the source inventory with processing status and the chapter register with writing status, so that the rule documents stay stable. `journal.md` holds the chronological decision history, append-only.
 
 A split rule accompanies the core: a document is divided only when its sections develop divergent update rhythms or divergent readers. Grown instances may therefore carry more documents than the template ships.
 
@@ -128,7 +128,7 @@ This governance layer is Promptotyping. Promptotyping organizes the knowledge ab
 
 The same files serve two readers.
 
-For humans, the vault is an Obsidian collection. A home page is the entry point, topic maps (MOCs) bundle the claims per topic, wikilinks connect related knowledge instead of repeating it, and the provenance chain is walkable by clicking from a deliverable footnote down to the supporting passage. The Markdown stays portable; beyond wikilinks and block references no plugin-specific syntax is used, so the vault remains readable outside Obsidian.
+For humans, the vault is an Obsidian collection. A home page is the entry point, topic maps (MOCs) bundle the claims per topic, wikilinks connect related knowledge instead of repeating it, and the provenance chain can be followed by clicking from a deliverable footnote down to the supporting passage. The Markdown stays portable; beyond wikilinks and block references no plugin-specific syntax is used, so the vault remains readable outside Obsidian.
 
 For agents, the entry point is an action layer (`CLAUDE.md` in the Claude Code harness, replaceable for other harnesses). It is imperative, kept short, and routes every task onto the declarative rule documents in `knowledge/` instead of duplicating them. A session-start reading order and a task routing table stand at its top. The harness-specific part is an explicitly exchangeable block, so the architecture does not depend on one vendor's tooling.
 
@@ -169,7 +169,7 @@ Folder names, the exact split of `10_markdown/`, and the handling of the registe
 
 ## 11. Instantiation
 
-A project instantiates the template by setting a small number of parameters. These are the topic and the controlled topic backbone (which becomes the MOC set), the active source types, the deliverable genre with its chapter register and style sheet, the working language of the content, the role that holds verification authority, and the mechanisms that fulfil the check contracts. Everything else, the layer model, the anchor mechanics per source type, the check contracts of the three instances, the status progression and the governance document set, is invariant. The instantiation mechanism itself, a template repository with placeholders plus a setup guide or setup skill, is part of the template build.
+A project instantiates the template by setting a small number of parameters. These are the purpose, which names the overall topic in its first sentence, the controlled topic set (which becomes the MOC set), the active source types, the deliverable genre with its chapter register and style sheet, the working language of the content, the role that holds verification authority, and the mechanisms that fulfil the check contracts. Everything else, the layer model, the anchor mechanics per source type, the check contracts of the three instances, the status progression and the governance document set, is invariant. The instantiation mechanism is a template repository with placeholders plus the setup guide `SETUP.md`, which carries a prompt for the first agent session that fills them.
 
 ## 12. Lineage
 

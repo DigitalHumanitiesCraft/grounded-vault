@@ -17,6 +17,14 @@
       "sameAs": "https://github.com/chpollin"
     }
   ],
-  "license": "https://spdx.org/licenses/MIT",
-  "dateModified": "2026-07-23"
+  "programmingLanguage": "Python",
+  "keywords": [
+    "ai-agents",
+    "digital-humanities",
+    "knowledge-base",
+    "promptotyping",
+    "provenance"
+  ],
+  "license": "https://spdx.org/licenses/CC-BY-4.0",
+  "dateModified": "2026-08-09"
 }

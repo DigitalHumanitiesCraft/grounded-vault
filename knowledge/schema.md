@@ -18,7 +18,7 @@ related: [index, specification, operations, state]
 
 # Schema
 
-This document is the stable rulebook of the vault. It defines the layer model, the controlled vocabularies, the anchor mechanics per source type, the audit trail, and for every content document type the exact frontmatter and section skeleton. Every content file, whether produced by agent or human, derives from the rules set here. The procedures that produce and check these documents live in [[knowledge/operations]]; this document defines only what a well-formed artifact is.
+This document defines the rules of the vault. It sets out the layer model, the controlled vocabularies, the anchor mechanics per source type, the audit trail, and for every content document type the exact frontmatter and section skeleton. Every content file, whether produced by agent or human, derives from the rules set here. The procedures that produce and check these documents live in [[knowledge/operations]]; this document defines only what a well-formed artifact is.
 
 ## Layer model
 
@@ -34,7 +34,7 @@ Every Markdown representation and every distillate is also listed in an inventor
 
 The layers carry these definitions. A **source** is the original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it. A **Markdown representation** is the uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. A **distillate** is the set of single statements extracted from one source, each anchored to the passage of the representation it was taken from. A **claim** is an atomic assertion synthesized from the distillates of a topic and grounded in at least one distillate statement. A **chapter** is a deliverable text in which every load-bearing sentence carries a footnote to a claim and every own conclusion is marked as a posit.
 
-Two rules keep the chain honest. Anchors are minted only at the layer they belong to; a Markdown representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the deliverable binds to claims, claims bind to distillate statements, distillates bind to the blocks of the Markdown representation.
+Two rules constrain the chain. Anchors are minted only at the layer they belong to; a Markdown representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the deliverable binds to claims, claims bind to distillate statements, distillates bind to the blocks of the Markdown representation.
 
 ## Controlled vocabularies
 
@@ -42,7 +42,7 @@ Two rules keep the chain honest. Anchors are minted only at the layer they belon
 - `source-type`: `document` | `publication` | `data`
 - `channel`: `handover` | `collection` | `import` | `deep-research`
 - `status`: `grounded` | `validated` | `verified`, plus `contested` (claims only) and `superseded` (distillates only)
-- `topics`: values must each name an existing topic map; the set of `MOC-*.md` files in `30_claims/` is the controlled topic backbone
+- `topics`: values must each name an existing topic map; the set of `MOC-*.md` files in `30_claims/` is the controlled topic set
 
 ## Audit trail
 
@@ -72,13 +72,21 @@ metadata:
   confidential: false  # true keeps original and full text local
 ```
 
+## Source types
+
+The source type of a source follows from whether its content may be stored in the vault and from the anchor that storage decision permits.
+
+A **document** is a source whose full text may be stored in the vault. It is converted into a Markdown representation and anchored by block reference into that representation. A **publication** is a source that is only cited. What lies in the vault is the bibliographic record, and the anchor is the verbatim quotation together with the identifier. A **data** source is a file whose anchor is a deterministic computation over that file. An aggregate or a statistical finding exists at no single passage, so the computation takes the place of one.
+
+The criterion is storability, and the publication status of a source decides nothing by itself, so an open-access article that may be stored is treated as a `document`. Where a full text may be stored, `document` is preferred over `publication`, because its anchors resolve inside the vault.
+
 ## Document types
 
 Each type carries its frontmatter as a code block, followed by the section skeleton where one is fixed. Fields not marked optional are required. Wikilink values are quoted, block IDs unquoted, as Obsidian requires for YAML.
 
 ### 1. Markdown representation (source-type: document)
 
-The uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. Exactly one per source, living in `10_markdown/documents/`. A revised source enters as a new file with a date-suffixed slug; existing anchors keep resolving against the old file.
+The uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. Exactly one per source, stored in `10_markdown/documents/`. A revised source enters as a new file with a date-suffixed slug; existing anchors keep resolving against the old file.
 
 ```yaml
 ---
@@ -219,7 +227,7 @@ A conclusion without source support never becomes a claim; it enters the deliver
 
 ### 5. Topic map (MOC)
 
-One file per topic of the controlled backbone, named `MOC-<Topic>.md` in `30_claims/`. The set of these files is the topic vocabulary.
+One file per topic of the controlled topic set, named `MOC-<Topic>.md` in `30_claims/`. The set of these files is the topic vocabulary.
 
 ```yaml
 ---

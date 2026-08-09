@@ -20,3 +20,8 @@ being recorded, so that neither register knows it exists.
 | Broken fixture note | document | [[10_markdown/documents/note]] | [[20_distillates/documents/note]] | distilled |
 | Broken fixture readings | data | — | [[20_distillates/data/missing-script]] | distilled |
 | Broken fixture publication | publication | — | [[20_distillates/publications/no-quote-check]] | distilled |
+| Duplicate block fixture note | document | [[10_markdown/documents/duplicate-blocks]] | — | ingested |
+| Duplicate statement fixture | document | — | [[20_distillates/documents/duplicate-statements]] | distilled |
+| Placeholder fixture note | document | [[10_markdown/documents/placeholder-note]] | — | ingested |
+| Sideways anchor fixture | document | — | [[20_distillates/documents/sideways]] | distilled |
+| Dead frontmatter target fixture | document | — | [[20_distillates/documents/dead-representation]] | distilled |

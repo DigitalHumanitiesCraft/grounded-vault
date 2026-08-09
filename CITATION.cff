@@ -2,10 +2,17 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it using these metadata."
 type: software
 title: "Grounded Vault"
+abstract: "A provenance-complete knowledge base architecture and Promptotyping profile in which every substantive statement carries a machine-checkable anchor back to its source, for evidence-grounded knowledge work by humans and AI agents."
 authors:
   - family-names: Pollin
     given-names: Christopher
     affiliation: "Digital Humanities Craft OG"
     orcid: "https://orcid.org/0000-0002-4879-129X"
 repository-code: "https://github.com/DigitalHumanitiesCraft/grounded-vault"
-license: MIT
+keywords:
+  - ai-agents
+  - digital-humanities
+  - knowledge-base
+  - promptotyping
+  - provenance
+license: CC-BY-4.0

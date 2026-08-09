@@ -1,11 +1,12 @@
 """Deterministic validation of a Grounded Vault against its schema.
 
 Implements the validation contract from knowledge/operations.md: frontmatter
-conformance per document type, anchor resolution, statement IDs, quotation
-recording, computation declarations, MOC reachability, bidirectional contested
-links, chapter mirror and footnote keywords, status discipline, and the
-inventory obligation of representations and distillates. The rules themselves
-are defined in knowledge/schema.md; this script only enforces them.
+conformance per document type, anchor resolution, layer direction of anchors,
+uniqueness of block and statement IDs, statement IDs, quotation recording,
+computation declarations, MOC reachability, bidirectional contested links,
+chapter mirror and footnote keywords, status discipline, and the inventory
+obligation of representations and distillates. The rules themselves are defined
+in knowledge/schema.md; this script only enforces them.
 
 Warnings report that a check found nothing to check rather than passing
 silently. An instance declares the warnings it expects under `expected-warnings`
@@ -13,7 +14,9 @@ in the frontmatter of knowledge/specification.md; every other warning is marked
 unexpected, and a declaration that no longer fires is reported in turn.
 
 Usage:
-    python tools/validate.py <vault-root> [--run-computations]
+    python tools/validate.py <vault-root> [--no-computations]
+
+Data anchors are re-run and compared by default; --no-computations skips that.
 
 Exit code 0 when no errors were found; warnings alone do not fail the run.
 """
@@ -51,6 +54,18 @@ INVENTORY_REGISTERS = ("knowledge/state.md",)
 INVENTORIED_FOLDERS = ("10_markdown", "20_distillates")
 SPECIFICATION = "knowledge/specification.md"
 
+REPRESENTATION_LAYER = "10_markdown/"
+DISTILLATE_LAYER = "20_distillates/"
+CLAIM_LAYER = "30_claims/"
+FRONTMATTER_LINK_FIELDS = (
+    "grounding",
+    "claims",
+    "representation",
+    "superseded-by",
+    "contested-with",
+)
+PLACEHOLDER_SCAN_FILES = ("CLAUDE.md", "HOME.md")
+
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
 STATUS_VOCAB = {
@@ -87,6 +102,7 @@ BLOCK_ID = re.compile(r"\^([A-Za-z0-9-]+)\s*$")
 FOOTNOTE_DEF = re.compile(r"^\[\^([A-Za-z0-9]+)\]:\s*(.*)$")
 FOOTNOTE_REF = re.compile(r"\[\^([A-Za-z0-9]+)\]")
 COMPUTATION = re.compile(r"computation:\s*`([^`]+)`\s*(?:→|->)\s*`([^`]+)`")
+PLACEHOLDER = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
 
 
 @dataclass
@@ -95,7 +111,7 @@ class Doc:
     rel: str  # root-relative path without extension, forward slashes
     fm: dict
     body: str
-    blocks: set[str]
+    blocks: list[str]  # in document order, duplicates kept for the uniqueness check
 
 
 @dataclass
@@ -133,7 +149,7 @@ def _parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
         report.error("E-FRONTMATTER", rel, f"frontmatter is not valid YAML: {exc}")
         return None
     body = text[end + 4 :]
-    blocks = {m.group(1) for line in body.splitlines() if (m := BLOCK_ID.search(line))}
+    blocks = [m.group(1) for line in body.splitlines() if (m := BLOCK_ID.search(line))]
     return Doc(path=path, rel=rel, fm=fm, body=body, blocks=blocks)
 
 
@@ -234,6 +250,82 @@ def _resolve_anchor(
         report.error("E-ANCHOR", doc.rel, f"block ^{block} not found in {target}")
 
 
+def _check_layer(
+    target: str, expected: str, what: str, doc: Doc, report: Report
+) -> None:
+    """An anchor may only point one layer down, into the layer that grounds it."""
+    if target.startswith("00_sources/"):
+        return
+    if not target.startswith(expected):
+        report.error(
+            "E-LAYER",
+            doc.rel,
+            f"{what} must anchor in {expected}, but points to {target}",
+        )
+
+
+def _frontmatter_links(doc: Doc) -> list[tuple[str, str, str | None]]:
+    """Link targets of the frontmatter fields that name other documents."""
+    found: list[tuple[str, str, str | None]] = []
+    for name in FRONTMATTER_LINK_FIELDS:
+        raw = doc.fm.get(name)
+        if not raw:
+            continue
+        values = raw if isinstance(raw, list) else [raw]
+        for value in values:
+            found += [(name, t, b) for t, b in _link_targets(str(value))]
+    return found
+
+
+def _check_frontmatter_links(
+    doc: Doc, docs: dict[str, Doc], root: Path, report: Report
+) -> None:
+    for name, target, block in _frontmatter_links(doc):
+        _resolve_anchor(target, block, docs, root, doc, report)
+        if name == "representation":
+            _check_layer(target, REPRESENTATION_LAYER, "representation", doc, report)
+
+
+def _check_duplicate_ids(doc: Doc, report: Report) -> None:
+    doctype = doc.fm.get("type")
+    if doctype == "representation":
+        ids, label = doc.blocks, "block ID"
+    elif doctype == "distillate":
+        ids = [
+            m.group(1)
+            for line, _ in _statement_lines(doc.body)
+            if (m := BLOCK_ID.search(line))
+        ]
+        label = "statement ID"
+    else:
+        return
+    for dup in sorted({i for i in ids if ids.count(i) > 1}):
+        report.error("E-DUPLICATE", doc.rel, f"duplicate {label}: ^{dup}")
+
+
+def _check_placeholders(root: Path, report: Report) -> None:
+    """Template tokens that survived instantiation, in content and in the layers around it."""
+    paths = [
+        p for folder in CONTENT_FOLDERS for p in sorted((root / folder).rglob("*.md"))
+    ]
+    paths += sorted((root / "knowledge").glob("*.md"))
+    paths += [root / name for name in PLACEHOLDER_SCAN_FILES]
+    for path in paths:
+        if not path.is_file():
+            continue
+        seen: set[str] = set()
+        for m in PLACEHOLDER.finditer(path.read_text(encoding="utf-8")):
+            name = m.group(1)
+            if name in seen:
+                continue
+            seen.add(name)
+            report.warn(
+                "W-PLACEHOLDER",
+                path.relative_to(root).as_posix(),
+                f"unfilled template placeholder: {{{{{name}}}}}",
+            )
+
+
 def _statement_lines(body: str) -> list[tuple[str, list[str]]]:
     """Top-level bullets of the Core statements section, each with its indented follow-up lines."""
     lines = body.splitlines()
@@ -277,9 +369,13 @@ def _check_distillate(
                 doc.rel,
                 f"core statement without statement ID: {line.strip()[:60]}",
             )
+        anchored = [t for t, block in _link_targets(line) if block is not None]
+        for target in anchored:
+            if source_type == "document" or target.startswith(DISTILLATE_LAYER):
+                _check_layer(
+                    target, REPRESENTATION_LAYER, "distillate statement", doc, report
+                )
         if source_type == "document":
-            links = _link_targets(line)
-            anchored = [t for t in links if t[1] is not None]
             if not anchored:
                 report.error(
                     "E-STATEMENT",
@@ -349,17 +445,25 @@ def _check_topics(doc: Doc, topic_names: set[str], report: Report) -> None:
     for raw in doc.fm.get("topics") or []:
         topic = str(raw).strip("[] ")
         if topic not in topic_names:
-            report.error("E-TOPIC", doc.rel, f"topic outside the backbone: {topic}")
+            report.error(
+                "E-TOPIC", doc.rel, f"topic outside the controlled topic set: {topic}"
+            )
 
 
-def _check_claim(doc: Doc, docs: dict[str, Doc], root: Path, report: Report) -> None:
-    for raw in doc.fm.get("grounding") or []:
-        for target, block in _link_targets(str(raw)):
-            if block is None:
-                report.error(
-                    "E-ANCHOR", doc.rel, f"grounding without statement anchor: {target}"
-                )
-            _resolve_anchor(target, block, docs, root, doc, report)
+def _check_claim(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
+    grounding = [
+        (target, block)
+        for raw in doc.fm.get("grounding") or []
+        for target, block in _link_targets(str(raw))
+    ]
+    if not grounding:
+        report.error("E-GROUNDING", doc.rel, "claim without a single grounding anchor")
+    for target, block in grounding:
+        if block is None:
+            report.error(
+                "E-ANCHOR", doc.rel, f"grounding without statement anchor: {target}"
+            )
+        _check_layer(target, DISTILLATE_LAYER, "grounding", doc, report)
     contested = [
         t
         for raw in doc.fm.get("contested-with") or []
@@ -389,7 +493,7 @@ def _check_claim(doc: Doc, docs: dict[str, Doc], root: Path, report: Report) -> 
             )
 
 
-def _check_chapter(doc: Doc, docs: dict[str, Doc], root: Path, report: Report) -> None:
+def _check_chapter(doc: Doc, report: Report) -> None:
     defs: dict[str, str] = {}
     body_lines = []
     for line in doc.body.splitlines():
@@ -416,7 +520,7 @@ def _check_chapter(doc: Doc, docs: dict[str, Doc], root: Path, report: Report) -
                 )
             for target in targets:
                 grounded_claims.add(target)
-                _resolve_anchor(target, None, docs, root, doc, report)
+                _check_layer(target, CLAIM_LAYER, "chapter footnote", doc, report)
         elif text.startswith("Posit:"):
             posit_count += 1
         else:
@@ -535,7 +639,7 @@ def _check_expectations(report: Report) -> None:
         )
 
 
-def validate(root: Path, run_computations: bool = False) -> Report:
+def validate(root: Path, run_computations: bool = True) -> Report:
     global _RUN_COMPUTATIONS
     _RUN_COMPUTATIONS = run_computations
     report = Report(expected_warnings=_read_expected_warnings(root))
@@ -551,6 +655,8 @@ def validate(root: Path, run_computations: bool = False) -> Report:
 
     for doc in docs.values():
         _check_frontmatter(doc, report)
+        _check_frontmatter_links(doc, docs, root, report)
+        _check_duplicate_ids(doc, report)
         doctype = doc.fm.get("type")
         if doctype in ("distillate", "claim", "chapter"):
             _check_status_discipline(doc, report)
@@ -559,14 +665,15 @@ def validate(root: Path, run_computations: bool = False) -> Report:
         if doctype == "distillate":
             _check_distillate(doc, docs, reference_ids, root, report)
         elif doctype == "claim":
-            _check_claim(doc, docs, root, report)
+            _check_claim(doc, docs, report)
         elif doctype == "chapter":
-            _check_chapter(doc, docs, root, report)
+            _check_chapter(doc, report)
         for target, block in _link_targets(doc.body):
             if block is not None or any(target.startswith(f) for f in CONTENT_FOLDERS):
                 _resolve_anchor(target, block, docs, root, doc, report)
     _check_moc_reachability(docs, report)
     _check_inventory(root, docs, report)
+    _check_placeholders(root, report)
     _check_deliverable_present(docs, report)
     _check_expectations(report)
     return report
@@ -579,13 +686,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("root", type=Path, help="vault root directory")
     parser.add_argument(
+        "--no-computations",
+        action="store_true",
+        help="skip re-running data anchors",
+    )
+    parser.add_argument(
         "--run-computations",
         action="store_true",
-        help="re-run data anchors and compare results",
+        help="no-op, kept for documented invocations; computations run by default",
     )
     args = parser.parse_args()
 
-    report = validate(args.root.resolve(), run_computations=args.run_computations)
+    report = validate(args.root.resolve(), run_computations=not args.no_computations)
     for code, rel, message in report.errors:
         print(f"ERROR {code} {rel}: {message}", file=sys.stderr)
     for code, rel, message in report.warnings:

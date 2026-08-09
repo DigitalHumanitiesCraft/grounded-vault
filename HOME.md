@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}}
 
-Human entry point of this vault. The vault produces {{GENRE}} on {{TOPIC}}; every load-bearing statement is anchored to its source material, and the checking state of every statement is readable at the statement itself.
+Human entry point of this vault. What this vault produces and on what topic is stated in the purpose section of [[knowledge/specification]]. Every load-bearing statement here is anchored to its source material, and the checking state of every statement is readable at the statement itself.
 
 ## The chain
 
@@ -16,7 +16,10 @@ Human entry point of this vault. The vault produces {{GENRE}} on {{TOPIC}}; ever
 
 ## Explore the knowledge
 
-- Topic maps: {{MOC_LINKS}}
+<!-- Instantiation: replace the line below with one wikilink per topic of the controlled
+     topic set, in the same order as the MOC files created in 30_claims/. -->
+
+- Topic maps: one per topic of the controlled topic set, in `30_claims/`.
 - [[glossary/]] — the project's terms.
 
 ## Understand the machine room
