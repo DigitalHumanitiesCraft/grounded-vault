@@ -35,7 +35,7 @@ Three things are written rather than substituted. One `MOC-<Topic>.md` per topic
 ## Fill-in order
 
 1. Replace the class B markers in `knowledge/specification.md`; this is the single place the decisions live.
-2. Replace the class A markers in `knowledge/index.md`, `schema.md`, `operations.md`, `state.md`, `journal.md`, `specification.md`, `CLAUDE.md` and `HOME.md`, plus `{{LANGUAGE}}` and `{{HARNESS_RULES}}` in `CLAUDE.md`.
+2. Replace the class A markers in `knowledge/index.md`, `schema.md`, `operations.md`, `state.md`, `journal.md`, `specification.md`, `CLAUDE.md` and `HOME.md`. The markers `{{LANGUAGE}}` and `{{HARNESS_RULES}}` in `CLAUDE.md` take the class B decisions from step 1. Remove the template note comment at the top of `CLAUDE.md`.
 3. Create one `MOC-<Topic>.md` per topic in `30_assertions/` and write the matching link list into `HOME.md`.
 4. Write the chapter register into `knowledge/state.md`.
 5. Leave `tests/fixtures/` in place; it is test accessory the validator's own suite runs against, and it stays in an instance. Delete `docs/` if unwanted.
@@ -66,8 +66,9 @@ this order and stop for me where the instructions say so.
    where my answer allows one, and do not invent a decision I have not given.
 2. Read the class A values off the repository and the current date, and confirm
    them with me in one step.
-3. Replace every {{...}} placeholder in the repository with the agreed values.
-   Do not touch tests/ or tools/.
+3. Replace every {{...}} placeholder in the repository with the agreed values
+   and remove the TEMPLATE NOTE comment at the top of CLAUDE.md. Do not touch
+   tests/ or tools/.
 4. Create one MOC-<Topic>.md file in 30_assertions/ per topic of the controlled
    topic set, following the topic map schema, and replace the topic map line in
    HOME.md with one wikilink per MOC file.
@@ -91,7 +92,7 @@ The validator needs PyYAML, the test suite additionally pytest. With uv, `uv syn
 
 The smallest full pass carries one source from the ground to a written paragraph and exercises every layer and every rule before scale does. The document skeletons belong to `knowledge/schema.md`, the procedures to `knowledge/operations.md`; the sequence is this.
 
-1. **Acquire.** Place the original in `00_sources/`, or, for a citable-only source, export its CSL JSON record into `references/`. Add the row to the source inventory in `knowledge/state.md` at status `new`, with the acquisition channel.
+1. **Acquire.** Place the original in `00_sources/`, or, for a citable-only source, export its CSL JSON record into `references/`. Add the row to the source inventory in `knowledge/state.md` at status `new`, with the acquisition channel. The `.gitignore` keeps `00_sources/` uncommitted by default because third-party rights usually forbid redistribution, and an original whose rights the project holds is committed by force-adding it.
 2. **Ingest.** Convert the original into its Markdown representation in `10_markdown/documents/` (or place the data file in `10_markdown/data/` with its schema description of the same slug), fill the metadata block, and stamp a block ID onto every anchor-relevant paragraph. A publication has no representation, because its record in `references/` is the root of that source type. Set the inventory row to `ingested`. From here on the representation is never edited; a revised source enters as a new file with a date-suffixed slug.
 3. **Distill.** Write one distillate of the same slug in `20_distillates/<source-type>s/`, one core statement per anchor, each ending in a statement ID. The anchor is a block reference for a document, a verbatim quotation for a publication, a declared computation for data. Record the quotation check as `checked.quote` now, while the full text is at hand. The distillate enters at `status: grounded`; set the inventory row to `distilled`.
 4. **Build one assertion.** Synthesize one atomic statement in `30_assertions/`, grounded in at least one distillate statement, filed under a topic of the controlled topic set, and list it in that topic's `MOC-<Topic>.md`.

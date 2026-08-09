@@ -28,7 +28,7 @@ Which of the three source types a source belongs to follows from whether its con
 
 The five numbered folders form the production chain, each one holding the layer that the folder name announces.
 
-- `00_sources/` holds the originals exactly as they arrived, kept untouched so that every later form of their content can be checked against them, local only where confidentiality requires it.
+- `00_sources/` holds the originals exactly as they arrived, kept untouched so that every later form of their content can be checked against them. By default the originals stay local and uncommitted, because third-party rights usually forbid redistribution, and an instance commits exactly those originals whose rights it holds.
 - `10_markdown/` holds the uniform Markdown form of each source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards, with the full texts in `documents/` and the datasets plus their schema description in `data/`.
 - `20_distillates/` holds one distillate per source, meaning the set of single statements extracted from that source, each anchored to the passage of the Markdown representation it was taken from and carrying its own statement ID.
 - `30_assertions/` holds the atomic cross-source statements, each synthesized from the distillates of a topic and grounded in at least one distillate statement, together with one topic map (`MOC-*.md`) per topic of the controlled topic set.
