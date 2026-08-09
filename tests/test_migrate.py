@@ -116,6 +116,24 @@ updated: 2026-01-01
 See [[20_wissen/aussage-one]].
 """
 
+EXTERNAL_DISTILLATE = """---
+type: distillat
+herkunft: extern
+themen: ["[[Governance]]"]
+status: verifiziert
+created: 2026-01-01
+updated: 2026-01-01
+---
+
+# Externes Distillat
+
+## Kernaussagen
+
+- The publication says something. ^s1
+
+> "a quotation instead of an anchor" (p. 1)
+"""
+
 GITIGNORE = "_sources/*\n!_sources/README.md\n"
 
 FILES = {
@@ -123,6 +141,7 @@ FILES = {
     "_sources/inventar.json": '{"paper": "_sources/paper.docx"}\n',
     "00_volltext/paper.md": REPRESENTATION,
     "10_distillate/intern/paper.md": DISTILLATE,
+    "10_distillate/extern/other.md": EXTERNAL_DISTILLATE,
     "20_wissen/aussage-one.md": ASSERTION,
     "20_wissen/MOC-governance.md": MOC,
     "30_strategie/kapitel-1.md": CHAPTER,
@@ -187,6 +206,16 @@ def test_types_keys_and_status_are_mapped(tmp_path):
         "Governance"
     )
     assert frontmatter(root / "glossary" / "llm.md")["type"] == "glossary"
+
+
+def test_external_distillates_reenter_at_grounded(tmp_path):
+    # Their old `verifiziert` claims a quote check that never ran; only the
+    # live quote review may lift them again.
+    root = run(tmp_path)
+    external = frontmatter(root / "20_distillates" / "extern" / "other.md")
+    assert external["status"] == "grounded"
+    internal = frontmatter(root / "20_distillates" / "intern" / "paper.md")
+    assert internal["status"] == "validated"
 
 
 def test_grounding_records_become_anchored_links(tmp_path):
