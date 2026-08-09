@@ -12,19 +12,23 @@ Grounded Vault ist eine Repository-Architektur aus portablen Markdown-Dateien, i
 
 ## Aufbau
 
+Die nummerierte Kette lautet `00_sources → 10_markdown → 20_distillates → 30_claims → 40_deliverable`.
+
 ```
-30_deliverable/      Fließtext; jeder tragende Satz per Fußnote an Claims gebunden,
-                     eigene Schlussfolgerungen sichtbar als Setzung markiert
-20_claims/           atomare, quellenübergreifende Aussagen; Themen-Landkarten
-                     (MOCs) als Einstieg je Thema
-10_distillates/      ein Distillat je Quelle, Kernaussagen mit Anker in die Quelle
-00_representation/   stabile Quellrepräsentationen: Volltexte mit Block-Ankern,
-                     Datendateien mit Schema
-_sources/ +          Originale (lokal, wo Vertraulichkeit es verlangt) und
-references/          bibliografische Wurzeln (CSL-JSON)
+40_deliverable/   Fließtext; jeder tragende Satz per Fußnote an Claims gebunden,
+                  eigene Schlussfolgerungen sichtbar als Setzung markiert
+30_claims/        atomare, quellenübergreifende Aussagen; Themen-Landkarten
+                  (MOCs) als Einstieg je Thema
+20_distillates/   ein Distillat je Quelle, Kernaussagen mit Anker in die Quelle
+10_markdown/      Markdown Representations: Volltexte mit Block-Ankern,
+                  Datendateien mit Schema
+00_sources/       die Originale, wie sie eingegangen sind, lokal, wo
+                  Vertraulichkeit es verlangt; ungeprüft, weil diese Schicht
+                  das Material hält, gegen das alles darüber geprüft wird
+references/       bibliografische Wurzeln (CSL-JSON)
 ```
 
-Jede Schicht ist für sich prüfbar und lieferfähig. Quellen gehören zu Source Types, je definiert durch Repräsentation, Distillationsoperation und Ankertyp. Jede Quellrepräsentation trägt einen kompakten, Dublin-Core-kompatiblen Metadatenblock samt Lizenzfeld; Vertraulichkeit und Lizenz sind Metadaten der einzelnen Quelle, keine Architekturentscheidung. Archivierbare Dokumente ankern per Block-Referenz auf den Volltext, nur zitierbare Publikationen per buchstabengetreuem Zitat samt DOI, strukturierte Daten per reproduzierbarer Berechnung. Beschaffungskanäle sind dazu orthogonal; der ausgearbeitete Referenzkanal ist Deep Research mit Spiegelung über Zotero, wobei der Research-Report selbst nie Quelle wird und alle Anker an die aufgefundenen Publikationen binden. Widersprüche zwischen Quellen bleiben als `contested` sichtbar und sind für das Deliverable selbst Information.
+Jede Schicht ist für sich prüfbar und lieferfähig. Quellen gehören zu Source Types, je definiert durch Repräsentation, Distillationsoperation und Ankertyp. Jede Markdown Representation trägt einen kompakten, Dublin-Core-kompatiblen Metadatenblock samt Lizenzfeld; Vertraulichkeit und Lizenz sind Metadaten der einzelnen Quelle, keine Architekturentscheidung. Archivierbare Dokumente ankern per Block-Referenz auf den Volltext, nur zitierbare Publikationen per buchstabengetreuem Zitat samt DOI, strukturierte Daten per reproduzierbarer Berechnung. Beschaffungskanäle sind dazu orthogonal; der ausgearbeitete Referenzkanal ist Deep Research mit Spiegelung über Zotero, wobei der Research-Report selbst nie Quelle wird und alle Anker an die aufgefundenen Publikationen binden. Widersprüche zwischen Quellen bleiben als `contested` sichtbar und sind für das Deliverable selbst Information.
 
 ## Prüfung
 

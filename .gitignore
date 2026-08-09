@@ -1,6 +1,6 @@
 # Originals may be confidential; they never enter version control.
-_sources/*
-!_sources/README.md
+00_sources/*
+!00_sources/README.md
 
 # Local credentials (reviewer APIs, reference manager)
 .env

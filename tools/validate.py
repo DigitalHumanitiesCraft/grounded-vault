@@ -31,24 +31,24 @@ from pathlib import Path
 import yaml
 
 CONTENT_FOLDERS = (
-    "00_representation",
-    "10_distillates",
-    "20_claims",
-    "30_deliverable",
+    "10_markdown",
+    "20_distillates",
+    "30_claims",
+    "40_deliverable",
     "glossary",
 )
 
 TYPE_FOLDER = {
-    "representation": "00_representation",
-    "distillate": "10_distillates",
-    "claim": "20_claims",
-    "moc": "20_claims",
-    "chapter": "30_deliverable",
+    "representation": "10_markdown",
+    "distillate": "20_distillates",
+    "claim": "30_claims",
+    "moc": "30_claims",
+    "chapter": "40_deliverable",
     "glossary": "glossary",
 }
 
 INVENTORY_REGISTERS = ("knowledge/state.md",)
-INVENTORIED_FOLDERS = ("00_representation", "10_distillates")
+INVENTORIED_FOLDERS = ("10_markdown", "20_distillates")
 SPECIFICATION = "knowledge/specification.md"
 
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
@@ -224,7 +224,7 @@ def _resolve_anchor(
     doc: Doc,
     report: Report,
 ) -> None:
-    if target.startswith("_sources/"):
+    if target.startswith("00_sources/"):
         return  # originals are local-only and not resolvable on every clone
     if target not in docs:
         if not (root / f"{target}.md").exists() and not (root / target).exists():
@@ -519,7 +519,7 @@ def _check_deliverable_present(docs: dict[str, Doc], report: Report) -> None:
     if not any(doc.fm.get("type") == "chapter" for doc in docs.values()):
         report.warn(
             "W-NO-DELIVERABLE",
-            "30_deliverable/",
+            "40_deliverable/",
             "no chapter document; the footnote contract does not take effect in this instance",
         )
 

@@ -24,23 +24,25 @@ This document is the stable rulebook of the vault. It defines the layer model, t
 
 | Layer | Folder | Content | Anchor it carries |
 |---|---|---|---|
-| Sources | `_sources/` | originals, local only | none; this is the ground |
-| Representation | `00_representation/` | archived full texts, datasets with schema | block IDs, file plus schema |
-| Distillates | `10_distillates/` | one distillate per source | grounding anchors into its source, statement IDs |
-| Claims | `20_claims/` | atomic cross-source statements, topic maps | grounding anchors into distillate statements |
-| Deliverable | `30_deliverable/` | one file per chapter | footnote anchors into claims, posits marked |
+| Sources | `00_sources/` | originals, local only | none; this is the ground |
+| Markdown representation | `10_markdown/` | archived full texts, datasets with schema | block IDs, file plus schema |
+| Distillates | `20_distillates/` | one distillate per source | grounding anchors into its source, statement IDs |
+| Claims | `30_claims/` | atomic cross-source statements, topic maps | grounding anchors into distillate statements |
+| Deliverable | `40_deliverable/` | one file per chapter | footnote anchors into claims, posits marked |
 
-Every representation and every distillate is also listed in an inventory register, `knowledge/state.md` by default, and the validator raises `E-INVENTORY` on one that is not. Without the register row a document is invisible to every check and every overview that reads a register, so it can be complete and conformant and still be missed. An instance that keeps more than one register declares them in `INVENTORY_REGISTERS` in `tools/validate.py`.
+Every Markdown representation and every distillate is also listed in an inventory register, `knowledge/state.md` by default, and the validator raises `E-INVENTORY` on one that is not. Without the register row a document is invisible to every check and every overview that reads a register, so it can be complete and conformant and still be missed. An instance that keeps more than one register declares them in `INVENTORY_REGISTERS` in `tools/validate.py`.
 
-Two rules keep the chain honest. Anchors are minted only at the layer they belong to; a representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the deliverable binds to claims, claims bind to distillate statements, distillates bind to representation blocks.
+The layers carry these definitions. A **source** is the original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it. A **Markdown representation** is the uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. A **distillate** is the set of single statements extracted from one source, each anchored to the passage of the representation it was taken from. A **claim** is an atomic assertion synthesized from the distillates of a topic and grounded in at least one distillate statement. A **chapter** is a deliverable text in which every load-bearing sentence carries a footnote to a claim and every own conclusion is marked as a posit.
+
+Two rules keep the chain honest. Anchors are minted only at the layer they belong to; a Markdown representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the deliverable binds to claims, claims bind to distillate statements, distillates bind to the blocks of the Markdown representation.
 
 ## Controlled vocabularies
 
-- `type`: `representation` | `distillate` | `claim` | `moc` | `glossary` | `chapter`
+- `type`: `representation` | `distillate` | `claim` | `moc` | `glossary` | `chapter`. The value `representation` is the machine-side short form for Markdown representation; the prose of this vault uses the full term.
 - `source-type`: `document` | `publication` | `data`
 - `channel`: `handover` | `collection` | `import` | `deep-research`
 - `status`: `grounded` | `validated` | `verified`, plus `contested` (claims only) and `superseded` (distillates only)
-- `topics`: values must each name an existing topic map; the set of `MOC-*.md` files in `20_claims/` is the controlled topic backbone
+- `topics`: values must each name an existing topic map; the set of `MOC-*.md` files in `30_claims/` is the controlled topic backbone
 
 ## Audit trail
 
@@ -57,7 +59,7 @@ The discipline is machine-enforced: `validated` requires `checked.validation` an
 
 ## Source metadata
 
-Every representation carries a compact, Dublin-Core-compatible metadata block. Licensing and confidentiality are metadata of the individual source; nothing else in the architecture depends on them.
+Every Markdown representation carries a compact, Dublin-Core-compatible metadata block. Licensing and confidentiality are metadata of the individual source; nothing else in the architecture depends on them.
 
 ```yaml
 metadata:
@@ -74,15 +76,15 @@ metadata:
 
 Each type carries its frontmatter as a code block, followed by the section skeleton where one is fixed. Fields not marked optional are required. Wikilink values are quoted, block IDs unquoted, as Obsidian requires for YAML.
 
-### 1. Representation (source-type: document)
+### 1. Markdown representation (source-type: document)
 
-Exactly one archived full text per source, converted once and never edited afterwards, so that its anchors stay stable. Lives in `00_representation/documents/`. A revised source enters as a new file with a date-suffixed slug; existing anchors keep resolving against the old file.
+The uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. Exactly one per source, living in `10_markdown/documents/`. A revised source enters as a new file with a date-suffixed slug; existing anchors keep resolving against the old file.
 
 ```yaml
 ---
 type: representation
 source-type: document
-source: "[[_sources/<filename>]]"
+source: "[[00_sources/<filename>]]"
 converter: ""            # e.g. Docling, MarkItDown
 channel: handover        # handover | collection | import | deep-research
 metadata: { … }          # see Source metadata
@@ -99,16 +101,16 @@ The board approves centrally operated services. ^a1b2
 
 Block IDs are short, stable, unique per file, and minted only here.
 
-### 2. Representation (source-type: data)
+### 2. Markdown representation (source-type: data)
 
-A dataset plus its schema description. The data file (CSV, XML, …) lives in `00_representation/data/` next to a Markdown file of the same slug that carries the frontmatter and describes the schema.
+A dataset plus its schema description. The data file (CSV, XML, …) lives in `10_markdown/data/` next to a Markdown file of the same slug that carries the frontmatter and describes the schema.
 
 ```yaml
 ---
 type: representation
 source-type: data
-source: "[[_sources/<filename>]]"    # omit when the data file is the original
-data: "[[00_representation/data/<file.csv>]]"
+source: "[[00_sources/<filename>]]"    # omit when the data file is the original
+data: "[[10_markdown/data/<file.csv>]]"
 channel: handover
 metadata: { … }
 created: 2026-01-01
@@ -120,13 +122,13 @@ The body describes columns, units, encodings and known limitations. The anchor o
 
 ### 3. Distillate
 
-The condensation of exactly one source into its core statements. One file per source in `10_distillates/<source-type>s/`, same slug as its representation. A distillate reproduces its source without evaluating it and without merging it with other sources; synthesis belongs to claims.
+The set of single statements extracted from one source, each anchored to the passage of the representation it was taken from. One file per source in `20_distillates/<source-type>s/`, same slug as its Markdown representation. A distillate reproduces its source without evaluating it and without merging it with other sources; synthesis belongs to claims.
 
 ```yaml
 ---
 type: distillate
 source-type: document        # document | publication | data
-representation: "[[00_representation/documents/<slug>]]"   # document and data types
+representation: "[[10_markdown/documents/<slug>]]"   # document and data types
 reference: ""                # publication type: CSL JSON id from references/
 topics: ["[[<Topic>]]"]
 status: grounded             # grounded | validated | verified | superseded
@@ -144,12 +146,12 @@ updated: 2026-01-01
 
 ## Core statements
 
-- <statement> [[00_representation/documents/<slug>#^a1b2]] ^s1
-- <statement> [[00_representation/documents/<slug>#^c3d4]] ^s2
+- <statement> [[10_markdown/documents/<slug>#^a1b2]] ^s1
+- <statement> [[10_markdown/documents/<slug>#^c3d4]] ^s2
 
 ## Terms
 
-- **<term>**: <meaning as set by the source> [[00_representation/documents/<slug>#^e5f6]]
+- **<term>**: <meaning as set by the source> [[10_markdown/documents/<slug>#^e5f6]]
 
 ## Open questions
 
@@ -157,12 +159,12 @@ updated: 2026-01-01
 
 ## Related
 
-- [[10_distillates/…]] / [[20_claims/…]]
+- [[20_distillates/…]] / [[30_claims/…]]
 ```
 
 Every core statement carries exactly one grounding anchor into its source and ends with a statement ID (`^s1`, `^s2`, …), the anchor claims bind to. The anchor form varies by source type:
 
-- **document**: a block reference into the representation, as above.
+- **document**: a block reference into the Markdown representation, as above.
 - **publication**: a verbatim quotation with citation instead of a block reference. The quotation must appear character for character in the source; the intake-time check is recorded as `checked.quote`.
 
   ```markdown
@@ -179,7 +181,7 @@ Every core statement carries exactly one grounding anchor into its source and en
 
 ### 4. Claim
 
-An atomic, source-independent statement relevant to the deliverable, one file in `20_claims/`, synthesized from the distillates of one or more sources. This is the layer where source types converge.
+An atomic assertion synthesized from the distillates of a topic and grounded in at least one distillate statement. One file per claim in `30_claims/`. This is the layer where source types converge.
 
 ```yaml
 ---
@@ -188,8 +190,8 @@ topics: ["[[<Topic>]]"]
 status: grounded             # grounded | validated | verified | contested
 checked: {}
 grounding:
-  - "[[10_distillates/documents/<slug>#^s1]]"
-  - "[[10_distillates/publications/<slug>#^s2]]"
+  - "[[20_distillates/documents/<slug>#^s1]]"
+  - "[[20_distillates/publications/<slug>#^s2]]"
 contested-with: []           # wikilinks; required on both sides when status is contested
 created: 2026-01-01
 updated: 2026-01-01
@@ -205,19 +207,19 @@ updated: 2026-01-01
 
 ## Support
 
-- [[10_distillates/documents/<slug>#^s1]] — <what this anchor contributes>
-- [[10_distillates/publications/<slug>#^s2]] — <what this anchor contributes>
+- [[20_distillates/documents/<slug>#^s1]] — <what this anchor contributes>
+- [[20_distillates/publications/<slug>#^s2]] — <what this anchor contributes>
 
 ## Related
 
-- [[20_claims/…]]
+- [[30_claims/…]]
 ```
 
 A conclusion without source support never becomes a claim; it enters the deliverable as a posit. Claims that cannot be reconciled are both set to `contested` and linked to each other in `contested-with`.
 
 ### 5. Topic map (MOC)
 
-One file per topic of the controlled backbone, named `MOC-<Topic>.md` in `20_claims/`. The set of these files is the topic vocabulary.
+One file per topic of the controlled backbone, named `MOC-<Topic>.md` in `30_claims/`. The set of these files is the topic vocabulary.
 
 ```yaml
 ---
@@ -247,14 +249,14 @@ The body gives the definition in one or two sentences with a grounding anchor wh
 
 ### 7. Chapter
 
-One file per chapter of the deliverable in `30_deliverable/`, continuous prose in the project's working language and style sheet.
+A deliverable text in which every load-bearing sentence carries a footnote to a claim and every own conclusion is marked as a posit. One file per chapter in `40_deliverable/`, continuous prose in the project's working language and style sheet.
 
 ```yaml
 ---
 type: chapter
 status: grounded             # grounded | validated | verified
 checked: {}
-claims: ["[[20_claims/<slug>]]"]   # structured mirror of all referenced claims
+claims: ["[[30_claims/<slug>]]"]   # structured mirror of all referenced claims
 posits: 0                          # count of posit footnotes
 created: 2026-01-01
 updated: 2026-01-01
@@ -267,7 +269,7 @@ The anchor contract of the deliverable: every load-bearing sentence carries a fo
 Water use fell by a third after metering was introduced.[^1] The board should
 therefore extend metering to all sites.[^2]
 
-[^1]: Grounded in [[20_claims/metering-reduces-use]].
+[^1]: Grounded in [[30_claims/metering-reduces-use]].
 [^2]: Posit: follows from [^1] only if consumption patterns are comparable
       across sites. Open evidence question: site-level baseline data.
 ```
@@ -280,4 +282,4 @@ The six documents in `knowledge/` carry the Promptotyping header (as at the top 
 
 ## Naming
 
-File names are speaking slugs, ASCII-lowercase with hyphens, derived from genre and subject (`report-water-metering-2026-03`). Representation and distillate of the same source share the same slug. Date suffixes distinguish version rows.
+File names are speaking slugs, ASCII-lowercase with hyphens, derived from genre and subject (`report-water-metering-2026-03`). Markdown representation and distillate of the same source share the same slug. Date suffixes distinguish version rows.

@@ -21,7 +21,7 @@ Everything volatile in one place, so the rule documents stay stable. Update rows
 
 One row per source. Processing status: `new` → `ingested` → `distilled`.
 
-| Source | Type | Channel | Representation | Distillate | Status |
+| Source | Type | Channel | Markdown representation | Distillate | Status |
 |---|---|---|---|---|---|
 | | | | | | |
 

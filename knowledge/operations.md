@@ -19,9 +19,9 @@ This document is the procedural playbook of the vault, one section per chain. Ev
 
 ## Acquire
 
-How a source enters the vault is orthogonal to its type; the channel is recorded in the representation's `channel` field and changes nothing about checking.
+How a source enters the vault is orthogonal to its type; the channel is recorded in the `channel` field of the Markdown representation and changes nothing about checking.
 
-- **handover** and **collection**: place the original in `_sources/`, record it in the source inventory in [[knowledge/state]] with status `new`.
+- **handover** and **collection**: place the original in `00_sources/`, record it in the source inventory in [[knowledge/state]] with status `new`.
 - **import**: export records from the reference library as CSL JSON into `references/`, one inventory row per record.
 - **deep-research**: run the research prompt below. Capture every located publication in the reference manager and export it as CSL JSON into `references/`. The research report itself never becomes a source; all anchors bind to the located publications.
 
@@ -37,11 +37,11 @@ How a source enters the vault is orthogonal to its type; the channel is recorded
 
 ## Ingest
 
-Per source, produce the representation.
+Per source, produce the Markdown representation. The operation is the **Markdown conversion**, and it runs in two steps. The first step converts the original into structure-preserving Markdown, so that headings, lists, tables and paragraph boundaries survive as the original had them. The second step stamps a block ID onto every anchor-relevant paragraph. After the second step the file is never edited again, because every later layer anchors into these blocks and an edit would move them.
 
-1. **document**: convert the original once (converter noted in frontmatter), set the H1, append a block ID to every anchor-relevant paragraph, fill the metadata block. Never edit the file after IDs exist.
-2. **data**: place the data file in `00_representation/data/`, write the schema description of the same slug, fill the metadata block.
-3. **publication**: no representation; the CSL JSON record in `references/` is the root.
+1. **document**: run the Markdown conversion into `10_markdown/documents/`, note the converter in the frontmatter, set the H1 from the original, fill the metadata block.
+2. **data**: place the data file in `10_markdown/data/`, write the schema description of the same slug, fill the metadata block.
+3. **publication**: no Markdown representation, because the CSL JSON record in `references/` is the root of this source type.
 
 Update the inventory row to `ingested`.
 

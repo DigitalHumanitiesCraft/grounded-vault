@@ -29,7 +29,7 @@ Purpose, parameters and settled decisions of this vault instance. The invariant 
 | Parameter | Value |
 |---|---|
 | Topic | {{TOPIC}} |
-| Topic backbone | {{TOPICS}} <!-- becomes the MOC set in 20_claims/ --> |
+| Topic backbone | {{TOPICS}} <!-- becomes the MOC set in 30_claims/ --> |
 | Active source types | {{SOURCE_TYPES}} <!-- document, publication, data --> |
 | Deliverable genre | {{GENRE}} <!-- strategy, proposal, report, scholarly synthesis --> |
 | Chapter register | see [[knowledge/state]] |

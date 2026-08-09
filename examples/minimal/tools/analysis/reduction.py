@@ -3,9 +3,7 @@
 import csv
 from pathlib import Path
 
-DATA = (
-    Path(__file__).parents[2] / "00_representation" / "data" / "water-readings-2025.csv"
-)
+DATA = Path(__file__).parents[2] / "10_markdown" / "data" / "water-readings-2025.csv"
 
 
 def main() -> None:

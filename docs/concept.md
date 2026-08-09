@@ -24,7 +24,7 @@ The vocabulary is chosen to keep an epistemological distinction visible that gen
 
 **Source.** Any carrier of information that enters the vault, whether a document, a publication, a dataset or an image. A source is where information comes from. Nothing about being a source implies being checked or being true.
 
-**Source type.** A class of sources defined by its representation inside the repository, by its distillation operation, and by its grounding anchor, meaning the mechanism by which a statement binds to a location in the source. Section 5 defines the initial typology. Source types are configuration; a project activates the types it needs.
+**Source type.** A class of sources defined by its representation inside the repository, which for archivable material is the Markdown representation, by its distillation operation, and by its grounding anchor, meaning the mechanism by which a statement binds to a location in the source. Section 5 defines the initial typology. Source types are configuration; a project activates the types it needs.
 
 **Distillate.** The condensation of exactly one source into its core statements, each statement carrying a grounding anchor into that source. A distillate reproduces its source without evaluating it and without merging it with other sources. Production runs as a three-stage chain, LLM extraction with a canonical prompt, deterministic formatting, and a fidelity check against the source; every content document type carries a fixed frontmatter and section skeleton defined in the schema. The skeleton follows the general shape of a knowledge document (title, lead summary, key statements, open questions, related links) with one deliberate omission: the distillate has no synthesis section, because synthesis is promoted to its own document type, the claim, where it becomes subject to grounding.
 
@@ -47,7 +47,7 @@ The vault is organized in ascending layers. Each layer is checkable on its own, 
 | Layer | Content | Anchor it carries |
 |---|---|---|
 | Sources | Original material per source type | none; this is the ground |
-| Source representation | Archived full texts, bibliographic records, datasets | stable anchors (block IDs, identifiers, file plus schema) |
+| Markdown representation | Archived full texts, bibliographic records, datasets | stable anchors (block IDs, identifiers, file plus schema) |
 | Distillates | One distillate per source | grounding anchors into that source |
 | Claims | Atomic statements plus topic maps (MOCs) and glossary | grounding anchors into distillates |
 | Deliverable | The synthesized output text | footnote anchors into claims, own conclusions marked as posits |
@@ -60,13 +60,13 @@ Contradictions between sources are preserved. Claims that cannot be reconciled a
 
 ## 5. Source types
 
-The initial typology covers three source types, with a fourth sketched. Each is defined by representation, distillation operation and grounding anchor.
+The initial typology covers three source types, with a fourth sketched. Each is defined by its representation in the repository, its distillation operation and its grounding anchor.
 
-Every source representation carries a compact metadata block in its frontmatter, with Dublin-Core-compatible field names (title, creator, date, type, identifier, license) plus the acquisition channel as a provenance note. Licensing and confidentiality are thereby metadata of the individual source; whether a full text may be archived, versioned or published is read off the license field instead of being wired into the architecture. For publications the bibliographic substance lives in the CSL JSON record, which the metadata block references instead of duplicating.
+Every Markdown representation carries a compact metadata block in its frontmatter, with Dublin-Core-compatible field names (title, creator, date, type, identifier, license) plus the acquisition channel as a provenance note. Licensing and confidentiality are thereby metadata of the individual source; whether a full text may be archived, versioned or published is read off the license field instead of being wired into the architecture. For publications the bibliographic substance lives in the CSL JSON record, which the metadata block references instead of duplicating.
 
 **Archivable documents.** Material that may be stored in full, typically documents produced by or for the project owner.
 
-- Representation: a Markdown full text, converted once from the original and never edited afterwards, so that its anchors stay stable.
+- Markdown representation: a Markdown full text, converted once from the original and never edited afterwards, so that its anchors stay stable.
 - Anchor: a block reference, a short stable ID attached to each passage, addressable per passage.
 - Distillation: extraction of core statements, each bound to the passage that supports it.
 
@@ -80,7 +80,7 @@ Whether the originals and full texts may be versioned or published is read off t
 
 **Structured data.** Datasets such as CSV, spreadsheets or XML.
 
-- Representation: the data file plus a description of its schema.
+- Markdown representation: the data file plus a description of its schema.
 - Anchor: a reproducible computation, meaning the data file, a versioned script or documented query, and its deterministic result. A statement like an aggregate or a statistical finding exists nowhere as a passage, so its anchor is the computation that yields it.
 - Distillation: an analysis document whose core statements each name their computation.
 
@@ -90,7 +90,7 @@ This type strengthens checking, because validation can re-run the computation an
 
 The historical two-stream design this architecture generalizes from distinguished internal and external documents for reasons of confidentiality and copyright. Those reasons were project-specific. What generalizes is the anchor mechanics per type; confidentiality and licensing live in the per-source metadata block, and a project may run a single type or several.
 
-Sources are versioned by replacement. A representation is converted once and never edited, so its anchors stay stable; a revised source enters as a new representation file with a date-suffixed slug, existing anchors keep resolving against the old file, and the old distillate is marked as superseded by the new one.
+Sources are versioned by replacement. A Markdown representation is converted once and never edited, so its anchors stay stable; a revised source enters as a new representation file with a date-suffixed slug, existing anchors keep resolving against the old file, and the old distillate is marked as superseded by the new one.
 
 ### Acquisition channels
 
@@ -146,21 +146,26 @@ A code or data-analysis deliverable is a named extension, deliberately not elabo
 
 Proposed folder layout of the template, layer numbering kept because it makes the stratification visible in any file listing:
 
+The numbered chain runs `00_sources → 10_markdown → 20_distillates → 30_claims → 40_deliverable`. The unnumbered folders lie across the chain rather than inside it.
+
 ```
-knowledge/          governance layer (Promptotyping documents)
-_sources/           originals per source type; local only where confidentiality requires
-00_representation/  archived full texts, datasets; stable anchors live here
-10_distillates/     one distillate per source, one subfolder per source type
-20_claims/          claim atoms and topic maps (MOC-*)
-30_deliverable/     the synthesized output
+00_sources/         originals per source type, local only where confidentiality
+                    requires; unchecked, because this layer holds the original
+                    everything above it is checked against
+10_markdown/        Markdown representations of full texts and datasets;
+                    stable anchors live here
+20_distillates/     one distillate per source, one subfolder per source type
+30_claims/          claim atoms and topic maps (MOC-*)
+40_deliverable/     the synthesized output
 glossary/           one term per file: definition, wikilink hub, tag keyword
 references/         bibliographic records (CSL JSON)
+knowledge/          governance layer (Promptotyping documents)
 tools/              validation scripts, one script per task
 HOME.md             human entry point
 CLAUDE.md           agent action layer (exchangeable block)
 ```
 
-Folder names, the exact split of `00_representation/`, and the handling of the register of source identifiers are open design decisions of the template build.
+Folder names, the exact split of `10_markdown/`, and the handling of the register of source identifiers are open design decisions of the template build.
 
 ## 11. Instantiation
 
