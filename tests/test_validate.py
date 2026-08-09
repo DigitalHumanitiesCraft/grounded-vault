@@ -44,6 +44,7 @@ EXPECTED_BROKEN_WARNINGS = {
     "W-PLACEHOLDER",  # test_a_surviving_template_placeholder_is_a_warning
     "W-STALE",  # test_checks_older_than_the_content_are_reported
     "W-UNANCHORED",  # test_a_paragraph_without_a_footnote_marker_is_a_warning
+    "W-CONTESTED",  # test_a_chapter_taking_one_side_of_a_contested_pair_is_reported
 }
 
 # Codes no fixture can carry, because they need a vault state a conformant file
@@ -266,6 +267,53 @@ def _raise_chain_to(tmp_path: Path, status: str) -> Path:
 def test_a_paragraph_without_a_footnote_marker_is_a_warning() -> None:
     report = validate(BROKEN)
     assert _rels(report.warnings, "W-UNANCHORED") == {"40_output/03-unanchored"}
+
+
+def test_an_id_minted_outside_the_core_statements_is_caught() -> None:
+    """An appraisal line carrying an ID would be citable as if it were evidence."""
+    report = validate(BROKEN)
+    assert "20_distillates/documents/appraisal-anchor" in _rels(
+        report.errors, "E-STATEMENT"
+    )
+
+
+def test_an_appraisal_section_raises_nothing_on_its_own() -> None:
+    """The clean fixture carries the appraisal, which stays off the anchor surface."""
+    distillate = (
+        MINIMAL / "20_distillates" / "documents" / "report-garden-water-2026.md"
+    )
+    assert "## Appraisal" in distillate.read_text(encoding="utf-8")
+    report = validate(MINIMAL)
+    assert report.errors == [], report.errors
+    assert report.warnings == [], report.warnings
+
+
+def test_a_chapter_taking_one_side_of_a_contested_pair_is_reported() -> None:
+    report = validate(BROKEN)
+    assert _rels(report.warnings, "W-CONTESTED") == {"40_output/04-contested"}
+
+
+def test_a_chapter_carrying_both_sides_of_a_contested_pair_is_silent(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(BROKEN, root)
+    chapter = root / "40_output" / "04-contested.md"
+    text = chapter.read_text(encoding="utf-8")
+    text = text.replace(
+        'assertions: ["[[30_assertions/one-sided]]"]',
+        'assertions: ["[[30_assertions/one-sided]]", "[[30_assertions/other-side]]"]',
+    )
+    text = text.replace(
+        "[^1]: Grounded in [[30_assertions/one-sided]].",
+        "[^1]: Grounded in [[30_assertions/one-sided]].\n"
+        "[^2]: Grounded in [[30_assertions/other-side]].",
+    )
+    text = text.replace("settled.[^1]", "settled.[^1] And so does its counterpart.[^2]")
+    chapter.write_text(text, encoding="utf-8")
+    report = validate(root)
+    assert _rels(report.warnings, "W-CONTESTED") == set()
+    assert "40_output/04-contested" not in _rels(report.errors, "E-MIRROR")
 
 
 def test_a_status_above_the_status_of_its_anchors_is_caught() -> None:

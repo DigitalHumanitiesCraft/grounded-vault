@@ -79,6 +79,8 @@ One distillate per source, produced as a three-stage chain:
 
 The chain iterates. A statement that fails the fidelity check is reformulated or discarded, and the check runs again, until every remaining statement passes.
 
+Where the source is to be judged as well as reproduced, the appraisal is written after the chain has run, so that no evaluation can leak into the extraction the chain checks. It goes into the optional Appraisal section defined in [[knowledge/schema]] and stays outside the fidelity check, which has nothing to compare it against.
+
 The distillate enters at `status: grounded`. Update the inventory row to `distilled`.
 
 ## Build assertions
@@ -90,7 +92,7 @@ Assertions are where the vault synthesizes, one file per assertion, and the work
 3. **Formulate**: write one atomic assertion per group, carried jointly by the sources of that group. Atomic means one statement that cannot be split without losing its point.
 4. **Ground**: list in `grounding` every statement ID that supports the assertion, one per supporting source, and say in the Support section what each anchor contributes.
 5. **Contradictions**: where a group holds statements that cannot be reconciled, write two assertions instead of one, set both to `contested`, and link them to each other in `contested-with` on both sides.
-6. **Posit candidates**: a conclusion that no distillate statement carries is noted for the output as a posit candidate and never becomes an assertion.
+6. **Posit candidates**: a conclusion that no distillate statement carries is noted for the output as a posit candidate and never becomes an assertion. The appraisal sections of the distillates are read at this step as posit candidates, never as support, because they hold the vault's judgment of a source rather than its content.
 7. **Register**: enter every assertion in its topic map with a half-sentence of orientation, and record questions the sources leave open under the map's open questions.
 
 Machine review then runs over every pair of assertion and supporting statement, under the contract below. A verdict below *fully supports* means the assertion is reformulated to the width its sources actually carry, or the grounding is corrected by dropping the anchor that does not carry it and naming one that does. Review repeats on the changed pair.
@@ -111,6 +113,8 @@ Machine review then runs over every pair of assertion and supporting statement, 
 ## Write chapters
 
 Write per chapter, in the working language and style sheet set in [[knowledge/specification]]. Every load-bearing sentence gets a footnote `Grounded in [[assertion]]`; every own conclusion gets a footnote `Posit: <rationale>. Open evidence question: <question>`. Mirror the referenced assertions and the posit count in the frontmatter. Update the chapter register in [[knowledge/state]].
+
+A chapter that reports the state of research across the sources of a topic is written with the same means and needs no type of its own. Enter through the topic map, and let the three parts fall on the mechanics that already carry them. What the sources agree on becomes sentences grounded in the assertions of the topic. What they disagree on becomes sentences grounded in both sides of a contested pair, which is why taking one side alone raises `W-CONTESTED`. The gap that the vault's own work closes carries no source and becomes a posit footnote with its open evidence question; the topic map's open questions are the register such a gap is read off. A synthesis chapter that later feeds another chapter stays an ordinary row in the chapter register.
 
 ## Query
 

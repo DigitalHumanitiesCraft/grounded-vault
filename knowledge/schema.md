@@ -150,7 +150,7 @@ The body describes columns, units, encodings and known limitations. The anchor o
 
 ### 3. Distillate
 
-The set of single statements extracted from one source, each anchored to the passage of the representation it was taken from. One file per source in `20_distillates/<source-type>s/`, same slug as its Markdown representation. A distillate reproduces its source without evaluating it and without merging it with other sources; synthesis belongs to assertions.
+The set of single statements extracted from one source, each anchored to the passage of the representation it was taken from. One file per source in `20_distillates/<source-type>s/`, same slug as its Markdown representation. The core statements reproduce their source without merging it with other sources; synthesis belongs to assertions, and judging the source belongs to the Appraisal section defined below.
 
 ```yaml
 ---
@@ -185,6 +185,10 @@ updated: 2026-01-01
 
 - <unclarity of the source>
 
+## Appraisal
+
+<optional; what this source is worth, in prose>
+
 ## Related
 
 - [[20_distillates/…]] / [[30_assertions/…]]
@@ -208,6 +212,8 @@ Every core statement carries exactly one grounding anchor into its source and en
   ```
 
   The script reads the data file of the Markdown representation, takes no arguments, and prints the stated result and nothing else to standard output. Validation re-runs it from the vault root and compares that output character for character with the stated result, so a formatting difference is a defect.
+
+The **Appraisal** section is optional and holds the judgment of the source, covering the standing of its venue and its review, the strengths and limits of its method, its relevance to the output of this vault, and the position the vault takes towards it, as far as each applies to the source at hand. Saying what a source is worth is a different speech act from saying what it says, and the section separates the two so that a reader can tell evidence from opinion at a glance. The appraisal is the vault's own judgment and therefore a posit, so it carries no grounding obligation and no anchor of its own. It also mints no IDs, because every ID in a distillate is citable from the assertion layer; validation raises `E-STATEMENT` on an ID minted anywhere but in the core statements, which is what keeps an appraisal from ever becoming grounding. Where an appraisal shapes the output, it enters as a posit footnote there.
 
 ### 4. Assertion
 
@@ -323,6 +329,8 @@ therefore extend metering to all sites.[^2]
 ```
 
 Validation cross-checks the footnotes against the `assertions` mirror and the `posits` count. Footnotes are the reference notation; an instantiation may substitute another notation as long as marker, keyword and mirror survive.
+
+Where a chapter reports a matter the sources disagree on, it grounds in both sides of the contested pair. A chapter that names one assertion of such a pair and none of its counterparts presents the dispute as settled, and validation raises `W-CONTESTED`.
 
 ## Meta documents
 

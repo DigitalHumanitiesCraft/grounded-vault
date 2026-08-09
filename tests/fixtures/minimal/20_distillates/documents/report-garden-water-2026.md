@@ -25,6 +25,10 @@ The garden's annual report documents the introduction of plot metering and the o
 
 - The report gives no plot-level breakdown of the reduction.
 
+## Appraisal
+
+The report is the board's own account of a measure the board decided, so it is an interested party on the question of that measure's effect. Its figures are consistent with the meter readings held as a data source, which is what makes it usable at all. For this vault it carries the narrative of the metering year; the causal claim it suggests is left to the assertion layer, where the wet summer the report itself names has to be weighed against it.
+
 ## Related
 
 - [[20_distillates/data/water-readings-2025]]

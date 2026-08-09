@@ -27,3 +27,4 @@ being recorded, so that neither register knows it exists.
 | Dead frontmatter target fixture | document | — | [[20_distillates/documents/dead-representation]] | distilled |
 | Stale check fixture | document | — | [[20_distillates/documents/stale]] | distilled |
 | Missing statement ID fixture | document | — | [[20_distillates/documents/no-statement-id]] | distilled |
+| Appraisal anchor fixture | document | — | [[20_distillates/documents/appraisal-anchor]] | distilled |

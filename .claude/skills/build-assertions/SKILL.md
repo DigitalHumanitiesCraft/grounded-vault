@@ -9,7 +9,7 @@ Follow `knowledge/operations.md` § Build assertions for the synthesis procedure
 
 1. Read every distillate the topic map registers, and group the statements that concern the same matter.
 2. Write one atomic assertion per group, and list every supporting statement ID in `grounding`.
-3. Split an irreconcilable group into two `contested` assertions linked in both directions; note a conclusion without support as a posit candidate.
+3. Split an irreconcilable group into two `contested` assertions linked in both directions; note a conclusion without support as a posit candidate, and read the appraisal sections of the distillates as posit candidates rather than as support.
 4. Register each assertion in its topic map, and put what the sources leave open under the map's open questions.
 5. Run machine review over every assertion-statement pair, and rework whatever falls below *fully supports*.
 

@@ -458,6 +458,23 @@ def _statement_lines(body: str) -> list[tuple[str, list[str]]]:
     return statements
 
 
+def _ids_outside_core_statements(body: str) -> list[str]:
+    """IDs a distillate mints anywhere but in its Core statements section.
+
+    Every ID in a distillate is citable from the assertion layer, so an ID on an
+    appraisal line would let a judgment of this vault be grounded in as if the
+    source had made it.
+    """
+    stray: list[str] = []
+    in_section = False
+    for line in body.splitlines():
+        if line.startswith("## "):
+            in_section = line.strip().lower() == "## core statements"
+        elif not in_section and (m := BLOCK_ID.search(line)):
+            stray.append(m.group(1))
+    return stray
+
+
 def _check_distillate(
     doc: Doc, docs: dict[str, Doc], reference_ids: set[str], root: Path, report: Report
 ) -> None:
@@ -465,6 +482,12 @@ def _check_distillate(
     statements = _statement_lines(doc.body)
     if not statements:
         report.error("E-STATEMENT", doc.rel, "no core statements found")
+    for stray in _ids_outside_core_statements(doc.body):
+        report.error(
+            "E-STATEMENT",
+            doc.rel,
+            f"ID ^{stray} minted outside the Core statements section",
+        )
     if source_type == "publication":
         if doc.fm.get("reference") and str(doc.fm["reference"]) not in reference_ids:
             report.error(
@@ -609,7 +632,34 @@ def _check_assertion(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
             )
 
 
-def _check_chapter(doc: Doc, report: Report) -> None:
+def _check_contested_coverage(
+    doc: Doc, docs: dict[str, Doc], grounded: set[str], report: Report
+) -> None:
+    """A chapter that takes one side of a contested pair reads as settled.
+
+    Where the sources disagree, the vault holds two assertions linked to each
+    other; naming one of them and none of its counterparts turns the dispute
+    into a finding the chapter does not have.
+    """
+    for target in sorted(grounded):
+        other = docs.get(target)
+        if other is None or other.fm.get("status") != "contested":
+            continue
+        counterparts = {
+            t
+            for raw in other.fm.get("contested-with") or []
+            for t, _ in _link_targets(str(raw))
+        }
+        if counterparts and not counterparts & grounded:
+            report.warn(
+                "W-CONTESTED",
+                doc.rel,
+                f"grounds in the contested assertion {target} without any of its "
+                f"counterparts ({', '.join(sorted(counterparts))})",
+            )
+
+
+def _check_chapter(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
     defs: dict[str, str] = {}
     body_lines = []
     for line in doc.body.splitlines():
@@ -661,6 +711,7 @@ def _check_chapter(doc: Doc, report: Report) -> None:
             doc.rel,
             f"frontmatter posits {doc.fm.get('posits')} != {posit_count} posit footnotes",
         )
+    _check_contested_coverage(doc, docs, grounded_assertions, report)
 
     paragraph = []
     for line in [*body_lines, ""]:
@@ -861,7 +912,7 @@ def validate(
         elif doctype == "assertion":
             _check_assertion(doc, docs, report)
         elif doctype == "chapter":
-            _check_chapter(doc, report)
+            _check_chapter(doc, docs, report)
         for target, block in _link_targets(doc.body):
             if block is not None or any(target.startswith(f) for f in CONTENT_FOLDERS):
                 _resolve_anchor(target, block, docs, root, doc, report)
