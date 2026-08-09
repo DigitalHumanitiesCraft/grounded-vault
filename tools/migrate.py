@@ -26,6 +26,15 @@ reach history as renames instead of as a delete beside an unrelated add:
     python tools/migrate.py . --instance kisug --only folders
     git commit -m "Rename the folders onto the template chain"
     python tools/migrate.py . --instance kisug --only content
+
+The content phase ends with a scan for surviving references to the retired
+folder names in everything the migration does not rewrite, the instance's own
+tools, workflows, package scripts, ignore files and documentation. Each hit is
+reported with file, line and old name as a warning; the migration itself has
+succeeded, and what remains is hand work on the instance. Every instance tool
+then needs a run whose reported file count is greater than zero, because a tool
+still pointing at a folder that no longer exists walks an empty tree and reports
+zero problems, which reads like a passing run.
 """
 
 from __future__ import annotations
@@ -43,6 +52,42 @@ import yaml
 ANY_TYPE = "*"
 
 FOOTNOTE_DEF = re.compile(r"^(\[\^[A-Za-z0-9]+\]:\s*)(.*)$")
+
+# The follow-up scan reads code, configuration and documentation, the files a
+# migration does not rewrite but which an instance's own tool chain is made of.
+SCAN_SUFFIXES = frozenset(
+    {
+        ".py",
+        ".js",
+        ".mjs",
+        ".cjs",
+        ".ts",
+        ".toml",
+        ".yaml",
+        ".yml",
+        ".json",
+        ".md",
+        ".sh",
+        ".ps1",
+        ".cfg",
+        ".ini",
+    }
+)
+SCAN_NAMES = frozenset({".gitignore", ".gitattributes", "Makefile", "Dockerfile"})
+# Dependency and build output, never hand-written and never the instance's own.
+SCAN_SKIP_DIRS = frozenset(
+    {
+        ".venv",
+        "venv",
+        ".tox",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".pytest_cache",
+        "site-packages",
+        "dist",
+        "build",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -67,9 +112,20 @@ class Mapping:
     status_grounded_prefixes: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class StaleReference:
+    """One surviving mention of a retired folder name outside the content."""
+
+    path: str
+    line: int
+    old: str
+    text: str
+
+
 @dataclass
 class Summary:
     moved: list[tuple[str, str]] = field(default_factory=list)
+    stale: list[StaleReference] = field(default_factory=list)
     files_rewritten: int = 0
     paths_rewritten: int = 0
     headings_rewritten: int = 0
@@ -337,6 +393,86 @@ def content_files(root: Path, mapping: Mapping) -> list[Path]:
     return list(seen)
 
 
+# ------------------------------------------------------- follow-up folder scan
+# A migration renames the folders and rewrites what the mapping declares as
+# content. Everything else an instance carries keeps pointing where it pointed:
+# its own linter, its analysis and build scripts, CI workflows, package scripts,
+# ignore files, documentation. A folder constant left on the old name does not
+# raise; the tool walks an empty tree, counts zero files and reports zero
+# problems, so a dead run reads like a passing one. The scan below makes that
+# state visible right where it is created.
+
+
+def _scan_patterns(mapping: Mapping) -> tuple[re.Pattern[str], re.Pattern[str]] | None:
+    """A loose pattern for code and configuration, a strict one for Markdown.
+
+    In code and configuration an old folder name is a path by default, so any
+    standalone occurrence counts. Markdown also carries prose, where a name like
+    `glossar` is an ordinary word, so there the name must sit in a path position
+    or be quoted whole (quotes, apostrophes or backticks) to count.
+    """
+    olds = sorted((old for old, _ in mapping.folders), key=len, reverse=True)
+    if not olds:
+        return None
+    alt = "|".join(re.escape(old) for old in olds)
+    loose = re.compile(rf"(?<![A-Za-z0-9_.\-])({alt})(?![A-Za-z0-9_\-])")
+    strict = re.compile(
+        rf"""(?:['"`]({alt})['"`]|(?<![A-Za-z0-9_.\-])({alt})(?=[/\\]))"""
+    )
+    return loose, strict
+
+
+def scan_files(root: Path, mapping: Mapping) -> list[Path]:
+    skip = SCAN_SKIP_DIRS | set(mapping.skip_dirs)
+    found = []
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(root)
+        if any(part in skip for part in rel.parts):
+            continue
+        if path.suffix.lower() in SCAN_SUFFIXES or path.name in SCAN_NAMES:
+            found.append(path)
+    return found
+
+
+def stale_references(root: Path, mapping: Mapping) -> list[StaleReference]:
+    """Mentions of a retired folder name that the migration did not reach.
+
+    Files the migration rewrote clear themselves, since they no longer hold an
+    old name, so no folder needs excluding and a tool that happens to live
+    inside a content folder is checked too. A line that names both sides of the
+    same rename is read as a report about the migration (a journal entry, the
+    mapping table itself) and is not a finding.
+    """
+    patterns = _scan_patterns(mapping)
+    if patterns is None:
+        return []
+    loose, strict = patterns
+    table = dict(mapping.folders)
+    findings: list[StaleReference] = []
+    for path in scan_files(root, mapping):
+        pattern = strict if path.suffix.lower() == ".md" else loose
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        for number, line in enumerate(text.splitlines(), start=1):
+            for match in pattern.finditer(line):
+                old = next(group for group in match.groups() if group)
+                if table[old] in line:
+                    continue
+                findings.append(
+                    StaleReference(
+                        path=path.relative_to(root).as_posix(),
+                        line=number,
+                        old=old,
+                        text=line.strip(),
+                    )
+                )
+    return findings
+
+
 def migrate(root: Path, mapping: Mapping, vcs: str, only: str = "all") -> Summary:
     """Rename the folders, then rewrite the files that point into them.
 
@@ -349,6 +485,9 @@ def migrate(root: Path, mapping: Mapping, vcs: str, only: str = "all") -> Summar
     if only in ("all", "content"):
         for path in content_files(root, mapping):
             migrate_file(path, mapping, summary, path.relative_to(root).as_posix())
+        # Only meaningful once the content pass has run; after the folder phase
+        # alone every content file still points at the old names.
+        summary.stale = stale_references(root, mapping)
     return summary
 
 
@@ -484,6 +623,19 @@ def main() -> None:
     ):
         for value, count in sorted(table.items()):
             print(f"note: {label}: {value!r} ({count})")
+
+    if summary.stale:
+        print(
+            f"\nwarning: {len(summary.stale)} reference(s) to a renamed folder "
+            "survive outside the rewritten content:"
+        )
+        for ref in summary.stale:
+            print(f"  {ref.path}:{ref.line}: {ref.old}: {ref.text}")
+        print(
+            "Point every instance tool, workflow and config at the new folder names, "
+            "then rerun each of them and check the file count it reports, "
+            "because a run over zero files reports zero problems and is not a pass."
+        )
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ import yaml
 REPO = Path(__file__).parents[1]
 sys.path.insert(0, str(REPO / "tools"))
 
-from migrate import KISUG, migrate  # noqa: E402
+from migrate import KISUG, Summary, migrate  # noqa: E402
 
 REPRESENTATION = """---
 type: volltext
@@ -149,8 +149,8 @@ FILES = {
 }
 
 
-def build(root: Path) -> None:
-    for rel, text in FILES.items():
+def build(root: Path, extra: dict[str, str] | None = None) -> None:
+    for rel, text in {**FILES, **(extra or {})}.items():
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
@@ -265,6 +265,60 @@ def test_phases_run_apart(tmp_path):
         ]
         == "[[10_markdown/paper]]"
     )
+
+
+def run_with(tmp_path: Path, extra: dict[str, str], only: str = "all") -> Summary:
+    build(tmp_path, extra)
+    return migrate(tmp_path, KISUG, vcs="none", only=only)
+
+
+def test_a_clean_vault_leaves_no_stale_reference(tmp_path):
+    assert run_with(tmp_path, {}).stale == []
+
+
+def test_an_instance_tool_pointing_at_an_old_folder_is_reported(tmp_path):
+    """The failure the check exists for: a linter whose folder constant went stale."""
+    summary = run_with(
+        tmp_path,
+        {"tools/lint.py": 'ROOT = "vault"\nSRC = Path("00_volltext")\n'},
+    )
+    assert len(summary.stale) == 1
+    (ref,) = summary.stale
+    assert ref.path == "tools/lint.py"
+    assert ref.line == 2
+    assert ref.old == "00_volltext"
+
+
+def test_a_tool_on_the_new_folders_is_not_reported(tmp_path):
+    summary = run_with(tmp_path, {"tools/lint.py": 'SRC = Path("10_markdown")\n'})
+    assert summary.stale == []
+
+
+def test_a_line_naming_both_sides_of_a_rename_is_a_migration_note(tmp_path):
+    """A journal reporting the rename names old and new together; a stale
+    constant names the old side alone."""
+    summary = run_with(
+        tmp_path,
+        {"knowledge/journal.md": "- `00_volltext` was renamed to `10_markdown`.\n"},
+    )
+    assert summary.stale == []
+
+
+def test_an_old_folder_name_as_a_word_in_prose_is_not_reported(tmp_path):
+    summary = run_with(
+        tmp_path,
+        {"notes/prosa.md": "Das Glossar und der Volltext, glossar als Wort.\n"},
+    )
+    assert summary.stale == []
+
+
+def test_the_folder_phase_alone_reports_nothing(tmp_path):
+    """Every content file still points at the old names there; the check is
+    meaningful only once the content phase has run."""
+    summary = run_with(
+        tmp_path, {"tools/lint.py": 'SRC = Path("00_volltext")\n'}, only="folders"
+    )
+    assert summary.stale == []
 
 
 def test_migration_is_idempotent(tmp_path):
