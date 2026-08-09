@@ -10,7 +10,7 @@ status: draft
 language: en
 created: "{{DATE}}"
 updated: "{{DATE}}"
-expected-warnings: [W-NO-OUTPUT, W-PLACEHOLDER]
+expected-warnings: [W-EMPTY, W-NO-OUTPUT, W-PLACEHOLDER]
 related: [index, schema, operations]
 ---
 

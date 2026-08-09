@@ -144,19 +144,33 @@ def test_an_empty_vault_says_which_checks_had_no_subject(tmp_path: Path) -> None
     report = validate(tmp_path)
     assert report.errors == []
     assert {code for code, _, _ in report.warnings} == {
+        "W-EMPTY",
         "W-NO-INVENTORY",
         "W-NO-OUTPUT",
     }
 
 
+def test_a_single_chain_document_ends_the_empty_finding(tmp_path: Path) -> None:
+    doc = tmp_path / "10_markdown" / "documents"
+    doc.mkdir(parents=True)
+    (doc / "note.md").write_text("---\ntype: representation\n---\n", encoding="utf-8")
+    report = validate(tmp_path)
+    assert "W-EMPTY" not in {code for code, _, _ in report.warnings}
+
+
+def test_a_populated_vault_reports_no_empty_chain() -> None:
+    report = validate(MINIMAL)
+    assert _rels(report.warnings, "W-EMPTY") == set()
+
+
 def test_a_declared_warning_is_not_reported_as_unexpected(tmp_path: Path) -> None:
-    _declare_expected_warnings(tmp_path, "W-NO-INVENTORY, W-NO-OUTPUT")
+    _declare_expected_warnings(tmp_path, "W-EMPTY, W-NO-INVENTORY, W-NO-OUTPUT")
     report = validate(tmp_path)
     assert report.unexpected_warnings() == []
 
 
 def test_an_undeclared_warning_stays_unexpected(tmp_path: Path) -> None:
-    _declare_expected_warnings(tmp_path, "W-NO-INVENTORY")
+    _declare_expected_warnings(tmp_path, "W-EMPTY, W-NO-INVENTORY")
     report = validate(tmp_path)
     assert [code for code, _, _ in report.unexpected_warnings()] == ["W-NO-OUTPUT"]
 
@@ -165,3 +179,14 @@ def test_a_declaration_that_no_longer_fires_is_reported(tmp_path: Path) -> None:
     _declare_expected_warnings(tmp_path, "W-NO-INVENTORY, W-NO-OUTPUT, W-GONE")
     report = validate(tmp_path)
     assert "W-STALE-EXPECTATION" in {code for code, _, _ in report.warnings}
+
+
+def test_checks_older_than_the_content_are_reported() -> None:
+    report = validate(BROKEN)
+    assert _rels(report.warnings, "W-STALE") == {"20_distillates/documents/stale"}
+
+
+def test_a_document_without_any_check_date_is_not_stale() -> None:
+    """Absent check dates are status grounded, which is a state and not a defect."""
+    report = validate(MINIMAL)
+    assert _rels(report.warnings, "W-STALE") == set()

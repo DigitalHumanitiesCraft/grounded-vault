@@ -4,8 +4,9 @@ Implements the validation contract from knowledge/operations.md: frontmatter
 conformance per document type, anchor resolution, layer direction of anchors,
 uniqueness of block and statement IDs, statement IDs, quotation recording,
 computation declarations, MOC reachability, bidirectional contested links,
-chapter mirror and footnote keywords, status discipline, and the inventory
-obligation of representations and distillates. The rules themselves are defined
+chapter mirror and footnote keywords, status discipline, the inventory
+obligation of representations and distillates, a production chain that holds no
+document at all, and checks older than the content they judge. The rules are defined
 in knowledge/schema.md; this script only enforces them.
 
 Warnings report that a check found nothing to check rather than passing
@@ -29,6 +30,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -40,6 +42,8 @@ CONTENT_FOLDERS = (
     "40_output",
     "glossary",
 )
+
+CHAIN_FOLDERS = ("10_markdown", "20_distillates", "30_assertions", "40_output")
 
 TYPE_FOLDER = {
     "representation": "10_markdown",
@@ -246,6 +250,35 @@ def _check_status_discipline(doc: Doc, report: Report) -> None:
             report.error(
                 "E-STATUS", doc.rel, f"status {status} without checked.{check}"
             )
+
+
+def _iso_date(value: object) -> date | None:
+    try:
+        return date.fromisoformat(str(value).strip()[:10])
+    except ValueError:
+        return None
+
+
+def _check_staleness(doc: Doc, report: Report) -> None:
+    """Checks older than the content they judge no longer cover the document.
+
+    A document that carries no check date at all is in the state the ladder
+    starts from and is not stale.
+    """
+    checked = doc.fm.get("checked")
+    if not isinstance(checked, dict):
+        return
+    dates = [d for value in checked.values() if (d := _iso_date(value))]
+    updated = _iso_date(doc.fm.get("updated"))
+    if not dates or updated is None:
+        return
+    latest = max(dates)
+    if updated > latest:
+        report.warn(
+            "W-STALE",
+            doc.rel,
+            f"updated {updated.isoformat()} is newer than the latest check {latest.isoformat()}",
+        )
 
 
 def _resolve_anchor(
@@ -636,6 +669,17 @@ def _check_inventory(root: Path, docs: dict[str, Doc], report: Report) -> None:
             )
 
 
+def _check_chain_populated(docs: dict[str, Doc], report: Report) -> None:
+    """A vault whose production chain holds no document gave every content check an empty subject."""
+    if not any(doc.rel.startswith(CHAIN_FOLDERS) for doc in docs.values()):
+        report.warn(
+            "W-EMPTY",
+            ".",
+            f"no document in the production chain ({' → '.join(CHAIN_FOLDERS)}); "
+            "no content check had a subject",
+        )
+
+
 def _check_output_present(docs: dict[str, Doc], report: Report) -> None:
     """A validator must not report green on a contract that had no subject."""
     if not any(doc.fm.get("type") == "chapter" for doc in docs.values()):
@@ -678,6 +722,7 @@ def validate(root: Path, run_computations: bool = True) -> Report:
         doctype = doc.fm.get("type")
         if doctype in ("distillate", "assertion", "chapter"):
             _check_status_discipline(doc, report)
+            _check_staleness(doc, report)
         if doctype in ("distillate", "assertion"):
             _check_topics(doc, topic_names, report)
         if doctype == "distillate":
@@ -692,6 +737,7 @@ def validate(root: Path, run_computations: bool = True) -> Report:
     _check_moc_reachability(docs, report)
     _check_inventory(root, docs, report)
     _check_placeholders(root, report)
+    _check_chain_populated(docs, report)
     _check_output_present(docs, report)
     _check_expectations(report)
     return report

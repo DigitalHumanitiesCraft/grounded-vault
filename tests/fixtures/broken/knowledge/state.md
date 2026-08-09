@@ -25,3 +25,4 @@ being recorded, so that neither register knows it exists.
 | Placeholder fixture note | document | [[10_markdown/documents/placeholder-note]] | — | ingested |
 | Sideways anchor fixture | document | — | [[20_distillates/documents/sideways]] | distilled |
 | Dead frontmatter target fixture | document | — | [[20_distillates/documents/dead-representation]] | distilled |
+| Stale check fixture | document | — | [[20_distillates/documents/stale]] | distilled |
