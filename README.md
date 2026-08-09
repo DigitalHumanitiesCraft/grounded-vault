@@ -41,7 +41,7 @@ The remaining folders lie across the chain rather than inside it.
 - `references/` holds the bibliographic records of citable-only sources as CSL JSON, one array per file, and is needed only while the source type `publication` is active.
 - `glossary/` holds one file per central technical term of the content, serving as definition, wikilink hub and tag keyword, and is filled as the need arises.
 - `tools/` holds the validator `validate.py`, the project page generator `build_docs.py`, and in `tools/analysis/` the deterministic scripts that data anchors re-run, one script per task.
-- `tests/` holds the validator's own pytest suite, with the fixture vaults it runs against in `tests/fixtures/`, a minimal conformant vault and a deliberately broken one.
+- `tests/` holds the validator's own pytest suite, with the fixture vaults it runs against in `tests/fixtures/`, a minimal conformant vault and a deliberately broken one that carries one specimen per finding class. A coverage test holds every finding code the validator emits against those specimens, so a check added without one fails the suite.
 - `docs/` holds the concept paper and the generated project page `index.html`, both describing the architecture rather than any instance, so an instance may delete the folder.
 - `.github/` holds the CI workflow `checks.yml`, which runs the validator and the test suite on every push and pull request.
 - `.claude/` holds the harness-specific skills that the action layer `CLAUDE.md` routes into, exchangeable together with that file.
@@ -56,7 +56,7 @@ Chapters are written and accepted one at a time, so the validator also judges on
 
 Quotations from citable-only publications are checked character for character at intake time, while the full text is at hand, and the check is recorded with its date in `checked.quote` on the distillate. Later validation runs cannot repeat it, because the full text of such a source does not lie in the vault; they check that the record exists.
 
-The architecture fixes a check contract per instance; the mechanism that fulfils it is a project choice. Statuses progress `grounded` → `validated` → `verified` (plus `contested` where sources conflict), and a status is only ever set by a check that actually ran, with outcome and date recorded on the document (audit trail).
+The architecture fixes a check contract per instance; the mechanism that fulfils it is a project choice. Statuses progress `grounded` → `validated` → `verified` (plus `contested` where sources conflict), and a status is only ever set by a check that actually ran, with outcome and date recorded on the document (audit trail). A document never stands higher than the anchors it rests on, so one unreviewed anchor holds the whole chain above it at `grounded`.
 
 ## Dual readability
 

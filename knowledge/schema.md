@@ -55,7 +55,7 @@ checked:
   machine-review: 2026-07-11
 ```
 
-The discipline is machine-enforced: `validated` requires `checked.validation` and `checked.machine-review`; `verified` additionally requires `checked.verification`. `grounded` is the entry status of every freshly produced document and requires no entry. A document's status is the minimum of the states of its anchors; one unreviewed anchor keeps the whole document at `grounded`. For publication distillates the intake-time quotation check is recorded as `checked.quote`, because the source text may be unavailable to later validation runs. No instance ever sets a status above its own authority; the contracts are defined in [[knowledge/operations]].
+The discipline is machine-enforced: `validated` requires `checked.validation` and `checked.machine-review`; `verified` additionally requires `checked.verification`. Every entry of the map carries an ISO date, because a record without one cannot be held against the content it judges. `grounded` is the entry status of every freshly produced document and requires no entry. A document's status is the minimum of the states of its anchors, judged against the anchors an assertion names in `grounding` and a chapter in its `assertions` mirror, so one unreviewed anchor keeps the whole document at `grounded`. `contested` and `superseded` lie beside the ladder and earn no rank, so a document resting on one of them stays at `grounded` as well. For publication distillates the intake-time quotation check is recorded as `checked.quote`, because the source text may be unavailable to later validation runs. No instance ever sets a status above its own authority; the contracts are defined in [[knowledge/operations]].
 
 ## Source metadata
 

@@ -6,6 +6,7 @@ be caught. The warning tests use temporary vaults, because a warning states that
 a check found no subject, which neither shipped fixture can show.
 """
 
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -27,13 +28,35 @@ EXPECTED_BROKEN_CODES = {
     "E-ORPHAN",  # assertion in no topic map
     "E-CONTESTED",  # one-sided contested relation
     "E-FRONTMATTER",  # illegal status value
+    "E-STATEMENT",  # core statement without a statement ID
     "E-STATUS",  # status without recorded checks
+    "E-LADDER",  # status above the status of the anchors it rests on
     "E-FOOTNOTE",  # wrong keyword and undefined marker
     "E-MIRROR",  # frontmatter mirror out of sync
     "E-COMPUTATION",  # computation script missing
     "E-QUOTE",  # intake-time quotation check not recorded
     "E-INVENTORY",  # document in no inventory register
 }
+
+# Warnings the broken fixture carries; each has its own test below, because the
+# broken-fixture tests above speak about error codes only.
+EXPECTED_BROKEN_WARNINGS = {
+    "W-PLACEHOLDER",  # test_a_surviving_template_placeholder_is_a_warning
+    "W-STALE",  # test_checks_older_than_the_content_are_reported
+    "W-UNANCHORED",  # test_a_paragraph_without_a_footnote_marker_is_a_warning
+}
+
+# Codes no fixture can carry, because they need a vault state a conformant file
+# set does not have; each is asserted from a temporary vault instead.
+EXPECTED_TEMPORARY_VAULT_CODES = {
+    "E-SCOPE",  # test_an_unknown_chapter_is_a_finding
+    "W-EMPTY",  # test_an_empty_vault_says_which_checks_had_no_subject
+    "W-NO-INVENTORY",  # test_an_empty_vault_says_which_checks_had_no_subject
+    "W-NO-OUTPUT",  # test_an_empty_vault_says_which_checks_had_no_subject
+    "W-STALE-EXPECTATION",  # test_a_declaration_that_no_longer_fires_is_reported
+}
+
+EMITTED_CODE = re.compile(r"report\.(?:error|warn)\(\s*\"([EW]-[A-Z-]+)\"")
 
 SPECIFICATION = """---
 title: Specification
@@ -85,6 +108,28 @@ def test_broken_reports_no_false_alarms_outside_expected_classes() -> None:
     report = validate(BROKEN)
     unexpected = report.codes() - EXPECTED_BROKEN_CODES
     assert not unexpected, f"unexpected error classes: {unexpected}"
+
+
+def test_every_code_the_validator_emits_has_a_specimen() -> None:
+    """No finding class may exist that the suite never sees fire.
+
+    The registries above are the claim of coverage, and this test holds them
+    against the codes actually emitted, so that a new check without a specimen
+    fails here and a registry entry the validator no longer raises does too.
+    """
+    source = (REPO / "tools" / "validate.py").read_text(encoding="utf-8")
+    emitted = set(EMITTED_CODE.findall(source))
+    covered = (
+        EXPECTED_BROKEN_CODES
+        | EXPECTED_BROKEN_WARNINGS
+        | EXPECTED_TEMPORARY_VAULT_CODES
+    )
+    assert emitted - covered == set(), (
+        f"finding classes without a specimen: {emitted - covered}"
+    )
+    assert covered - emitted == set(), (
+        f"specimens for codes never emitted: {covered - emitted}"
+    )
 
 
 def test_every_layer_violation_is_caught_at_its_own_layer() -> None:
@@ -191,6 +236,98 @@ def test_a_document_without_any_check_date_is_not_stale() -> None:
     """Absent check dates are status grounded, which is a state and not a defect."""
     report = validate(MINIMAL)
     assert _rels(report.warnings, "W-STALE") == set()
+
+
+CHECKED = "checked:\n  validation: 2026-07-11\n  machine-review: 2026-07-11"
+CHAIN_UNDER_THE_CHAPTER = (
+    "20_distillates/documents/report-garden-water-2026.md",
+    "20_distillates/data/water-readings-2025.md",
+    "20_distillates/publications/example-2024-metering.md",
+    "30_assertions/metering-reduces-water-use.md",
+)
+
+
+def _raise_chain_to(tmp_path: Path, status: str) -> Path:
+    """A copy of the clean fixture whose chain below the chapter carries `status`."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    for rel in CHAIN_UNDER_THE_CHAPTER:
+        path = root / rel
+        text = path.read_text(encoding="utf-8")
+        text = text.replace("status: grounded", f"status: {status}")
+        text = text.replace("checked: {}", CHECKED)
+        text = text.replace(
+            "checked:\n  quote: 2026-07-11", f"{CHECKED}\n  quote: 2026-07-11"
+        )
+        path.write_text(text, encoding="utf-8")
+    return root
+
+
+def test_a_paragraph_without_a_footnote_marker_is_a_warning() -> None:
+    report = validate(BROKEN)
+    assert _rels(report.warnings, "W-UNANCHORED") == {"40_output/03-unanchored"}
+
+
+def test_a_status_above_the_status_of_its_anchors_is_caught() -> None:
+    """`ladder-jump` is the pure specimen, with its own ledger complete.
+
+    `validated-unchecked` claims the same status without any check date, so it
+    stands above its anchors as well and the two findings are independent.
+    """
+    report = validate(BROKEN)
+    assert _rels(report.errors, "E-LADDER") == {
+        "30_assertions/ladder-jump",
+        "30_assertions/validated-unchecked",
+    }
+
+
+def test_a_chain_that_carries_its_status_all_the_way_down_passes(
+    tmp_path: Path,
+) -> None:
+    root = _raise_chain_to(tmp_path, "validated")
+    report = validate(root)
+    assert _rels(report.errors, "E-LADDER") == set()
+
+
+def test_a_chapter_above_its_assertions_is_caught(tmp_path: Path) -> None:
+    root = _raise_chain_to(tmp_path, "validated")
+    chapter = root / "40_output" / "01-findings.md"
+    chapter.write_text(
+        chapter.read_text(encoding="utf-8").replace(
+            "status: grounded\nchecked: {}",
+            "status: validated\nchecked:\n  validation: 2026-07-11\n"
+            "  machine-review: 2026-07-11",
+        ),
+        encoding="utf-8",
+    )
+    assertion = root / "30_assertions" / "metering-reduces-water-use.md"
+    assertion.write_text(
+        assertion.read_text(encoding="utf-8").replace(
+            "status: validated", "status: grounded"
+        ),
+        encoding="utf-8",
+    )
+    report = validate(root)
+    assert _rels(report.errors, "E-LADDER") == {"40_output/01-findings"}
+    # The rule is decidable per document, so it holds in the chapter mode too.
+    scoped = validate(root, chapter=CHAPTER)
+    assert _rels(scoped.errors, "E-LADDER") == {"40_output/01-findings"}
+
+
+def test_a_check_entry_without_a_date_is_a_finding(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    distillate = root / "20_distillates" / "documents" / "report-garden-water-2026.md"
+    distillate.write_text(
+        distillate.read_text(encoding="utf-8").replace(
+            "checked: {}", "checked:\n  validation: yes"
+        ),
+        encoding="utf-8",
+    )
+    report = validate(root)
+    assert "20_distillates/documents/report-garden-water-2026" in _rels(
+        report.errors, "E-STATUS"
+    )
 
 
 CHAPTER = "40_output/01-findings"

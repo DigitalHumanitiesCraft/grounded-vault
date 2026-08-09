@@ -4,9 +4,10 @@ Implements the validation contract from knowledge/operations.md: frontmatter
 conformance per document type, anchor resolution, layer direction of anchors,
 uniqueness of block and statement IDs, statement IDs, quotation recording,
 computation declarations, MOC reachability, bidirectional contested links,
-chapter mirror and footnote keywords, status discipline, the inventory
-obligation of representations and distillates, a production chain that holds no
-document at all, and checks older than the content they judge. The rules are defined
+chapter mirror and footnote keywords, status discipline including the ladder
+against the anchors a document rests on, the inventory obligation of
+representations and distillates, a production chain that holds no document at
+all, and checks older than the content they judge. The rules are defined
 in knowledge/schema.md; this script only enforces them.
 
 Warnings report that a check found nothing to check rather than passing
@@ -99,6 +100,12 @@ STATUS_VOCAB = {
     "assertion": frozenset({"grounded", "validated", "verified", "contested"}),
     "chapter": frozenset({"grounded", "validated", "verified"}),
 }
+# The ladder a status climbs. `contested` and `superseded` lie beside it and
+# earn no rank, so a document resting on one of them cannot rise above grounded.
+STATUS_RANK = {"grounded": 0, "validated": 1, "verified": 2}
+# The frontmatter field naming the anchors whose status a document cannot exceed.
+# A representation carries no status, so a distillate has nothing to exceed.
+ANCHOR_FIELD = {"assertion": "grounding", "chapter": "assertions"}
 REQUIRED_FIELDS = {
     "representation": (
         "type",
@@ -272,6 +279,13 @@ def _check_status_discipline(doc: Doc, report: Report) -> None:
             report.error(
                 "E-STATUS", doc.rel, f"status {status} without checked.{check}"
             )
+    for name, value in checked.items():
+        if _iso_date(value) is None:
+            report.error(
+                "E-STATUS",
+                doc.rel,
+                f"checked.{name} records no ISO date: {value!r}",
+            )
 
 
 def _iso_date(value: object) -> date | None:
@@ -301,6 +315,30 @@ def _check_staleness(doc: Doc, report: Report) -> None:
             doc.rel,
             f"updated {updated.isoformat()} is newer than the latest check {latest.isoformat()}",
         )
+
+
+def _check_ladder(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
+    """A document's status is the minimum of the states of its anchors.
+
+    A check that ran on this document alone says nothing about the material it
+    rests on, so one unreviewed anchor keeps the whole document at grounded.
+    """
+    field_name = ANCHOR_FIELD.get(doc.fm.get("type"))
+    own = STATUS_RANK.get(doc.fm.get("status"), 0)
+    if field_name is None or own == 0:
+        return
+    for raw in doc.fm.get(field_name) or []:
+        for target, _ in _link_targets(str(raw)):
+            other = docs.get(target)
+            if other is None:
+                continue  # E-ANCHOR speaks about the target that does not exist
+            if STATUS_RANK.get(other.fm.get("status"), 0) < own:
+                report.error(
+                    "E-LADDER",
+                    doc.rel,
+                    f"status {doc.fm['status']} above its anchor {target} "
+                    f"at status {other.fm.get('status')!r}",
+                )
 
 
 def _resolve_anchor(
@@ -815,6 +853,7 @@ def validate(
         if doctype in ("distillate", "assertion", "chapter"):
             _check_status_discipline(doc, report)
             _check_staleness(doc, report)
+            _check_ladder(doc, docs, report)
         if doctype in ("distillate", "assertion"):
             _check_topics(doc, topic_names, report)
         if doctype == "distillate":
