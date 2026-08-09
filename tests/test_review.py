@@ -21,6 +21,7 @@ from review import (  # noqa: E402
     build_prompt,
     cut_pairs,
     parse_verdict,
+    run_claude,
     set_checked_date,
 )
 
@@ -251,6 +252,42 @@ def test_booking_keeps_the_line_endings_of_the_file(tmp_path) -> None:
     raw = path.read_bytes()
     assert b"machine-review: 2026-08-09" in raw
     assert raw.count(b"\n") == raw.count(b"\r\n")
+
+
+class _Result:
+    returncode = 0
+    stderr = ""
+    stdout = "fully supports\nThe passage states exactly this."
+
+
+def test_run_claude_passes_the_prompt_on_stdin(monkeypatch, pairs) -> None:
+    """Windows caps a command line at ~32k characters, so no prompt goes into argv."""
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        return _Result()
+
+    monkeypatch.setattr("review.shutil.which", lambda name: "claude")
+    monkeypatch.setattr("review.subprocess.run", fake_run)
+
+    long_pair = pairs[0].__class__(
+        id="x",
+        kind="source",
+        document="d",
+        anchor="a",
+        location="L" * 40000,
+        claim="C",
+    )
+    problems: list[str] = []
+    records = run_claude([long_pair], "sonnet", problems)
+
+    assert problems == []
+    assert [r["verdict"] for r in records] == ["fully supports"]
+    command, kwargs = calls[0]
+    assert all(long_pair.prompt not in part for part in command)
+    assert max(len(part) for part in command) < 4096
+    assert kwargs["input"] == long_pair.prompt
 
 
 def test_booked_vault_still_validates(tmp_path) -> None:

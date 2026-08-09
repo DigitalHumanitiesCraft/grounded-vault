@@ -416,18 +416,29 @@ def read_verdicts(path: Path, problems: list[str]) -> dict[str, str]:
 def run_claude(
     pairs: list[Pair], model: str | None, problems: list[str], timeout: int = 300
 ) -> list[dict[str, str]]:
-    """Judge each pair with `claude -p` as a subprocess, one call per pair."""
+    """Judge each pair with `claude -p` as a subprocess, one call per pair.
+
+    The prompt goes in on stdin; a command line caps out around 32k characters on
+    Windows, and a quotation with its heading path can pass that.
+    """
     executable = shutil.which("claude")
     if not executable:
         raise RuntimeError("claude executable not found on PATH")
     records: list[dict[str, str]] = []
     for pair in pairs:
-        command = [executable, "-p", pair.prompt]
+        command = [executable, "-p"]
         if model:
             command += ["--model", model]
         try:
             result = subprocess.run(
-                command, capture_output=True, text=True, timeout=timeout, check=False
+                command,
+                input=pair.prompt,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=timeout,
+                check=False,
             )
         except subprocess.TimeoutExpired:
             problems.append(f"{pair.id}: judging timed out after {timeout}s")

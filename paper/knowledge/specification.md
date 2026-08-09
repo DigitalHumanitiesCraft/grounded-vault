@@ -10,7 +10,7 @@ status: draft
 language: en
 created: "2026-08-09"
 updated: "2026-08-09"
-expected-warnings: [W-NO-OUTPUT]
+expected-warnings: [W-EMPTY, W-NO-OUTPUT]
 related: [index, schema, operations]
 ---
 

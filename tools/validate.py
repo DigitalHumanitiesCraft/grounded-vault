@@ -788,8 +788,17 @@ def _check_inventory(root: Path, docs: dict[str, Doc], report: Report) -> None:
 
 
 def _check_chain_populated(docs: dict[str, Doc], report: Report) -> None:
-    """A vault whose production chain holds no document gave every content check an empty subject."""
-    if not any(doc.rel.startswith(CHAIN_FOLDERS) for doc in docs.values()):
+    """A vault whose production chain holds no document gave every content check an empty subject.
+
+    Topic maps do not count. Instantiation writes one per topic into 30_assertions,
+    so counting them would silence the finding for exactly the fresh vault it is for.
+    """
+    content = (
+        doc
+        for doc in docs.values()
+        if doc.rel.startswith(CHAIN_FOLDERS) and doc.fm.get("type") != "moc"
+    )
+    if not any(content):
         report.warn(
             "W-EMPTY",
             ".",

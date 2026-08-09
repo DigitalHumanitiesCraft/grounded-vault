@@ -205,6 +205,25 @@ def test_a_single_chain_document_ends_the_empty_finding(tmp_path: Path) -> None:
     assert "W-EMPTY" not in {code for code, _, _ in report.warnings}
 
 
+def test_the_topic_maps_of_a_fresh_instance_do_not_count_as_content(
+    tmp_path: Path,
+) -> None:
+    """Instantiation writes one topic map per topic, and they land in 30_assertions.
+
+    Counting them would hide the empty chain of every freshly instantiated vault,
+    the very state the finding exists for.
+    """
+    moc = tmp_path / "30_assertions"
+    moc.mkdir(parents=True)
+    (moc / "MOC-Provenance.md").write_text(
+        "---\ntype: moc\ntopic: Provenance\ncreated: 2026-08-09\nupdated: 2026-08-09\n---\n\n"
+        "# Provenance\n",
+        encoding="utf-8",
+    )
+    report = validate(tmp_path)
+    assert "W-EMPTY" in {code for code, _, _ in report.warnings}
+
+
 def test_a_populated_vault_reports_no_empty_chain() -> None:
     report = validate(MINIMAL)
     assert _rels(report.warnings, "W-EMPTY") == set()
