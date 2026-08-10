@@ -310,7 +310,7 @@ An output text in which every load-bearing sentence carries a footnote to an ass
 type: chapter
 status: grounded             # grounded | validated | verified
 checked: {}
-assertions: ["[[30_assertions/<slug>]]"]   # structured mirror of all referenced assertions
+assertions: ["[[30_assertions/<slug>]]"]   # structured mirror of exactly the Grounded-in assertions; posit-linked ones stay out
 posits: 0                                  # count of posit footnotes
 created: 2026-01-01
 updated: 2026-01-01
