@@ -153,7 +153,7 @@ Three instances check the vault. The architecture fixes their contracts; the mec
   > STATEMENT: {statement}
 
 - Pair cutting: a pair consists of the anchored location (for documents the block plus its heading path, for publications the quotation, for data the computation and its result) and the bare statement. Nothing else enters the pair.
-- Self-report: where the passage has the source speaking about itself, about its own priority, reach or achievement, the reviewer adds one line naming that fact. The verdict stays *fully supports* when the statement reports the claim as the source's own, and it is *overreaches* when the statement asserts the matter the claim is about. This is the one case the coverage relation cannot separate on its own.
+- Displaced subject: where the passage supports the statement while its subject is not the matter the assertion is about, the reviewer adds one line naming the displacement. In **self-report** the source speaks about itself, about its own priority, reach or achievement; the verdict stays *fully supports* when the statement reports the claim as the source's own, and it is *overreaches* when the statement asserts the matter the claim is about. In **state report** the source shows the matter in one state at one time, such as a restored object, a dated inventory or a plan; the verdict stays *fully supports* when the statement names that state with its date, and it is *overreaches* when the statement asserts the property of the matter as such. These are the cases the coverage relation cannot separate on its own.
 
 ### Contract: verification
 

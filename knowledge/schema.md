@@ -259,7 +259,11 @@ A conclusion without source support never becomes an assertion; it enters the ou
 
 Posit and assertion differ in kind and not in ripeness, and reading the posit as an unripe assertion is the common mistake. An assertion rests on sources and carries a status on the ladder, which records how far it has been checked. A posit rests on the author, and it carries no status because it makes no claim about a source that a check could test. A posit therefore never matures into an assertion. Where a source turns up later, a new assertion is written and the posit falls away. What it leaves behind is its open evidence question, which is a research task rather than a defect, and the `posits` count of a chapter measures how much of that text stands on the author alone.
 
-Where a source speaks about itself, about its own priority, reach or achievement, its passage covers the claim and never the matter the claim is about. The distillate holds such a statement as what the source asserts. An assertion built from it either carries the speaker along, in the form that the source claims something, or it rests on a second and independent source. No check catches this overreach on its own, because the coverage relation holds and both validation and machine review test exactly that relation.
+A passage can support a statement whose subject is not the subject the assertion is about, and the coverage relation still holds. No check catches this on its own, because validation and machine review test exactly that relation. Two cases of such a displaced subject occur often enough to be named.
+
+**Self-report.** Where a source speaks about itself, about its own priority, reach or achievement, its passage covers the claim and never the matter the claim is about. The distillate holds such a statement as what the source asserts. An assertion built from it either carries the speaker along, in the form that the source claims something, or it rests on a second and independent source.
+
+**State report.** Where a source shows the matter in one state at one time, its passage covers that state and never the matter across time. A restored object witnesses the restoration, a dated inventory witnesses the day it was taken, a plan witnesses what was intended when it was written. The distillate holds such a statement together with the state and its date. An assertion built from it either names the state and its date, or it rests on a source that establishes the property for the span the assertion claims.
 
 ### 5. Topic map (MOC)
 
