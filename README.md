@@ -2,7 +2,7 @@
 
 A provenance-complete knowledge base architecture for humans and AI agents. A [Promptotyping](https://dhcraft.org/Promptotyping/) profile for evidence-grounded knowledge work.
 
-This repository is a template. Instantiate it for a project via `SETUP.md`; the full concept lives in [docs/concept.md](docs/concept.md).
+This repository is a template. Instantiate it for a project via `SETUP.md`; the full concept lives in [docs/concept.md](docs/concept.md). What changed for existing instances is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Why
 
