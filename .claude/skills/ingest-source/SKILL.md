@@ -10,6 +10,6 @@ Follow `knowledge/operations.md` § Acquire and § Ingest; that section is autho
 1. Record the channel and place the original in `00_sources/`, or export the record into `references/` where the source is citable only.
 2. Convert to structure-preserving Markdown with the converter the decision list names, and record it in `converter`.
 3. Mint a block ID on every anchor-relevant paragraph, set the H1 from the original, fill the metadata block per `knowledge/schema.md`.
-4. Update the source inventory row in `knowledge/state.md` to `ingested`.
+4. Regenerate the source inventory with `python tools/inventory.py . --write`.
 
-Run `python tools/validate.py .` before reporting the ingest as done, and treat every warning marked `*` as a finding.
+Run `python tools/validate.py .` before reporting the ingest as done, and treat every warning as a finding.

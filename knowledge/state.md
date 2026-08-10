@@ -19,11 +19,12 @@ Everything volatile in one place, so the rule documents stay stable. Update rows
 
 ## Source inventory
 
-One row per source. Processing status: `new` → `ingested` → `distilled`.
+One row per source. Processing status: `new` → `ingested` → `distilled`. This section is generated from the real file state by `python tools/inventory.py . --write` and is never edited by hand; everything between the two markers is overwritten on each run.
 
+<!-- inventory:begin -->
 | Source | Type | Channel | Markdown representation | Distillate | Status |
 |---|---|---|---|---|---|
-| | | | | | |
+<!-- inventory:end -->
 
 ## Chapter register
 

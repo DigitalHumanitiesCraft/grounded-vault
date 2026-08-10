@@ -4,7 +4,7 @@ topics: ["[[Broken]]"]
 status: approved
 checked: {}
 grounding:
-  - "[[20_distillates/documents/note#^s1]]"
+  - "[[20_distillates/documents/note#^s2]]"
 contested-with: []
 created: 2026-07-11
 updated: 2026-07-11
@@ -18,6 +18,6 @@ Fixture: `approved` is outside the controlled vocabulary (defect: frontmatter vi
 
 ## Support
 
-- [[20_distillates/documents/note#^s1]] — fixture support.
+- [[20_distillates/documents/note#^s2]] — fixture support.
 
 ## Related

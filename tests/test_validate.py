@@ -8,13 +8,14 @@ a check found no subject, which neither shipped fixture can show.
 
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
 REPO = Path(__file__).parents[1]
 sys.path.insert(0, str(REPO / "tools"))
 
-from validate import validate  # noqa: E402
+from validate import VAULT_WIDE_CHECKS, validate  # noqa: E402
 
 MINIMAL = REPO / "tests" / "fixtures" / "minimal"
 BROKEN = REPO / "tests" / "fixtures" / "broken"
@@ -35,7 +36,6 @@ EXPECTED_BROKEN_CODES = {
     "E-MIRROR",  # frontmatter mirror out of sync
     "E-COMPUTATION",  # computation script missing
     "E-QUOTE",  # intake-time quotation check not recorded
-    "E-INVENTORY",  # document in no inventory register
 }
 
 # Warnings the broken fixture carries; each has its own test below, because the
@@ -45,6 +45,8 @@ EXPECTED_BROKEN_WARNINGS = {
     "W-STALE",  # test_checks_older_than_the_content_are_reported
     "W-UNANCHORED",  # test_a_paragraph_without_a_footnote_marker_is_a_warning
     "W-CONTESTED",  # test_a_chapter_taking_one_side_of_a_contested_pair_is_reported
+    "W-DUPLICATE-GROUNDING",  # test_two_assertions_on_the_same_anchors_are_reported
+    "W-ALIAS",  # test_a_footnote_alias_that_renames_its_assertion_is_reported
 }
 
 # Codes no fixture can carry, because they need a vault state a conformant file
@@ -52,31 +54,14 @@ EXPECTED_BROKEN_WARNINGS = {
 EXPECTED_TEMPORARY_VAULT_CODES = {
     "E-SCOPE",  # test_an_unknown_chapter_is_a_finding
     "W-EMPTY",  # test_an_empty_vault_says_which_checks_had_no_subject
-    "W-NO-INVENTORY",  # test_an_empty_vault_says_which_checks_had_no_subject
     "W-NO-OUTPUT",  # test_an_empty_vault_says_which_checks_had_no_subject
-    "W-STALE-EXPECTATION",  # test_a_declaration_that_no_longer_fires_is_reported
 }
 
 EMITTED_CODE = re.compile(r"report\.(?:error|warn)\(\s*\"([EW]-[A-Z-]+)\"")
 
-SPECIFICATION = """---
-title: Specification
-expected-warnings: [{expected}]
----
-
-# Specification
-"""
-
 
 def _rels(entries: list[tuple[str, str, str]], code: str) -> set[str]:
     return {rel for found, rel, _ in entries if found == code}
-
-
-def _declare_expected_warnings(root: Path, expected: str) -> None:
-    (root / "knowledge").mkdir(exist_ok=True)
-    (root / "knowledge" / "specification.md").write_text(
-        SPECIFICATION.format(expected=expected), encoding="utf-8"
-    )
 
 
 def test_minimal_is_clean() -> None:
@@ -190,11 +175,7 @@ def test_placeholders_are_scanned_outside_the_content_folders(tmp_path: Path) ->
 def test_an_empty_vault_says_which_checks_had_no_subject(tmp_path: Path) -> None:
     report = validate(tmp_path)
     assert report.errors == []
-    assert {code for code, _, _ in report.warnings} == {
-        "W-EMPTY",
-        "W-NO-INVENTORY",
-        "W-NO-OUTPUT",
-    }
+    assert {code for code, _, _ in report.warnings} == {"W-EMPTY", "W-NO-OUTPUT"}
 
 
 def test_a_single_chain_document_ends_the_empty_finding(tmp_path: Path) -> None:
@@ -229,22 +210,49 @@ def test_a_populated_vault_reports_no_empty_chain() -> None:
     assert _rels(report.warnings, "W-EMPTY") == set()
 
 
-def test_a_declared_warning_is_not_reported_as_unexpected(tmp_path: Path) -> None:
-    _declare_expected_warnings(tmp_path, "W-EMPTY, W-NO-INVENTORY, W-NO-OUTPUT")
-    report = validate(tmp_path)
-    assert report.unexpected_warnings() == []
+def _run_cli(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(REPO / "tools" / "validate.py"), str(root), *args],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
-def test_an_undeclared_warning_stays_unexpected(tmp_path: Path) -> None:
-    _declare_expected_warnings(tmp_path, "W-EMPTY, W-NO-INVENTORY")
-    report = validate(tmp_path)
-    assert [code for code, _, _ in report.unexpected_warnings()] == ["W-NO-OUTPUT"]
+def test_a_warning_alone_does_not_fail_the_full_run(tmp_path: Path) -> None:
+    """Over the whole vault a warning is a finding to read, never a verdict."""
+    root = _vault_with_a_placeholder(tmp_path)
+    result = _run_cli(root, "--no-computations")
+    assert result.returncode == 0, result.stderr
+    assert "W-PLACEHOLDER" in result.stderr
+    assert "1 error(s), 0 warning(s)" not in result.stdout
+    assert "0 error(s), 1 warning(s)" in result.stdout
 
 
-def test_a_declaration_that_no_longer_fires_is_reported(tmp_path: Path) -> None:
-    _declare_expected_warnings(tmp_path, "W-NO-INVENTORY, W-NO-OUTPUT, W-GONE")
-    report = validate(tmp_path)
-    assert "W-STALE-EXPECTATION" in {code for code, _, _ in report.warnings}
+def test_a_warning_fails_the_chapter_mode(tmp_path: Path) -> None:
+    """There the run answers whether this chapter may be accepted."""
+    root = _vault_with_a_placeholder(tmp_path)
+    result = _run_cli(root, "--no-computations", "--chapter", CHAPTER)
+    assert result.returncode == 1, result.stdout
+    assert "CHAPTER NOT READY" in result.stdout
+
+
+def test_a_chapter_without_a_finding_is_ready(tmp_path: Path) -> None:
+    result = _run_cli(MINIMAL, "--no-computations", "--chapter", CHAPTER)
+    assert result.returncode == 0, result.stderr
+    assert "CHAPTER READY" in result.stdout
+
+
+def _vault_with_a_placeholder(tmp_path: Path) -> Path:
+    """A clean vault whose chapter chain carries one warning and no error."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    distillate = root / "20_distillates" / "documents" / "report-garden-water-2026.md"
+    distillate.write_text(
+        distillate.read_text(encoding="utf-8") + "\n{{OPEN_QUESTION}}\n",
+        encoding="utf-8",
+    )
+    return root
 
 
 def test_checks_older_than_the_content_are_reported() -> None:
@@ -305,6 +313,72 @@ def test_an_appraisal_section_raises_nothing_on_its_own() -> None:
     report = validate(MINIMAL)
     assert report.errors == [], report.errors
     assert report.warnings == [], report.warnings
+
+
+def test_two_assertions_on_the_same_anchors_are_reported() -> None:
+    """Two assertions carried by the same evidence are one assertion said twice."""
+    report = validate(BROKEN)
+    assert _rels(report.warnings, "W-DUPLICATE-GROUNDING") == {
+        "30_assertions/duplicate-grounding-a"
+    }
+    (message,) = [m for c, _, m in report.warnings if c == "W-DUPLICATE-GROUNDING"]
+    assert "30_assertions/duplicate-grounding-b" in message
+
+
+def test_an_assertion_whose_anchors_are_contained_in_another_is_reported(
+    tmp_path: Path,
+) -> None:
+    """A subset carries nothing its superset does not already carry."""
+    root = tmp_path / "vault"
+    shutil.copytree(BROKEN, root)
+    narrower = root / "30_assertions" / "duplicate-grounding-b.md"
+    narrower.write_text(
+        narrower.read_text(encoding="utf-8").replace(
+            '  - "[[20_distillates/documents/note#^s8]]"\n', ""
+        ),
+        encoding="utf-8",
+    )
+    report = validate(root)
+    (message,) = [m for c, _, m in report.warnings if c == "W-DUPLICATE-GROUNDING"]
+    assert "contained in" in message
+
+
+def test_distinct_grounding_sets_raise_nothing() -> None:
+    report = validate(MINIMAL)
+    assert _rels(report.warnings, "W-DUPLICATE-GROUNDING") == set()
+
+
+def test_an_assertion_without_grounding_is_no_duplicate_of_anything() -> None:
+    """The empty set is contained in every other, and E-GROUNDING already speaks."""
+    report = validate(BROKEN)
+    assert "30_assertions/empty-grounding" not in {
+        rel for code, rel, message in report.warnings if code == "W-DUPLICATE-GROUNDING"
+    }
+    assert not [
+        m
+        for c, _, m in report.warnings
+        if c == "W-DUPLICATE-GROUNDING" and "empty-grounding" in m
+    ]
+
+
+def test_a_footnote_alias_that_renames_its_assertion_is_reported() -> None:
+    report = validate(BROKEN)
+    assert _rels(report.warnings, "W-ALIAS") == {"40_output/05-alias"}
+
+
+def test_an_alias_equal_to_the_title_of_its_target_is_silent(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(BROKEN, root)
+    chapter = root / "40_output" / "05-alias.md"
+    title = "Two assertions of the broken fixture rest on the same two anchors"
+    chapter.write_text(
+        chapter.read_text(encoding="utf-8").replace(
+            "|a different assertion altogether]]", f"|{title}]]"
+        ),
+        encoding="utf-8",
+    )
+    report = validate(root)
+    assert _rels(report.warnings, "W-ALIAS") == set()
 
 
 def test_a_chapter_taking_one_side_of_a_contested_pair_is_reported() -> None:
@@ -474,7 +548,7 @@ def test_a_chapter_stays_clean_while_the_rest_of_the_vault_is_broken(
     assert validate(root).errors != []
     report = validate(root, chapter=CHAPTER)
     assert report.errors == [], report.errors
-    assert report.unexpected_warnings() == [], report.warnings
+    assert report.warnings == [], report.warnings
 
 
 def test_a_defect_in_a_branch_the_chapter_does_not_hang_on_stays_out(
@@ -536,13 +610,15 @@ def test_only_a_chapter_can_be_the_scope() -> None:
 
 
 def test_the_vault_wide_checks_stay_out_of_the_chapter_mode(tmp_path: Path) -> None:
+    """The two remaining vault-wide findings speak about the vault as a whole.
+
+    A run narrowed to one chapter says nothing about whether the vault holds a
+    chapter or any content at all, so neither may enter its verdict.
+    """
     root = tmp_path / "vault"
     shutil.copytree(MINIMAL, root)
-    (root / "knowledge" / "state.md").unlink()
-    assert "W-NO-INVENTORY" in {code for code, _, _ in validate(root).warnings}
     report = validate(root, chapter=CHAPTER)
-    assert report.errors == [], report.errors
-    assert report.warnings == [], report.warnings
+    assert not set(VAULT_WIDE_CHECKS) & {code for code, _, _ in report.warnings}
 
 
 def test_a_placeholder_under_the_chapter_is_reported(tmp_path: Path) -> None:

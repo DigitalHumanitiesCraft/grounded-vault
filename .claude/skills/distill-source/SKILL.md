@@ -12,6 +12,6 @@ Follow `knowledge/operations.md` § Distill for the three-stage chain and the ca
 3. Run the fidelity check against each anchor, for publications including the quotation check recorded as `checked.quote`.
 4. Iterate: reformulate or discard a statement that fails, and check again until every remaining statement passes.
 5. Where the source is to be judged, write the optional Appraisal section afterwards, with no ID on any of its lines.
-6. Set `status: grounded`, register the distillate in `knowledge/state.md`, update the inventory row to `distilled`.
+6. Set `status: grounded` and regenerate the source inventory with `python tools/inventory.py . --write`.
 
-Run `python tools/validate.py .` before reporting the distillate as done, and treat every warning marked `*` as a finding.
+Run `python tools/validate.py .` before reporting the distillate as done, and treat every warning as a finding.

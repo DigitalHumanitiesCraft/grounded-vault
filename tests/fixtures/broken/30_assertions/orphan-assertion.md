@@ -4,7 +4,7 @@ topics: ["[[Broken]]"]
 status: grounded
 checked: {}
 grounding:
-  - "[[20_distillates/documents/note#^s1]]"
+  - "[[20_distillates/documents/note#^s5]]"
 contested-with: []
 created: 2026-07-11
 updated: 2026-07-11
@@ -18,6 +18,6 @@ Fixture: no MOC lists this assertion (defect: orphan assertion).
 
 ## Support
 
-- [[20_distillates/documents/note#^s1]] — fixture support.
+- [[20_distillates/documents/note#^s5]] — fixture support.
 
 ## Related

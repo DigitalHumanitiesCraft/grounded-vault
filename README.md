@@ -40,7 +40,7 @@ The remaining folders lie across the chain rather than inside it.
 - `knowledge/` is the governance layer, six Promptotyping documents holding terminology, parameters, schema, procedures, volatile state and the decision history.
 - `references/` holds the bibliographic records of citable-only sources as CSL JSON, one array per file, and is needed only while the source type `publication` is active.
 - `glossary/` holds one file per central technical term of the content, serving as definition, wikilink hub and tag keyword, and is filled as the need arises.
-- `tools/` holds the validator `validate.py`, the project page generator `build_docs.py`, and in `tools/analysis/` the deterministic scripts that data anchors re-run, one script per task.
+- `tools/` holds the validator `validate.py`, the source inventory generator `inventory.py`, the project page generator `build_docs.py`, and in `tools/analysis/` the deterministic scripts that data anchors re-run, one script per task.
 - `tests/` holds the validator's own pytest suite, with the fixture vaults it runs against in `tests/fixtures/`, a minimal conformant vault and a deliberately broken one that carries one specimen per finding class. A coverage test holds every finding code the validator emits against those specimens, so a check added without one fails the suite.
 - `docs/` holds the concept paper and the generated project page `index.html`, both describing the architecture rather than any instance, so an instance may delete the folder.
 - `.github/` holds the CI workflow `checks.yml`, which runs the validator and the test suite on every push and pull request.
@@ -66,7 +66,7 @@ Humans read the vault in Obsidian, following wikilinks from an output footnote d
 
 1. Create a repository from this template.
 2. Follow `SETUP.md` to set the project parameters (purpose, controlled topic set, active source types, output genre, language, verification role, check mechanisms, harness rules), or hand its first-session prompt to an agent.
-3. Run `python tools/validate.py .` on every change, and `python -m pytest tests` when you touch the validator. A run without errors is not the whole criterion; warnings say that a check found no subject, and the instance declares the ones it expects under `expected-warnings` in `knowledge/specification.md`.
+3. Run `python tools/validate.py .` on every change, and `python -m pytest tests` when you touch the validator. A run without errors is not the whole criterion; every warning is a finding, whether it says that a check found no subject or names a defect the schema does not make an error. Over the whole vault warnings never fail the run, and in chapter mode a warning inside the scope does.
 
 ## Licence
 

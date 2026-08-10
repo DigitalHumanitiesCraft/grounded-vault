@@ -35,6 +35,10 @@ succeeded, and what remains is hand work on the instance. Every instance tool
 then needs a run whose reported file count is greater than zero, because a tool
 still pointing at a folder that no longer exists walks an empty tree and reports
 zero problems, which reads like a passing run.
+
+The same pass reads the instance action layer, CLAUDE.md, and reports every
+backtick-quoted command line whose path the instance does not have, so that a
+rename the documentation did not follow surfaces before an agent runs it.
 """
 
 from __future__ import annotations
@@ -126,6 +130,7 @@ class StaleReference:
 class Summary:
     moved: list[tuple[str, str]] = field(default_factory=list)
     stale: list[StaleReference] = field(default_factory=list)
+    dead_commands: list[StaleReference] = field(default_factory=list)
     files_rewritten: int = 0
     paths_rewritten: int = 0
     headings_rewritten: int = 0
@@ -473,6 +478,52 @@ def stale_references(root: Path, mapping: Mapping) -> list[StaleReference]:
     return findings
 
 
+# The action layer documents the instance's commands in backticks. A rename that
+# the documentation did not follow leaves a command line naming a path that no
+# longer exists, and the next agent runs it, gets a file-not-found and has no way
+# to tell an outdated instruction from a broken vault.
+
+INSTANCE_ACTION_LAYER = "CLAUDE.md"
+BACKTICKED = re.compile(r"`([^`\n]+)`")
+# Placeholder and glob syntax stands for a path rather than naming one.
+UNRESOLVABLE = ("<", ">", "{", "}", "*", "://", "$")
+
+
+def _documented_paths(command: str) -> list[str]:
+    """The path-like tokens of one backtick-quoted command line."""
+    found = []
+    for raw in command.split():
+        token = raw.strip("\"'()[],;:").rstrip(".")
+        if token.startswith("-") or any(part in token for part in UNRESOLVABLE):
+            continue
+        if "/" in token or token.endswith(".py"):
+            found.append(token)
+    return found
+
+
+def dead_commands(root: Path) -> list[StaleReference]:
+    """Documented command lines whose paths the instance does not have."""
+    path = root / INSTANCE_ACTION_LAYER
+    if not path.is_file():
+        return []
+    findings: list[StaleReference] = []
+    for number, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        for match in BACKTICKED.finditer(line):
+            for token in _documented_paths(match.group(1)):
+                if not (root / token).exists():
+                    findings.append(
+                        StaleReference(
+                            path=INSTANCE_ACTION_LAYER,
+                            line=number,
+                            old=token,
+                            text=line.strip(),
+                        )
+                    )
+    return findings
+
+
 def migrate(root: Path, mapping: Mapping, vcs: str, only: str = "all") -> Summary:
     """Rename the folders, then rewrite the files that point into them.
 
@@ -488,6 +539,7 @@ def migrate(root: Path, mapping: Mapping, vcs: str, only: str = "all") -> Summar
         # Only meaningful once the content pass has run; after the folder phase
         # alone every content file still points at the old names.
         summary.stale = stale_references(root, mapping)
+        summary.dead_commands = dead_commands(root)
     return summary
 
 
@@ -635,6 +687,19 @@ def main() -> None:
             "Point every instance tool, workflow and config at the new folder names, "
             "then rerun each of them and check the file count it reports, "
             "because a run over zero files reports zero problems and is not a pass."
+        )
+
+    if summary.dead_commands:
+        print(
+            f"\nwarning: {len(summary.dead_commands)} command(s) documented in "
+            f"{INSTANCE_ACTION_LAYER} name a path the instance does not have:"
+        )
+        for ref in summary.dead_commands:
+            print(f"  {ref.path}:{ref.line}: {ref.old}: {ref.text}")
+        print(
+            "Correct the action layer, because an agent runs what it documents "
+            "and a path that is not there fails as a broken vault rather than as "
+            "an outdated instruction."
         )
 
 

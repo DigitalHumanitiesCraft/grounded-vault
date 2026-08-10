@@ -6,7 +6,7 @@ checked:
   validation: 2026-08-09
   machine-review: 2026-08-09
 grounding:
-  - "[[20_distillates/documents/note#^s1]]"
+  - "[[20_distillates/documents/note#^s3]]"
 contested-with: []
 created: 2026-08-09
 updated: 2026-08-09
@@ -20,6 +20,6 @@ Fixture: the assertion carries `validated` with both check dates recorded, while
 
 ## Support
 
-- [[20_distillates/documents/note#^s1]] — fixture support that has not been reviewed itself.
+- [[20_distillates/documents/note#^s3]] — fixture support that has not been reviewed itself.
 
 ## Related

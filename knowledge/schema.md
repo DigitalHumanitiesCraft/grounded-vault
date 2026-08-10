@@ -30,7 +30,7 @@ This document defines the rules of the vault. It sets out the layer model, the c
 | Assertions | `30_assertions/` | atomic cross-source statements, topic maps | grounding anchors into distillate statements |
 | Output | `40_output/` | one file per chapter | footnote anchors into assertions, posits marked |
 
-Every Markdown representation and every distillate is also listed in an inventory register, `knowledge/state.md` by default, and the validator raises `E-INVENTORY` on one that is not. Without the register row a document is invisible to every check and every overview that reads a register, so it can be complete and conformant and still be missed. An instance that keeps more than one register declares them in `INVENTORY_REGISTERS` in `tools/validate.py`.
+The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand. The files are the one record of what the vault holds, so there is no second bookkeeping that could drift away from them.
 
 The layers carry these definitions. A **source** is the original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it. A **Markdown representation** is the uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. A **distillate** is the set of single statements extracted from one source, each anchored to the passage of the representation it was taken from. An **assertion** is a single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement. The **output** is the final output of the vault, one or more documents such as a report, proposal, thesis or paper; its document type is the chapter, and a **chapter** is an output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
 
@@ -303,7 +303,7 @@ The body gives the definition in one or two sentences with a grounding anchor wh
 
 ### 7. Chapter
 
-An output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit. One file per chapter in `40_output/`, continuous prose in the project's working language and style sheet.
+An output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit. One file per chapter in `40_output/`, continuous prose in the project's working language and style sheet. The type name `chapter` denotes the acceptance-capable unit of the output, one file that is checked and accepted on its own; in an article genre it corresponds to a section.
 
 ```yaml
 ---

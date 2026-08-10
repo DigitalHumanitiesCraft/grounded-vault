@@ -5,15 +5,15 @@ conformance per document type, anchor resolution, layer direction of anchors,
 uniqueness of block and statement IDs, statement IDs, quotation recording,
 computation declarations, MOC reachability, bidirectional contested links,
 chapter mirror and footnote keywords, status discipline including the ladder
-against the anchors a document rests on, the inventory obligation of
-representations and distillates, a production chain that holds no document at
-all, and checks older than the content they judge. The rules are defined
-in knowledge/schema.md; this script only enforces them.
+against the anchors a document rests on, assertions that rest on the same
+anchors as another, footnote aliases that rename the assertion they cite, a
+production chain that holds no document at all, and checks older than the
+content they judge. The rules are defined in knowledge/schema.md; this script
+only enforces them.
 
-Warnings report that a check found nothing to check rather than passing
-silently. An instance declares the warnings it expects under `expected-warnings`
-in the frontmatter of knowledge/specification.md; every other warning is marked
-unexpected, and a declaration that no longer fires is reported in turn.
+Warnings report that a check found nothing to check, or found something that
+needs a human decision rather than a verdict. They are always printed and
+counted.
 
 Usage:
     python tools/validate.py <vault-root> [--no-computations]
@@ -27,7 +27,7 @@ rest of the vault does not enter its verdict. The checks that are decidable only
 over the whole vault stay out of that mode and are named in its closing lines.
 
 Exit code 0 when no errors were found; warnings alone do not fail the run. In
-chapter mode an undeclared warning fails the run as well, because there the run
+chapter mode any warning in scope fails the run as well, because there the run
 answers whether this chapter is ready for acceptance.
 """
 
@@ -63,10 +63,6 @@ TYPE_FOLDER = {
     "glossary": "glossary",
 }
 
-INVENTORY_REGISTERS = ("knowledge/state.md",)
-INVENTORIED_FOLDERS = ("10_markdown", "20_distillates")
-SPECIFICATION = "knowledge/specification.md"
-
 REPRESENTATION_LAYER = "10_markdown/"
 DISTILLATE_LAYER = "20_distillates/"
 ASSERTION_LAYER = "30_assertions/"
@@ -85,13 +81,7 @@ LAYER_BELOW = {
     "assertion": DISTILLATE_LAYER,
     "distillate": REPRESENTATION_LAYER,
 }
-VAULT_WIDE_CHECKS = (
-    "E-INVENTORY",
-    "W-EMPTY",
-    "W-NO-INVENTORY",
-    "W-NO-OUTPUT",
-    "W-STALE-EXPECTATION",
-)
+VAULT_WIDE_CHECKS = ("W-EMPTY", "W-NO-OUTPUT")
 
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
@@ -147,6 +137,8 @@ REQUIRED_FIELDS = {
 }
 
 WIKILINK = re.compile(r"\[\[([^\]#|]+?)(?:#\^([A-Za-z0-9-]+))?(?:\|[^\]]*)?\]\]")
+ALIASED_LINK = re.compile(r"\[\[([^\]#|]+?)(?:#\^[A-Za-z0-9-]+)?\|([^\]]*)\]\]")
+H1 = re.compile(r"^#\s+(.*)$", re.MULTILINE)
 BLOCK_ID = re.compile(r"\^([A-Za-z0-9-]+)\s*$")
 FOOTNOTE_DEF = re.compile(r"^\[\^([A-Za-z0-9]+)\]:\s*(.*)$")
 FOOTNOTE_REF = re.compile(r"\[\^([A-Za-z0-9]+)\]")
@@ -167,7 +159,6 @@ class Doc:
 class Report:
     errors: list[tuple[str, str, str]] = field(default_factory=list)
     warnings: list[tuple[str, str, str]] = field(default_factory=list)
-    expected_warnings: frozenset[str] = frozenset()
 
     def error(self, code: str, rel: str, message: str) -> None:
         self.errors.append((code, rel, message))
@@ -177,9 +168,6 @@ class Report:
 
     def codes(self) -> set[str]:
         return {code for code, _, _ in self.errors}
-
-    def unexpected_warnings(self) -> list[tuple[str, str, str]]:
-        return [w for w in self.warnings if w[0] not in self.expected_warnings]
 
 
 def _parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
@@ -712,6 +700,7 @@ def _check_chapter(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
             f"frontmatter posits {doc.fm.get('posits')} != {posit_count} posit footnotes",
         )
     _check_contested_coverage(doc, docs, grounded_assertions, report)
+    _check_chapter_aliases(doc, defs, docs, report)
 
     paragraph = []
     for line in [*body_lines, ""]:
@@ -741,49 +730,70 @@ def _check_moc_reachability(
 _RUN_COMPUTATIONS = False
 
 
-def _read_expected_warnings(root: Path) -> frozenset[str]:
-    """The warning codes this instance has declared as its known baseline."""
-    path = root / SPECIFICATION
-    if not path.is_file():
-        return frozenset()
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        return frozenset()
-    end = text.find("\n---", 4)
-    fm = yaml.safe_load(text[4 : end if end > 0 else None]) or {}
-    declared = fm.get("expected-warnings") or []
-    if isinstance(declared, str):
-        declared = [part.strip() for part in declared.split(",")]
-    return frozenset(str(code).strip() for code in declared if str(code).strip())
+def _grounding_set(doc: Doc) -> frozenset[tuple[str, str | None]]:
+    return frozenset(
+        (target, block)
+        for raw in doc.fm.get("grounding") or []
+        for target, block in _link_targets(str(raw))
+    )
 
 
-def _check_inventory(root: Path, docs: dict[str, Doc], report: Report) -> None:
-    """Every representation and distillate is named in an inventory register.
+def _check_duplicate_grounding(docs: dict[str, Doc], report: Report) -> None:
+    """Two assertions on the same anchors say one thing twice.
 
-    A document listed in no register is invisible to every overview and every
-    check that reads one, so it can be complete and conformant and still be
-    missed. An instance may keep more than one register; any of them counts as
-    proof of record.
+    Where one anchor set contains the other, the narrower assertion carries
+    nothing its counterpart does not already carry, and the two are either the
+    same statement or one of them reaches past its evidence. Which of the two it
+    is, is a decision for a person, so the finding is a warning. Comparison is
+    over the exact anchor sets; an assertion without any anchor is left out,
+    because the empty set is contained in every other and E-GROUNDING already
+    speaks about it.
     """
-    registers = [root / name for name in INVENTORY_REGISTERS if (root / name).is_file()]
-    if not registers:
-        report.warn(
-            "W-NO-INVENTORY",
-            "knowledge/",
-            "no inventory register found; the inventory obligation was not checked",
-        )
-        return
-    listed = {
-        target
-        for path in registers
-        for target, _ in _link_targets(path.read_text(encoding="utf-8"))
-    }
-    for doc in docs.values():
-        if doc.rel.startswith(INVENTORIED_FOLDERS) and doc.rel not in listed:
-            report.error(
-                "E-INVENTORY",
+    assertions = sorted(
+        (
+            (doc.rel, anchors)
+            for doc in docs.values()
+            if doc.fm.get("type") == "assertion" and (anchors := _grounding_set(doc))
+        ),
+    )
+    for index, (rel, anchors) in enumerate(assertions):
+        for other_rel, other in assertions[index + 1 :]:
+            if anchors == other:
+                narrow, wide = rel, other_rel
+                relation = "rests on the same grounding anchors as"
+            elif anchors < other or other < anchors:
+                narrow, wide = (rel, other_rel) if anchors < other else (other_rel, rel)
+                relation = "rests on grounding anchors contained in those of"
+            else:
+                continue
+            report.warn("W-DUPLICATE-GROUNDING", narrow, f"{relation} {wide}")
+
+
+def _check_chapter_aliases(
+    doc: Doc, defs: dict[str, str], docs: dict[str, Doc], report: Report
+) -> None:
+    """A footnote alias is read as the title of what it cites.
+
+    Where the alias differs from the H1 of the assertion, the chapter tells the
+    reader something the anchor does not say, and the drift is invisible in the
+    rendered text.
+    """
+    for key, text in defs.items():
+        if not text.startswith("Grounded in"):
+            continue
+        for match in ALIASED_LINK.finditer(text):
+            target, alias = match.group(1).strip(), match.group(2).strip()
+            other = docs.get(target)
+            if other is None:
+                continue  # E-ANCHOR speaks about the target that does not exist
+            title = H1.search(other.body)
+            if title is None or title.group(1).strip() == alias:
+                continue
+            report.warn(
+                "W-ALIAS",
                 doc.rel,
-                f"named in no inventory register ({', '.join(INVENTORY_REGISTERS)})",
+                f"footnote [^{key}] renames {target} as {alias!r}, "
+                f"whose title reads {title.group(1).strip()!r}",
             )
 
 
@@ -814,17 +824,6 @@ def _check_output_present(docs: dict[str, Doc], report: Report) -> None:
             "W-NO-OUTPUT",
             "40_output/",
             "no chapter document; the footnote contract does not take effect in this instance",
-        )
-
-
-def _check_expectations(report: Report) -> None:
-    """A declared warning that no longer fires is a stale declaration."""
-    raised = {code for code, _, _ in report.warnings}
-    for code in sorted(report.expected_warnings - raised):
-        report.warn(
-            "W-STALE-EXPECTATION",
-            SPECIFICATION,
-            f"{code} is declared as expected but was not raised",
         )
 
 
@@ -877,7 +876,7 @@ def validate(
 ) -> Report:
     global _RUN_COMPUTATIONS
     _RUN_COMPUTATIONS = run_computations
-    report = Report(expected_warnings=_read_expected_warnings(root))
+    report = Report()
     docs: dict[str, Doc] = {}
     for folder in CONTENT_FOLDERS:
         for path in sorted((root / folder).rglob("*.md")):
@@ -926,12 +925,11 @@ def validate(
             if block is not None or any(target.startswith(f) for f in CONTENT_FOLDERS):
                 _resolve_anchor(target, block, docs, root, doc, report)
     _check_moc_reachability(docs, report, scope)
+    _check_duplicate_grounding(scope, report)
     if chapter is None:
-        _check_inventory(root, docs, report)
         _check_placeholders(root, report)
         _check_chain_populated(docs, report)
         _check_output_present(docs, report)
-        _check_expectations(report)
     else:
         _check_placeholders(root, report, [doc.path for doc in scope.values()])
     return report
@@ -968,16 +966,11 @@ def main() -> None:
     for code, rel, message in report.errors:
         print(f"ERROR {code} {rel}: {message}", file=sys.stderr)
     for code, rel, message in report.warnings:
-        mark = " " if code in report.expected_warnings else "*"
-        print(f"WARN{mark} {code} {rel}: {message}", file=sys.stderr)
-    undeclared = len(report.unexpected_warnings())
-    summary = f"{len(report.errors)} error(s), {len(report.warnings)} warning(s)"
-    if report.expected_warnings:
-        summary += f", {undeclared} of them undeclared (marked *)"
-    print(summary)
+        print(f"WARN {code} {rel}: {message}", file=sys.stderr)
+    print(f"{len(report.errors)} error(s), {len(report.warnings)} warning(s)")
     if args.chapter:
         print(f"not decidable per chapter, left out: {', '.join(VAULT_WIDE_CHECKS)}")
-        ready = not report.errors and not undeclared
+        ready = not report.errors and not report.warnings
         verdict = "READY" if ready else "NOT READY"
         print(f"CHAPTER {verdict} {args.chapter}")
         sys.exit(0 if ready else 1)

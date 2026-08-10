@@ -13,4 +13,4 @@ Follow `knowledge/operations.md` § Build assertions for the synthesis procedure
 4. Register each assertion in its topic map, and put what the sources leave open under the map's open questions.
 5. Run machine review over every assertion-statement pair, and rework whatever falls below *fully supports*.
 
-Run `python tools/validate.py .` before reporting the assertions as done, and treat every warning marked `*` as a finding.
+Run `python tools/validate.py .` before reporting the assertions as done, and treat every warning as a finding.

@@ -27,7 +27,7 @@ Read in this order: `knowledge/index.md` (terminology), `knowledge/state.md` (wh
 - A Markdown representation is never edited after ingest; a revised source enters as a new file with a date-suffixed slug.
 - A status is set only after its check ran; record the date in `checked`. Never set `verified`; that is the human verification role's alone.
 - Own conclusions become posits in the output, never assertions.
-- Run `python tools/validate.py .` before reporting any production task as done. Zero errors alone is not the criterion; a warning marked `*` is undeclared and is a finding, not background noise.
+- Run `python tools/validate.py .` before reporting any production task as done. Zero errors alone is not the criterion; every warning is a finding to act on.
 - Volatile state goes to `knowledge/state.md`, decisions to `knowledge/journal.md` (append-only).
 - Working language of content: {{LANGUAGE}}. This action layer and `knowledge/` stay English.
 

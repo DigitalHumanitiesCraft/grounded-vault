@@ -321,6 +321,45 @@ def test_the_folder_phase_alone_reports_nothing(tmp_path):
     assert summary.stale == []
 
 
+def test_a_documented_command_naming_a_missing_path_is_reported(tmp_path):
+    """The failure the check exists for: the action layer kept the old command."""
+    summary = run_with(
+        tmp_path,
+        {
+            "CLAUDE.md": "Run `python tools/lint.py 10_markdown/` before reporting.\n",
+        },
+    )
+    assert [(ref.path, ref.line, ref.old) for ref in summary.dead_commands] == [
+        ("CLAUDE.md", 1, "tools/lint.py")
+    ]
+
+
+def test_a_documented_command_on_existing_paths_is_not_reported(tmp_path):
+    summary = run_with(
+        tmp_path,
+        {
+            "CLAUDE.md": (
+                "Run `python tools/validate.py .` and read `knowledge/state.md`.\n"
+                "Distillates live in `20_distillates/<source-type>s/`.\n"
+            ),
+            "tools/validate.py": "",
+            "knowledge/state.md": "",
+        },
+    )
+    assert summary.dead_commands == []
+
+
+def test_an_instance_without_an_action_layer_reports_nothing(tmp_path):
+    assert run_with(tmp_path, {}).dead_commands == []
+
+
+def test_the_folder_phase_alone_reports_no_dead_command(tmp_path):
+    summary = run_with(
+        tmp_path, {"CLAUDE.md": "Run `python tools/gone.py`.\n"}, only="folders"
+    )
+    assert summary.dead_commands == []
+
+
 def test_migration_is_idempotent(tmp_path):
     root = run(tmp_path)
     before = {p: p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()}

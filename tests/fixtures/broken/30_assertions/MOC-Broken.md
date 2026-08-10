@@ -16,3 +16,5 @@ Fixture topic map. The orphan assertion is deliberately missing here.
 - [[30_assertions/wrong-layer-grounding]] — layer violation fixture.
 - [[30_assertions/empty-grounding]] — empty grounding fixture.
 - [[30_assertions/ladder-jump]] — status ladder fixture.
+- [[30_assertions/duplicate-grounding-a]] — duplicate grounding fixture.
+- [[30_assertions/duplicate-grounding-b]] — its counterpart on the same anchors.
