@@ -10,6 +10,7 @@ Follow `knowledge/operations.md` § Build assertions for the synthesis procedure
 1. Read every distillate the topic map registers, and group the statements that concern the same matter.
 2. Write one atomic assertion per group, and list every supporting statement ID in `grounding`.
 3. Split an irreconcilable group into two `contested` assertions linked in both directions; note a conclusion without support as a posit candidate, and read the appraisal sections of the distillates as posit candidates rather than as support.
+4. Check every group for statements in which the source speaks about itself, about its own priority, reach or achievement. Such a statement carries an assertion only with the speaker named, or together with a second and independent source. The coverage relation holds in these cases, so no check will stop you.
 4. Register each assertion in its topic map, and put what the sources leave open under the map's open questions.
 5. Run machine review over every assertion-statement pair, and rework whatever falls below *fully supports*.
 
