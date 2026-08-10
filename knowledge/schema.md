@@ -36,6 +36,8 @@ The layers carry these definitions. A **source** is the original file exactly as
 
 Two rules constrain the chain. Anchors are minted only at the layer they belong to; a Markdown representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the output binds to assertions, assertions bind to distillate statements, distillates bind to the blocks of the Markdown representation.
 
+The chain fastens onto one property of its subject matter. Whether a passage covers a statement is settled by a fast oracle, a resolver that answers in milliseconds whether the anchor exists and what stands at it. Qualities without such an oracle stay unrewarded wherever checking has to scale, which is why the maintainability of code goes unscored in machine learning and shows its cost only in weeks and months. Verification here is therefore fastened to the one relation that is cheap to test, and everything the relation cannot settle is handed to the instances defined in [[knowledge/operations]].
+
 ## Controlled vocabularies
 
 - `type`: `representation` | `distillate` | `assertion` | `moc` | `glossary` | `chapter`. The value `representation` is the machine-side short form for Markdown representation; the prose of this vault uses the full term.
@@ -215,6 +217,8 @@ Every core statement carries exactly one grounding anchor into its source and en
 
 The **Appraisal** section is optional and holds the judgment of the source, covering the standing of its venue and its review, the strengths and limits of its method, its relevance to the output of this vault, and the position the vault takes towards it, as far as each applies to the source at hand. Saying what a source is worth is a different speech act from saying what it says, and the section separates the two so that a reader can tell evidence from opinion at a glance. The appraisal is the vault's own judgment and therefore a posit, so it carries no grounding obligation and no anchor of its own. It also mints no IDs, because every ID in a distillate is citable from the assertion layer; validation raises `E-STATEMENT` on an ID minted anywhere but in the core statements, which is what keeps an appraisal from ever becoming grounding. Where an appraisal shapes the output, it enters as a posit footnote there.
 
+The **Open questions** section holds questions and no findings. A finding that could carry an assertion belongs in the core statements with an anchor and an ID of its own, and it is lifted there rather than cited from where it sits. The section mints no IDs for the same reason the appraisal mints none, and that is what makes it the one place in the chain where unanchored material may rest, including whatever a perspective pass produced before the sources were chosen.
+
 ### 4. Assertion
 
 A single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement. One file per assertion in `30_assertions/`. This is the layer where source types converge.
@@ -252,6 +256,8 @@ updated: 2026-01-01
 ```
 
 A conclusion without source support never becomes an assertion; it enters the output as a posit. Assertions that cannot be reconciled are both set to `contested` and linked to each other in `contested-with`.
+
+Where a source speaks about itself, about its own priority, reach or achievement, its passage covers the claim and never the matter the claim is about. The distillate holds such a statement as what the source asserts. An assertion built from it either carries the speaker along, in the form that the source claims something, or it rests on a second and independent source. No check catches this overreach on its own, because the coverage relation holds and both validation and machine review test exactly that relation.
 
 ### 5. Topic map (MOC)
 
