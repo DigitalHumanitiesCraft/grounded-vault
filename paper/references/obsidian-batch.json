@@ -1,0 +1,38 @@
+[
+  {
+    "id": "obsidianhelpdatastorage",
+    "type": "webpage",
+    "title": "How Obsidian stores data",
+    "author": [{ "literal": "Obsidian" }],
+    "container-title": "Obsidian Help",
+    "URL": "https://obsidian.md/help/data-storage",
+    "accessed": { "date-parts": [[2026, 8, 10]] }
+  },
+  {
+    "id": "obsidianhelplinks",
+    "type": "webpage",
+    "title": "Internal links",
+    "author": [{ "literal": "Obsidian" }],
+    "container-title": "Obsidian Help",
+    "URL": "https://obsidian.md/help/links",
+    "accessed": { "date-parts": [[2026, 8, 10]] }
+  },
+  {
+    "id": "obsidianhelpofm",
+    "type": "webpage",
+    "title": "Obsidian Flavored Markdown",
+    "author": [{ "literal": "Obsidian" }],
+    "container-title": "Obsidian Help",
+    "URL": "https://obsidian.md/help/obsidian-flavored-markdown",
+    "accessed": { "date-parts": [[2026, 8, 10]] }
+  },
+  {
+    "id": "obsidiandocsmetadatacache",
+    "type": "webpage",
+    "title": "MetadataCache",
+    "author": [{ "literal": "Obsidian" }],
+    "container-title": "Obsidian Developer Documentation",
+    "URL": "https://docs.obsidian.md/Reference/TypeScript+API/MetadataCache",
+    "accessed": { "date-parts": [[2026, 8, 10]] }
+  }
+]

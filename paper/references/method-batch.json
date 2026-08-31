@@ -1,0 +1,12 @@
+[
+  {
+    "id": "anthropic2025context",
+    "type": "post-weblog",
+    "title": "Effective context engineering for AI agents",
+    "author": [{ "literal": "Anthropic" }],
+    "issued": { "date-parts": [[2025, 9, 29]] },
+    "container-title": "Anthropic Engineering",
+    "URL": "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents",
+    "accessed": { "date-parts": [[2026, 8, 10]] }
+  }
+]

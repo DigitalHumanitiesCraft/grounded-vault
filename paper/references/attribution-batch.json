@@ -1,0 +1,28 @@
+[
+  {
+    "id": "rashkin2023attribution",
+    "type": "article-journal",
+    "title": "Measuring Attribution in Natural Language Generation Models",
+    "author": [
+      { "family": "Rashkin", "given": "Hannah" },
+      { "family": "Nikolaev", "given": "Vitaly" },
+      { "family": "Lamm", "given": "Matthew" },
+      { "family": "Aroyo", "given": "Lora" },
+      { "family": "Collins", "given": "Michael" },
+      { "family": "Das", "given": "Dipanjan" },
+      { "family": "Petrov", "given": "Slav" },
+      { "family": "Singh Tomar", "given": "Gaurav" },
+      { "family": "Turc", "given": "Iulia" },
+      { "family": "Reitter", "given": "David" }
+    ],
+    "issued": { "date-parts": [[2023, 12]] },
+    "container-title": "Computational Linguistics",
+    "volume": "49",
+    "issue": "4",
+    "page": "777-840",
+    "publisher": "MIT Press",
+    "DOI": "10.1162/coli_a_00486",
+    "URL": "https://aclanthology.org/2023.cl-4.2/",
+    "license": "CC BY-NC-ND 4.0"
+  }
+]

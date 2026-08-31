@@ -1,0 +1,178 @@
+layer,round,document,anchor,verdict,category
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s10,fully supports,
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s11,fully supports,
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s12,fully supports,
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s13,fully supports,
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s21,fully supports,
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s22,fully supports,
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s23,fully supports,
+assertion,1,prov-models-entities-activities-agents,prov-dm-20130430#^s24,fully supports,
+assertion,1,prov-validity-is-internal-consistency,prov-constraints-20130430#^s4,fully supports,
+assertion,1,prov-validity-is-internal-consistency,prov-constraints-20130430#^s5,fully supports,
+assertion,1,prov-validity-is-internal-consistency,prov-constraints-20130430#^s17,fully supports,
+assertion,1,prov-validity-is-internal-consistency,prov-dm-20130430#^s2,partially supports,scope mismatch
+assertion,1,prov-derivation-conditions-unspecified,prov-dm-20130430#^s17,fully supports,
+assertion,1,prov-derivation-conditions-unspecified,prov-dm-20130430#^s18,fully supports,
+assertion,1,prov-derivation-conditions-unspecified,prov-dm-20130430#^s19,partially supports,producer inference
+assertion,1,critical-apparatus-binds-reading-to-witnesses,tei-p5-critical-apparatus#^s12,fully supports,
+assertion,1,critical-apparatus-binds-reading-to-witnesses,tei-p5-critical-apparatus#^s16,fully supports,
+assertion,1,critical-apparatus-binds-reading-to-witnesses,tei-p5-critical-apparatus#^s17,fully supports,
+assertion,1,critical-apparatus-binds-reading-to-witnesses,tei-p5-critical-apparatus#^s22,partially supports,modality drift
+assertion,1,critical-apparatus-binds-reading-to-witnesses,tei-p5-critical-apparatus#^s23,overreaches,modality drift
+assertion,1,agentic-context-engineering-as-design-task,anthropic-2025-context-engineering#^s2,fully supports,
+assertion,1,agentic-context-engineering-as-design-task,anthropic-2025-context-engineering#^s4,fully supports,
+assertion,1,agentic-context-engineering-as-design-task,anthropic-2025-context-engineering#^s6,fully supports,
+assertion,1,agentic-context-engineering-as-design-task,liu-2024-lost-in-the-middle#^s1,partially supports,unanchored detail
+assertion,1,agentic-context-engineering-as-design-task,liu-2024-lost-in-the-middle#^s17,fully supports,
+assertion,1,agentic-promptotyping-knowledge-base-artifact,pollin-2025-dissertation-ch74#^s3,partially supports,unanchored detail
+assertion,1,agentic-promptotyping-knowledge-base-artifact,promptotyping-specification-2026-07-31#^s4,fully supports,
+assertion,1,agentic-promptotyping-knowledge-base-artifact,promptotyping-specification-2026-07-31#^s5,fully supports,
+assertion,1,agentic-promptotyping-knowledge-base-artifact,promptotyping-specification-2026-07-31#^s6,fully supports,
+assertion,1,agentic-promptotyping-knowledge-base-artifact,promptotyping-specification-2026-07-31#^s11,fully supports,
+assertion,1,card-index-organizes-knowledge-as-addressable-linked-notes,schmidt-2018-luhmann-card-index#^s3,fully supports,
+assertion,1,card-index-organizes-knowledge-as-addressable-linked-notes,schmidt-2018-luhmann-card-index#^s5,partially supports,unanchored detail
+assertion,1,card-index-organizes-knowledge-as-addressable-linked-notes,schmidt-2018-luhmann-card-index#^s7,fully supports,
+assertion,1,card-index-organizes-knowledge-as-addressable-linked-notes,schmidt-2018-luhmann-card-index#^s12,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,loc-recommended-formats-2025-2026#^s1,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,loc-recommended-formats-2025-2026#^s8,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,loc-recommended-formats-2025-2026#^s9,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,tna-selecting-file-formats-2008#^s4,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,tna-selecting-file-formats-2008#^s8,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,tna-selecting-file-formats-2008#^s9,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,tna-selecting-file-formats-2008#^s15,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,dpc-handbook-file-formats-and-standards#^s9,fully supports,
+assertion,1,plain-text-meets-archival-format-criteria,dpc-handbook-file-formats-and-standards#^s10,fully supports,
+assertion,1,obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state,obsidian-help-data-storage#^s1,fully supports,
+assertion,1,obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state,obsidian-help-data-storage#^s2,fully supports,
+assertion,1,obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state,obsidian-help-data-storage#^s3,fully supports,
+assertion,1,obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state,obsidian-help-data-storage#^s6,fully supports,
+assertion,1,obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state,obsidian-help-data-storage#^s7,fully supports,
+assertion,1,obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state,obsidian-help-data-storage#^s9,partially supports,producer inference
+assertion,1,block-references-address-blocks-as-literal-text-markers,obsidian-help-internal-links#^s9,fully supports,
+assertion,1,block-references-address-blocks-as-literal-text-markers,obsidian-help-internal-links#^s10,fully supports,
+assertion,1,block-references-address-blocks-as-literal-text-markers,obsidian-help-internal-links#^s11,fully supports,
+assertion,1,block-references-address-blocks-as-literal-text-markers,obsidian-help-internal-links#^s12,fully supports,
+assertion,1,block-references-address-blocks-as-literal-text-markers,obsidian-help-internal-links#^s14,fully supports,
+assertion,1,block-references-address-blocks-as-literal-text-markers,obsidian-help-internal-links#^s15,fully supports,
+assertion,1,obsidian-link-registers-map-files-to-files,obsidian-docs-metadatacache#^s2,fully supports,
+assertion,1,obsidian-link-registers-map-files-to-files,obsidian-docs-metadatacache#^s3,fully supports,
+assertion,1,obsidian-link-registers-map-files-to-files,obsidian-docs-metadatacache#^s4,fully supports,
+assertion,1,obsidian-link-registers-map-files-to-files,obsidian-docs-metadatacache#^s5,fully supports,
+assertion,1,block-references-are-specific-to-obsidian,obsidian-help-internal-links#^s16,fully supports,
+assertion,1,block-references-are-specific-to-obsidian,obsidian-help-obsidian-flavored-markdown#^s5,partially supports,producer inference
+assertion,1,attribution-is-separate-from-correctness,rashkin-2023-measuring-attribution#^s2,partially supports,scope mismatch
+assertion,1,attribution-is-separate-from-correctness,rashkin-2023-measuring-attribution#^s8,fully supports,
+assertion,1,attribution-is-separate-from-correctness,gao-2023-llms-generate-text-with-citations#^s7,partially supports,scope mismatch
+assertion,1,attribution-is-separate-from-correctness,gao-2023-llms-generate-text-with-citations#^s8,fully supports,
+assertion,1,generated-citations-often-fail-to-support-their-sentences,liu-2023-evaluating-verifiability-generative-search-engines#^s2,partially supports,unanchored detail
+assertion,1,generated-citations-often-fail-to-support-their-sentences,liu-2023-evaluating-verifiability-generative-search-engines#^s14,partially supports,overgeneralization
+assertion,1,source-binding-lowers-unsupported-citation-without-eliminating-it,fabricated-citations-chatgpt-2023#^s2,fully supports,
+assertion,1,source-binding-lowers-unsupported-citation-without-eliminating-it,fabricated-citations-chatgpt-2023#^s3,fully supports,
+assertion,1,source-binding-lowers-unsupported-citation-without-eliminating-it,legal-ai-research-tools-hallucination-2025#^s1,partially supports,unanchored detail
+assertion,1,resolvable-citation-without-support-is-a-distinct-error-class,legal-ai-research-tools-hallucination-2025#^s4,fully supports,
+assertion,1,resolvable-citation-without-support-is-a-distinct-error-class,legal-ai-research-tools-hallucination-2025#^s5,fully supports,
+assertion,1,resolvable-citation-without-support-is-a-distinct-error-class,legal-ai-research-tools-hallucination-2025#^s6,fully supports,
+assertion,1,resolvable-citation-without-support-is-a-distinct-error-class,liu-2023-evaluating-verifiability-generative-search-engines#^s2,overreaches,overgeneralization
+assertion,1,llm-evaluators-favor-their-own-generations,llm-evaluators-self-preference-2024#^s1,fully supports,
+assertion,1,llm-evaluators-favor-their-own-generations,llm-evaluators-self-preference-2024#^s4,fully supports,
+assertion,1,llm-evaluators-favor-their-own-generations,llm-evaluators-self-preference-2024#^s7,fully supports,
+assertion,1,cross-family-evaluator-panels-reduce-intra-model-bias,llm-jury-panel-evaluation-2024#^s1,fully supports,
+assertion,1,cross-family-evaluator-panels-reduce-intra-model-bias,llm-jury-panel-evaluation-2024#^s3,fully supports,
+assertion,1,cross-family-evaluator-panels-reduce-intra-model-bias,llm-jury-panel-evaluation-2024#^s4,fully supports,
+assertion,1,historical-method-separates-origin-check-from-credibility,langlois-seignobos-1898-introduction#^s1,fully supports,
+assertion,1,historical-method-separates-origin-check-from-credibility,langlois-seignobos-1898-introduction#^s2,fully supports,
+assertion,1,historical-method-separates-origin-check-from-credibility,bernheim-1908-lehrbuch-historische-methode#^s2,fully supports,
+assertion,1,historical-method-separates-origin-check-from-credibility,bernheim-1908-lehrbuch-historische-methode#^s7,fully supports,
+assertion,1,llm-summaries-broaden-the-scope-of-findings,generalization-bias-llm-summarization-2025#^s2,fully supports,
+assertion,1,llm-summaries-broaden-the-scope-of-findings,generalization-bias-llm-summarization-2025#^s3,partially supports,distributive reading
+assertion,1,llm-summaries-broaden-the-scope-of-findings,generalization-bias-llm-summarization-2025#^s5,fully supports,
+assertion,2,source-binding-lowers-unsupported-citation-without-eliminating-it,legal-ai-research-tools-hallucination-2025#^s1,partially supports,unanchored evaluation
+assertion,2,resolvable-citation-without-support-is-a-distinct-error-class,liu-2023-evaluating-verifiability-generative-search-engines#^s2,partially supports,unanchored detail
+distillate,1,prov-dm-20130430,^s13,partially supports,modality drift
+distillate,1,prov-dm-20130430,^s26,partially supports,scope mismatch
+distillate,1,prov-constraints-20130430,^s11,partially supports,scope mismatch
+distillate,1,prov-constraints-20130430,^s12,partially supports,scope mismatch
+distillate,1,tei-p5-critical-apparatus,^s8,partially supports,modality drift
+distillate,1,tei-p5-critical-apparatus,^s15,partially supports,modality drift
+distillate,1,tei-p5-critical-apparatus,^s16,partially supports,modality drift
+distillate,1,tei-p5-critical-apparatus,^s36,partially supports,modality drift
+distillate,1,tei-p5-critical-apparatus,^s39,partially supports,modality drift
+distillate,1,tei-p5-critical-apparatus,^s41,partially supports,modality drift
+distillate,1,rashkin-2023-measuring-attribution,^s1,partially supports,unanchored detail
+distillate,1,rashkin-2023-measuring-attribution,^s3,partially supports,modality drift
+distillate,1,rashkin-2023-measuring-attribution,^s4,partially supports,unanchored detail
+distillate,1,rashkin-2023-measuring-attribution,^s5,partially supports,unanchored detail
+distillate,1,rashkin-2023-measuring-attribution,^s9,partially supports,scope mismatch
+distillate,1,rashkin-2023-measuring-attribution,^s10,partially supports,scope mismatch
+distillate,1,rashkin-2023-measuring-attribution,^s12,partially supports,unanchored detail
+distillate,1,rashkin-2023-measuring-attribution,^s15,partially supports,unanchored detail
+distillate,1,gao-2023-llms-generate-text-with-citations,^s3,partially supports,modality drift
+distillate,1,gao-2023-llms-generate-text-with-citations,^s5,partially supports,unanchored detail
+distillate,1,gao-2023-llms-generate-text-with-citations,^s17,partially supports,modality drift
+distillate,1,liu-2023-evaluating-verifiability-generative-search-engines,^s2,partially supports,unanchored detail
+distillate,1,liu-2023-evaluating-verifiability-generative-search-engines,^s15,partially supports,modality drift
+distillate,1,liu-2023-evaluating-verifiability-generative-search-engines,^s16,partially supports,modality drift
+distillate,1,liu-2024-lost-in-the-middle,^s1,partially supports,modality drift
+distillate,1,liu-2024-lost-in-the-middle,^s4,partially supports,modality drift
+distillate,1,liu-2024-lost-in-the-middle,^s8,partially supports,neighbouring block
+distillate,1,liu-2024-lost-in-the-middle,^s11,partially supports,modality drift
+distillate,1,liu-2024-lost-in-the-middle,^s12,partially supports,neighbouring block
+distillate,1,liu-2024-lost-in-the-middle,^s16,partially supports,neighbouring block
+distillate,1,generalization-bias-llm-summarization-2025,^s7,partially supports,scope mismatch
+distillate,1,generalization-bias-llm-summarization-2025,^s8,partially supports,scope mismatch
+distillate,1,legal-ai-research-tools-hallucination-2025,^s6,partially supports,modality drift
+distillate,1,llm-evaluators-self-preference-2024,^s8,partially supports,unanchored detail
+distillate,1,llm-evaluators-self-preference-2024,^s9,partially supports,unanchored detail
+distillate,1,llm-jury-panel-evaluation-2024,^s2,partially supports,scope mismatch
+distillate,1,llm-jury-panel-evaluation-2024,^s5,partially supports,neighbouring block
+distillate,1,llm-jury-panel-evaluation-2024,^s6,overreaches,neighbouring block
+distillate,1,llm-jury-panel-evaluation-2024,^s7,partially supports,neighbouring block
+distillate,1,llm-jury-panel-evaluation-2024,^s8,partially supports,neighbouring block
+distillate,1,llm-jury-panel-evaluation-2024,^s10,partially supports,neighbouring block
+distillate,1,anthropic-2025-context-engineering,^s5,partially supports,unanchored detail
+distillate,1,anthropic-2025-context-engineering,^s6,partially supports,modality drift
+distillate,1,obsidian-help-data-storage,^s6,partially supports,modality drift
+distillate,1,obsidian-help-internal-links,^s2,partially supports,neighbouring block
+distillate,1,obsidian-help-internal-links,^s19,overreaches,overgeneralization
+distillate,1,obsidian-docs-metadatacache,^s6,partially supports,neighbouring block
+distillate,1,obsidian-docs-metadatacache,^s9,partially supports,neighbouring block
+distillate,1,obsidian-help-obsidian-flavored-markdown,^s5,partially supports,neighbouring block
+distillate,1,pollin-2025-dissertation-ch74,^s2,partially supports,modality drift
+distillate,1,pollin-2025-dissertation-ch74,^s5,partially supports,neighbouring block
+distillate,1,pollin-2025-dissertation-ch74,^s7,partially supports,scope mismatch
+distillate,1,promptotyping-specification-2026-07-31,^s12,partially supports,scope mismatch
+distillate,1,promptotyping-specification-2026-07-31,^s18,overreaches,overgeneralization
+distillate,1,promptotyping-specification-2026-07-31,^s23,partially supports,modality drift
+distillate,1,promptotyping-specification-2026-07-31,^s29,partially supports,modality drift
+distillate,1,loc-recommended-formats-2025-2026,^s8,partially supports,scope mismatch
+distillate,1,loc-recommended-formats-2025-2026,^s10,overreaches,ordering claim
+distillate,1,loc-recommended-formats-2025-2026,^s13,partially supports,scope mismatch
+distillate,1,tna-selecting-file-formats-2008,^s9,overreaches,modality drift
+distillate,1,tna-selecting-file-formats-2008,^s14,partially supports,neighbouring block
+distillate,1,dpc-handbook-file-formats-and-standards,^s5,overreaches,modality drift
+distillate,1,dpc-handbook-file-formats-and-standards,^s7,overreaches,modality drift
+distillate,1,dpc-handbook-file-formats-and-standards,^s10,partially supports,modality drift
+distillate,1,dpc-handbook-file-formats-and-standards,^s18,partially supports,scope mismatch
+distillate,1,schmidt-2018-luhmann-card-index,^s2,partially supports,modality drift
+distillate,1,schmidt-2018-luhmann-card-index,^s9,partially supports,modality drift
+distillate,1,schmidt-2018-luhmann-card-index,^s16,partially supports,modality drift
+distillate,1,bernheim-1908-lehrbuch-historische-methode,^s3,partially supports,neighbouring block
+distillate,1,bernheim-1908-lehrbuch-historische-methode,^s4,partially supports,neighbouring block
+distillate,1,bernheim-1908-lehrbuch-historische-methode,^s5,partially supports,neighbouring block
+distillate,1,langlois-seignobos-1898-introduction,^s6,partially supports,neighbouring block
+distillate,1,langlois-seignobos-1898-introduction,^s7,overreaches,overgeneralization
+distillate,1,langlois-seignobos-1898-introduction,^s8,partially supports,scope mismatch
+distillate,1,langlois-seignobos-1898-introduction,^s9,partially supports,scope mismatch
+distillate,1,langlois-seignobos-1898-introduction,^s11,overreaches,overgeneralization
+chapter,1,blog-stuetzungsluecke-2026-08,generated-citations-often-fail-to-support-their-sentences,fully supports,
+chapter,1,blog-stuetzungsluecke-2026-08,resolvable-citation-without-support-is-a-distinct-error-class,fully supports,
+chapter,1,blog-stuetzungsluecke-2026-08,attribution-is-separate-from-correctness,fully supports,
+chapter,1,blog-stuetzungsluecke-2026-08,prov-validity-is-internal-consistency,fully supports,
+chapter,1,blog-stuetzungsluecke-2026-08,llm-summaries-broaden-the-scope-of-findings,fully supports,
+chapter,1,blog-stuetzungsluecke-2026-08,source-binding-lowers-unsupported-citation-without-eliminating-it,overreaches,overgeneralization
+chapter,1,blog-stuetzungsluecke-2026-08,historical-method-separates-origin-check-from-credibility,partially supports,scope mismatch
+chapter,1,blog-stuetzungsluecke-2026-08,card-index-organizes-knowledge-as-addressable-linked-notes,partially supports,producer inference
+chapter,1,blog-stuetzungsluecke-2026-08,critical-apparatus-binds-reading-to-witnesses,overreaches,modality drift
+chapter,2,blog-stuetzungsluecke-2026-08,source-binding-lowers-unsupported-citation-without-eliminating-it,partially supports,unanchored detail
+chapter,2,blog-stuetzungsluecke-2026-08,historical-method-separates-origin-check-from-credibility,partially supports,producer inference
+chapter,2,blog-stuetzungsluecke-2026-08,critical-apparatus-binds-reading-to-witnesses,overreaches,modality drift

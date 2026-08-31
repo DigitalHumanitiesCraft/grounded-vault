@@ -1,0 +1,30 @@
+[
+  {
+    "id": "bernheim1908lehrbuch",
+    "type": "book",
+    "title": "Lehrbuch der historischen Methode und der Geschichtsphilosophie. Mit Nachweis der wichtigsten Quellen und Hilfsmittel zum Studium der Geschichte",
+    "author": [{ "family": "Bernheim", "given": "Ernst" }],
+    "issued": { "date-parts": [[1908]] },
+    "edition": "5. und 6. neu bearbeitete und vermehrte Auflage",
+    "publisher": "Duncker & Humblot",
+    "publisher-place": "Leipzig",
+    "language": "de",
+    "URL": "https://archive.org/details/lehrbuchderhisto00bernuoft",
+    "note": "Public domain. Quoted from the Internet Archive digitisation (OCR full text lehrbuchderhisto00bernuoft_djvu.txt); page numbers are those of the printed edition."
+  },
+  {
+    "id": "langlois1898introduction",
+    "type": "book",
+    "title": "Introduction aux études historiques",
+    "author": [
+      { "family": "Langlois", "given": "Charles-Victor" },
+      { "family": "Seignobos", "given": "Charles" }
+    ],
+    "issued": { "date-parts": [[1898]] },
+    "publisher": "Hachette",
+    "publisher-place": "Paris",
+    "language": "fr",
+    "URL": "https://classiques.uqam.ca/classiques/langlois_charles_victor/intro_etudes_historiques/",
+    "note": "Public domain. Quoted from the Les Classiques des sciences sociales digitisation (seignobos_etudhisto.pdf); page numbers are the pagination markers of the printed edition carried in that file."
+  }
+]

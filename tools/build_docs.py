@@ -3,6 +3,8 @@
 Data flow: README.md, docs/concept.md and the knowledge documents are read in a
 fixed order, their YAML frontmatter is stripped, their Markdown is converted to
 HTML and the sections are wrapped in one self-contained page with inline CSS.
+Repository-relative links are resolved against each source document and point
+to the canonical repository, so they remain valid wherever the page is served.
 
 The Markdown subset covers what these documents actually use: headings,
 paragraphs, lists (nested, with block content in an item), tables, blockquotes,
@@ -20,9 +22,11 @@ from __future__ import annotations
 
 import argparse
 import html
+import posixpath
 import re
 import sys
 from pathlib import Path
+from urllib.parse import quote, urlsplit, urlunsplit
 
 REPOSITORY_URL = "https://github.com/DigitalHumanitiesCraft/grounded-vault"
 
@@ -54,7 +58,21 @@ _ITEM = re.compile(r"^(\s*)([-*]|\d+[.)])\s+(.*)$")
 _TABLE_RULE = re.compile(r"^\s*\|[\s:|-]+\|\s*$")
 
 
-def _inline(text: str) -> str:
+def _repository_href(href: str, source: Path) -> str:
+    """Resolve a relative Markdown target from its source document."""
+    target = html.unescape(href)
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc or not parsed.path or parsed.path.startswith("/"):
+        return href
+    resolved = posixpath.normpath((source.parent / parsed.path).as_posix())
+    repository_path = f"{REPOSITORY_URL}/blob/main/{quote(resolved, safe='/')}"
+    return html.escape(
+        urlunsplit(("", "", repository_path, parsed.query, parsed.fragment)),
+        quote=True,
+    )
+
+
+def _inline(text: str, source: Path) -> str:
     """Convert inline Markdown, keeping code spans free of further markup."""
     parts = _CODE_SPAN.split(text)
     out = []
@@ -64,7 +82,12 @@ def _inline(text: str) -> str:
             continue
         piece = html.escape(part)
         piece = _WIKILINK.sub(lambda m: f"<code>{m.group(1)}</code>", piece)
-        piece = _LINK.sub(lambda m: f'<a href="{m.group(2)}">{m.group(1)}</a>', piece)
+        piece = _LINK.sub(
+            lambda m: (
+                f'<a href="{_repository_href(m.group(2), source)}">{m.group(1)}</a>'
+            ),
+            piece,
+        )
         piece = _BOLD.sub(r"<strong>\1</strong>", piece)
         piece = _ITALIC.sub(r"<em>\1</em>", piece)
         out.append(piece)
@@ -101,39 +124,39 @@ def _render_fence(lines: list[str], start: int) -> tuple[str, int]:
     return f"<pre><code>{code}</code></pre>", index + 1
 
 
-def _render_table(lines: list[str], start: int) -> tuple[str, int]:
+def _render_table(lines: list[str], start: int, source: Path) -> tuple[str, int]:
     header = _split_row(lines[start])
     index = start + 2
     rows = []
     while index < len(lines) and lines[index].lstrip().startswith("|"):
         rows.append(_split_row(lines[index]))
         index += 1
-    head = "".join(f"<th>{_inline(cell)}</th>" for cell in header)
+    head = "".join(f"<th>{_inline(cell, source)}</th>" for cell in header)
     body = "".join(
-        "<tr>" + "".join(f"<td>{_inline(cell)}</td>" for cell in row) + "</tr>"
+        "<tr>" + "".join(f"<td>{_inline(cell, source)}</td>" for cell in row) + "</tr>"
         for row in rows
     )
     table = f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
     return f'<div class="scroll">{table}</div>', index
 
 
-def _render_quote(lines: list[str], start: int) -> tuple[str, int]:
+def _render_quote(lines: list[str], start: int, source: Path) -> tuple[str, int]:
     index = start
     body = []
     while index < len(lines) and lines[index].lstrip().startswith(">"):
         body.append(lines[index].lstrip()[1:].removeprefix(" "))
         index += 1
-    return f"<blockquote>{_render_blocks(body)}</blockquote>", index
+    return f"<blockquote>{_render_blocks(body, source)}</blockquote>", index
 
 
-def _render_item(buffer: list[str]) -> str:
-    first = _inline(buffer[0].strip())
+def _render_item(buffer: list[str], source: Path) -> str:
+    first = _inline(buffer[0].strip(), source)
     rest = _dedent(buffer[1:])
-    inner = _render_blocks(rest) if any(line.strip() for line in rest) else ""
+    inner = _render_blocks(rest, source) if any(line.strip() for line in rest) else ""
     return f"<li>{first}{inner}</li>"
 
 
-def _render_list(lines: list[str], start: int) -> tuple[str, int]:
+def _render_list(lines: list[str], start: int, source: Path) -> tuple[str, int]:
     match = _ITEM.match(lines[start])
     if match is None:
         raise ValueError(f"not a list item: {lines[start]!r}")
@@ -148,7 +171,7 @@ def _render_list(lines: list[str], start: int) -> tuple[str, int]:
         indent = len(line) - len(line.lstrip())
         if item and indent == base:
             if buffer:
-                items.append(_render_item(buffer))
+                items.append(_render_item(buffer, source))
             buffer = [item.group(3)]
         elif not line.strip():
             # A blank line ends the list unless an indented continuation or a
@@ -167,12 +190,12 @@ def _render_list(lines: list[str], start: int) -> tuple[str, int]:
             break
         index += 1
     if buffer:
-        items.append(_render_item(buffer))
+        items.append(_render_item(buffer, source))
     tag = "ol" if ordered else "ul"
     return f"<{tag}>{''.join(items)}</{tag}>", index
 
 
-def _render_blocks(lines: list[str]) -> str:
+def _render_blocks(lines: list[str], source: Path) -> str:
     out: list[str] = []
     index = 0
     while index < len(lines):
@@ -184,20 +207,20 @@ def _render_blocks(lines: list[str]) -> str:
             out.append(block)
         elif heading := _HEADING.match(line):
             level = min(len(heading.group(1)), 6)
-            out.append(f"<h{level}>{_inline(heading.group(2))}</h{level}>")
+            out.append(f"<h{level}>{_inline(heading.group(2), source)}</h{level}>")
             index += 1
         elif (
             line.lstrip().startswith("|")
             and index + 1 < len(lines)
             and _TABLE_RULE.match(lines[index + 1])
         ):
-            block, index = _render_table(lines, index)
+            block, index = _render_table(lines, index, source)
             out.append(block)
         elif line.lstrip().startswith(">"):
-            block, index = _render_quote(lines, index)
+            block, index = _render_quote(lines, index, source)
             out.append(block)
         elif _ITEM.match(line):
-            block, index = _render_list(lines, index)
+            block, index = _render_list(lines, index, source)
             out.append(block)
         else:
             paragraph = [line.strip()]
@@ -205,7 +228,7 @@ def _render_blocks(lines: list[str]) -> str:
             while index < len(lines) and not _starts_block(lines[index]):
                 paragraph.append(lines[index].strip())
                 index += 1
-            out.append(f"<p>{_inline(' '.join(paragraph))}</p>")
+            out.append(f"<p>{_inline(' '.join(paragraph), source)}</p>")
     return "".join(out)
 
 
@@ -227,10 +250,10 @@ def _prepare(text: str) -> list[str]:
     return out
 
 
-def _render_section(anchor: str, title: str, path: Path) -> str:
+def _render_section(anchor: str, title: str, path: Path, source: Path) -> str:
     if not path.is_file():
         raise FileNotFoundError(f"source document missing: {path}")
-    body = _render_blocks(_prepare(path.read_text(encoding="utf-8")))
+    body = _render_blocks(_prepare(path.read_text(encoding="utf-8")), source)
     return (
         f'<section id="{anchor}">\n<h2>{html.escape(title)}</h2>\n{body}\n</section>\n'
     )
@@ -320,7 +343,7 @@ def build_page(root: Path, date: str) -> str:
         for anchor, title, _ in SECTIONS
     )
     sections = "".join(
-        _render_section(anchor, title, root / relative)
+        _render_section(anchor, title, root / relative, Path(relative))
         for anchor, title, relative in SECTIONS
     )
     return f"""<!doctype html>

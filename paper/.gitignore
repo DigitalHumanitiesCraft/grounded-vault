@@ -1,0 +1,14 @@
+# Originals may be confidential; they never enter version control.
+00_sources/*
+!00_sources/README.md
+
+# Local credentials (reviewer APIs, reference manager)
+.env
+
+# Obsidian workspace state; the vault opens without it
+.obsidian/
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/

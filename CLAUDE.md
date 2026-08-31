@@ -20,6 +20,7 @@ Read in this order: `knowledge/index.md` (terminology), `knowledge/state.md` (wh
 | Write a chapter | `schema.md` § Chapter, `operations.md` § Write chapters | chapters |
 | Answer a question | `operations.md` § Query | query |
 | Check the vault | `operations.md` § Check | validate → review |
+| Work on the internal method manuscript | `paper/CLAUDE.md` | paper instance |
 
 ## Hard rules
 

@@ -1,0 +1,25 @@
+[
+  {
+    "id": "verga2024juries",
+    "type": "article",
+    "title": "Replacing Judges with Juries: Evaluating LLM Generations with a Panel of Diverse Models",
+    "author": [
+      { "family": "Verga", "given": "Pat" },
+      { "family": "Hofstätter", "given": "Sebastian" },
+      { "family": "Althammer", "given": "Sophia" },
+      { "family": "Su", "given": "Yixuan" },
+      { "family": "Piktus", "given": "Aleksandra" },
+      { "family": "Arkhangorodsky", "given": "Arkady" },
+      { "family": "Xu", "given": "Minjie" },
+      { "family": "White", "given": "Naomi" },
+      { "family": "Lewis", "given": "Patrick" }
+    ],
+    "issued": { "date-parts": [[2024, 5, 1]] },
+    "container-title": "arXiv",
+    "publisher": "arXiv",
+    "number": "arXiv:2404.18796v2",
+    "DOI": "10.48550/arXiv.2404.18796",
+    "URL": "https://arxiv.org/abs/2404.18796v2",
+    "note": "Quoted from version 2 of 1 May 2024; page numbers refer to the PDF of that version. The submission carries the arXiv non-exclusive distribution licence, which permits no redistribution of the full text, so this source is held as a bibliographic record rather than as a Markdown representation."
+  }
+]
