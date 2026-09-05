@@ -14,6 +14,8 @@ An entry is written when a change makes an existing instance do something or let
 
 **Computation scripts run only from `tools/analysis/`.** A data anchor naming a script elsewhere is refused as `E-COMPUTATION` before the validator would execute it.
 
+**The no-op flag `--run-computations` is gone (act where used).** Computations have run by default since the flag became a no-op; an instance whose harness rules or workflows still pass it drops the flag. The continuous integration workflow now also lints `tools/` and `tests/` with ruff, whose configuration `pyproject.toml` already carried.
+
 ## 2026-08-10
 
 **Self-report is a named case (act).** A source that speaks about itself, about its own priority, reach or achievement, covers the claim and never the matter the claim is about. `knowledge/schema.md` states the rule at the assertion type, `knowledge/operations.md` adds the verdict rule to the machine-review contract, and the `build-assertions` skill carries it as a step. Running instances should walk their assertions for statements taken from self-descriptive sources, since neither validation nor review flags this case on its own.

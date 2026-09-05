@@ -8,6 +8,7 @@ checked:
   quote: 2026-08-10
   validation: 2026-08-10
   machine-review: 2026-08-10
+checked-against: "Internet Archive digitisation lehrbuchderhisto00bernuoft, OCR full text lehrbuchderhisto00bernuoft_djvu.txt, pages of the printed edition"
 created: 2026-08-10
 updated: 2026-08-10
 ---

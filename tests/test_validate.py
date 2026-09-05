@@ -700,9 +700,13 @@ def test_a_source_the_distillates_mostly_leave_unanchored_is_reported(
 
 def test_the_coverage_threshold_is_a_parameter(tmp_path: Path) -> None:
     root = _vault_with_an_unread_source(tmp_path)
-    assert _rels(
-        validate(root, run_computations=False, min_coverage=0).warnings, "W-COVERAGE"
-    ) == set()
+    assert (
+        _rels(
+            validate(root, run_computations=False, min_coverage=0).warnings,
+            "W-COVERAGE",
+        )
+        == set()
+    )
     assert _rels(
         validate(root, run_computations=False, min_coverage=0.45).warnings, "W-COVERAGE"
     ) == {"10_markdown/documents/report-garden-water-2026"}

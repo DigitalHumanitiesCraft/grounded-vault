@@ -8,6 +8,7 @@ checked:
   quote: 2026-08-10
   validation: 2026-08-10
   machine-review: 2026-08-10
+checked-against: "arXiv:2404.18796v2, version 2 of 1 May 2024, PDF of that version"
 created: 2026-08-10
 updated: 2026-08-10
 ---

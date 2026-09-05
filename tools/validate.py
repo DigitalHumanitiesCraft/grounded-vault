@@ -41,6 +41,7 @@ import json
 import re
 import subprocess
 import sys
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -181,22 +182,34 @@ class Report:
         return {code for code, _, _ in self.errors}
 
 
-def _parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
-    rel = path.relative_to(root).with_suffix("").as_posix()
-    text = path.read_text(encoding="utf-8")
+def split_frontmatter(text: str) -> tuple[str, str] | None:
+    """The raw YAML block and the body of a Markdown file, None when it has no frontmatter.
+
+    The one place the frontmatter delimiter is read; inventory and migrate
+    import it, so that what counts as frontmatter cannot drift between tools.
+    """
     if not text.startswith("---\n"):
-        report.error("E-FRONTMATTER", rel, "missing frontmatter")
         return None
     end = text.find("\n---", 4)
     if end < 0:
-        report.error("E-FRONTMATTER", rel, "unterminated frontmatter")
         return None
+    return text[4:end], text[end + 4 :]
+
+
+def _parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
+    rel = path.relative_to(root).with_suffix("").as_posix()
+    text = path.read_text(encoding="utf-8")
+    split = split_frontmatter(text)
+    if split is None:
+        what = "unterminated" if text.startswith("---\n") else "missing"
+        report.error("E-FRONTMATTER", rel, f"{what} frontmatter")
+        return None
+    raw, body = split
     try:
-        fm = yaml.safe_load(text[4:end]) or {}
+        fm = yaml.safe_load(raw) or {}
     except yaml.YAMLError as exc:
         report.error("E-FRONTMATTER", rel, f"frontmatter is not valid YAML: {exc}")
         return None
-    body = text[end + 4 :]
     blocks = [m.group(1) for line in body.splitlines() if (m := BLOCK_ID.search(line))]
     return Doc(path=path, rel=rel, fm=fm, body=body, blocks=blocks)
 
@@ -407,8 +420,9 @@ def _check_duplicate_ids(doc: Doc, report: Report) -> None:
         label = "statement ID"
     else:
         return
-    for dup in sorted({i for i in ids if ids.count(i) > 1}):
-        report.error("E-DUPLICATE", doc.rel, f"duplicate {label}: ^{dup}")
+    for dup, count in sorted(Counter(ids).items()):
+        if count > 1:
+            report.error("E-DUPLICATE", doc.rel, f"duplicate {label}: ^{dup}")
 
 
 def _check_placeholders(
@@ -475,7 +489,11 @@ def _ids_outside_core_statements(body: str) -> list[str]:
 
 
 def _check_distillate(
-    doc: Doc, docs: dict[str, Doc], reference_ids: set[str], root: Path, report: Report
+    doc: Doc,
+    reference_ids: set[str],
+    root: Path,
+    report: Report,
+    run_computations: bool,
 ) -> None:
     source_type = doc.fm.get("source-type")
     statements = _statement_lines(doc.body)
@@ -545,11 +563,18 @@ def _check_distillate(
                     f"core statement without computation: {line.strip()[:60]}",
                 )
             for m in declared:
-                _check_computation(m.group(1), m.group(2), root, doc, report)
+                _check_computation(
+                    m.group(1), m.group(2), root, doc, report, run_computations
+                )
 
 
 def _check_computation(
-    command: str, stated: str, root: Path, doc: Doc, report: Report
+    command: str,
+    stated: str,
+    root: Path,
+    doc: Doc,
+    report: Report,
+    run_computations: bool,
 ) -> None:
     scripts = [part for part in command.split() if part.endswith(".py")]
     if not scripts:
@@ -573,7 +598,7 @@ def _check_computation(
             "E-COMPUTATION", doc.rel, f"computation script missing: {scripts[0]}"
         )
         return
-    if _RUN_COMPUTATIONS:
+    if run_computations:
         result = subprocess.run(
             [sys.executable, str(script)],
             cwd=root,
@@ -598,7 +623,10 @@ def _check_computation(
 
 def _check_topics(doc: Doc, topic_names: set[str], report: Report) -> None:
     for raw in doc.fm.get("topics") or []:
-        topic = str(raw).strip("[] ")
+        # A topic is written as a wikilink; an alias on it would otherwise
+        # slip a name past the controlled set.
+        linked = _link_targets(str(raw))
+        topic = linked[0][0] if linked else str(raw).strip("[] ")
         if topic not in topic_names:
             report.error(
                 "E-TOPIC", doc.rel, f"topic outside the controlled topic set: {topic}"
@@ -755,9 +783,6 @@ def _check_moc_reachability(
     for doc in (scope if scope is not None else docs).values():
         if doc.fm.get("type") == "assertion" and doc.rel not in listed:
             report.error("E-ORPHAN", doc.rel, "assertion reachable from no topic map")
-
-
-_RUN_COMPUTATIONS = False
 
 
 def _grounding_set(doc: Doc) -> frozenset[tuple[str, str | None]]:
@@ -947,8 +972,6 @@ def validate(
     chapter: str | None = None,
     min_coverage: float = DEFAULT_MIN_COVERAGE,
 ) -> Report:
-    global _RUN_COMPUTATIONS
-    _RUN_COMPUTATIONS = run_computations
     report = Report()
     docs: dict[str, Doc] = {}
     for folder in CONTENT_FOLDERS:
@@ -989,7 +1012,7 @@ def validate(
         if doctype in ("distillate", "assertion"):
             _check_topics(doc, topic_names, report)
         if doctype == "distillate":
-            _check_distillate(doc, docs, reference_ids, root, report)
+            _check_distillate(doc, reference_ids, root, report, run_computations)
         elif doctype == "assertion":
             _check_assertion(doc, docs, report)
         elif doctype == "chapter":
@@ -1019,11 +1042,6 @@ def main() -> None:
         "--no-computations",
         action="store_true",
         help="skip re-running data anchors",
-    )
-    parser.add_argument(
-        "--run-computations",
-        action="store_true",
-        help="no-op, kept for documented invocations; computations run by default",
     )
     parser.add_argument(
         "--chapter",

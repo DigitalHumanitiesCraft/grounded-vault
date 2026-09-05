@@ -8,6 +8,7 @@ checked:
   quote: 2026-08-10
   validation: 2026-08-10
   machine-review: 2026-08-10
+checked-against: "publisher version at https://aclanthology.org/2023.cl-4.2/ (doi:10.1162/coli_a_00486)"
 created: 2026-08-10
 updated: 2026-08-10
 ---

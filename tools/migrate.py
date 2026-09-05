@@ -53,6 +53,8 @@ from pathlib import Path
 
 import yaml
 
+from validate import split_frontmatter
+
 ANY_TYPE = "*"
 
 FOOTNOTE_DEF = re.compile(r"^(\[\^[A-Za-z0-9]+\]:\s*)(.*)$")
@@ -306,15 +308,6 @@ def rewrite_footnotes(body: str, mapping: Mapping) -> tuple[str, int]:
     return "".join(lines), count
 
 
-def _split_frontmatter(text: str) -> tuple[str, str] | None:
-    if not text.startswith("---\n"):
-        return None
-    end = text.find("\n---", 4)
-    if end < 0:
-        return None
-    return text[4:end], text[end + 4 :]
-
-
 def migrate_file(path: Path, mapping: Mapping, summary: Summary, rel: str = "") -> None:
     original = path.read_text(encoding="utf-8")
     text, paths = rewrite_paths(original, mapping)
@@ -328,7 +321,7 @@ def migrate_file(path: Path, mapping: Mapping, summary: Summary, rel: str = "") 
 
     # Body rewrites do not depend on frontmatter; a generated export carries
     # footnotes without any.
-    split = _split_frontmatter(text)
+    split = split_frontmatter(text)
     raw_fm, body = split if split else (None, text)
     body, headings = rewrite_headings(body, mapping)
     body, footnotes = rewrite_footnotes(body, mapping)

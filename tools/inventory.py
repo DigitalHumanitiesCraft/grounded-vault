@@ -38,7 +38,7 @@ from pathlib import Path
 
 import yaml
 
-from validate import Report, _parse_doc, anchored_blocks
+from validate import Report, _parse_doc, anchored_blocks, split_frontmatter
 
 STATE = "knowledge/state.md"
 BEGIN = "<!-- inventory:begin -->"
@@ -87,14 +87,11 @@ class Row:
 
 def _frontmatter(path: Path) -> dict:
     """The YAML block of a Markdown file, empty when it carries none."""
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        return {}
-    end = text.find("\n---", 4)
-    if end < 0:
+    split = split_frontmatter(path.read_text(encoding="utf-8"))
+    if split is None:
         return {}
     try:
-        loaded = yaml.safe_load(text[4:end])
+        loaded = yaml.safe_load(split[0])
     except yaml.YAMLError:
         return {}
     return loaded if isinstance(loaded, dict) else {}

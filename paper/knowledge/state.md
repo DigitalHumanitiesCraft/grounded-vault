@@ -55,10 +55,9 @@ related: [specification, journal]
 
 | Chapter | File | Status | Notes |
 |---|---|---|---|
-| Grounded Vault and the Support Gap | [[40_output/grounded-vault-method]] | grounded | Canonical internal method manuscript. Chapter validation NOT READY since 2026-09-05 because the publication distillates it hangs on carry no `checked-against`; machine review and human verification remain open. |
+| Grounded Vault and the Support Gap | [[40_output/grounded-vault-method]] | grounded | Canonical internal method manuscript. Deterministic validation passed on 2026-08-21 and again in chapter scope on 2026-09-05 after the version records were filled; machine review and human verification remain open. |
 
 ## Open work
 
-- Fill `checked-against` on the nine publication distillates from the intake records of the source repository; the chapter verdict depends on it.
 - Act on the eight coverage warnings: extend the distillate or record the scoping decision in the journal.
 - Machine review with a reviewer from another model family, then human verification.
