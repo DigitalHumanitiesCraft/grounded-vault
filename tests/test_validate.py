@@ -47,6 +47,7 @@ EXPECTED_BROKEN_WARNINGS = {
     "W-CONTESTED",  # test_a_chapter_taking_one_side_of_a_contested_pair_is_reported
     "W-DUPLICATE-GROUNDING",  # test_two_assertions_on_the_same_anchors_are_reported
     "W-ALIAS",  # test_a_footnote_alias_that_renames_its_assertion_is_reported
+    "W-VERSION",  # test_a_quotation_check_without_a_text_version_is_reported
 }
 
 # Codes no fixture can carry, because they need a vault state a conformant file
@@ -55,6 +56,7 @@ EXPECTED_TEMPORARY_VAULT_CODES = {
     "E-SCOPE",  # test_an_unknown_chapter_is_a_finding
     "W-EMPTY",  # test_an_empty_vault_says_which_checks_had_no_subject
     "W-NO-OUTPUT",  # test_an_empty_vault_says_which_checks_had_no_subject
+    "W-COVERAGE",  # test_a_source_the_distillates_mostly_leave_unanchored_is_reported
 }
 
 EMITTED_CODE = re.compile(r"report\.(?:error|warn)\(\s*\"([EW]-[A-Z-]+)\"")
@@ -633,3 +635,91 @@ def test_a_placeholder_under_the_chapter_is_reported(tmp_path: Path) -> None:
     assert _rels(report.warnings, "W-PLACEHOLDER") == {
         "20_distillates/documents/report-garden-water-2026.md"
     }
+
+
+def test_a_quotation_check_without_a_text_version_is_reported() -> None:
+    report = validate(BROKEN)
+    assert _rels(report.warnings, "W-VERSION") == {
+        "20_distillates/publications/unversioned-quote"
+    }
+
+
+def test_a_quotation_outside_the_declared_form_is_caught() -> None:
+    """A line with a quotation mark and a parenthesis is not yet a quotation."""
+    report = validate(BROKEN)
+    assert "20_distillates/publications/malformed-quotation" in _rels(
+        report.errors, "E-STATEMENT"
+    )
+    assert "20_distillates/publications/unversioned-quote" not in _rels(
+        report.errors, "E-STATEMENT"
+    )
+
+
+def test_a_quotation_may_run_over_several_lines(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "20_distillates" / "publications" / "example-2024-metering.md"
+    text = path.read_text(encoding="utf-8").replace(
+        '  > "Metering alone reduced irrigation volumes in nine of eleven surveyed gardens." (example2024metering, p. 4)',
+        '  > "Metering alone reduced irrigation volumes\n  > in nine of eleven surveyed gardens." (example2024metering, p. 4)',
+    )
+    path.write_text(text, encoding="utf-8")
+    report = validate(root)
+    assert _rels(report.errors, "E-STATEMENT") == set()
+
+
+def test_a_computation_outside_the_analysis_folder_is_refused() -> None:
+    report = validate(BROKEN)
+    messages = [
+        message
+        for code, rel, message in report.errors
+        if code == "E-COMPUTATION" and rel == "20_distillates/data/outside-analysis"
+    ]
+    assert messages and "outside tools/analysis/" in messages[0], messages
+
+
+def _vault_with_an_unread_source(tmp_path: Path) -> Path:
+    """The minimal vault whose report gains four blocks no distillate anchors."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "10_markdown" / "documents" / "report-garden-water-2026.md"
+    extra = "".join(f"\nAn unread paragraph number {n}. ^u{n}\n" for n in range(4))
+    path.write_text(path.read_text(encoding="utf-8") + extra, encoding="utf-8")
+    return root
+
+
+def test_a_source_the_distillates_mostly_leave_unanchored_is_reported(
+    tmp_path: Path,
+) -> None:
+    root = _vault_with_an_unread_source(tmp_path)
+    report = validate(root, run_computations=False)
+    (finding,) = [w for w in report.warnings if w[0] == "W-COVERAGE"]
+    assert finding[1] == "10_markdown/documents/report-garden-water-2026"
+    assert "4 of 7 blocks" in finding[2]
+
+
+def test_the_coverage_threshold_is_a_parameter(tmp_path: Path) -> None:
+    root = _vault_with_an_unread_source(tmp_path)
+    assert _rels(
+        validate(root, run_computations=False, min_coverage=0).warnings, "W-COVERAGE"
+    ) == set()
+    assert _rels(
+        validate(root, run_computations=False, min_coverage=0.45).warnings, "W-COVERAGE"
+    ) == {"10_markdown/documents/report-garden-water-2026"}
+
+
+def test_a_representation_without_a_distillate_is_not_judged_for_coverage(
+    tmp_path: Path,
+) -> None:
+    """Before the first distillate the inventory already says ingested."""
+    root = _vault_with_an_unread_source(tmp_path)
+    (root / "20_distillates" / "documents" / "report-garden-water-2026.md").unlink()
+    report = validate(root, run_computations=False)
+    assert _rels(report.warnings, "W-COVERAGE") == set()
+
+
+def test_coverage_stays_out_of_the_chapter_mode(tmp_path: Path) -> None:
+    root = _vault_with_an_unread_source(tmp_path)
+    result = _run_cli(root, "--no-computations", "--chapter", CHAPTER)
+    assert result.returncode == 0, result.stdout
+    assert "W-COVERAGE" in result.stdout

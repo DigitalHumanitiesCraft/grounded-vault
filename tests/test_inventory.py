@@ -28,8 +28,8 @@ title: State
 ## Source inventory
 
 {BEGIN}
-| Source | Type | Channel | Markdown representation | Distillate | Status |
-|---|---|---|---|---|---|
+| Source | Type | Channel | Markdown representation | Distillate | Coverage | Status |
+|---|---|---|---|---|---|---|
 | stale row that predates the last ingest | | | | | |
 {END}
 
@@ -48,6 +48,7 @@ def test_a_distilled_document_carries_both_links() -> None:
     assert row.channel == "handover"
     assert row.representation == "[[10_markdown/documents/report-garden-water-2026]]"
     assert row.distillate == "[[20_distillates/documents/report-garden-water-2026]]"
+    assert row.coverage == "3/3"
     assert row.status == "distilled"
 
 
@@ -59,7 +60,7 @@ def test_a_publication_row_comes_from_the_csl_record() -> None:
         "—",
     )
     assert row.distillate == "[[20_distillates/publications/example-2024-metering]]"
-    assert row.status == "distilled"
+    assert (row.coverage, row.status) == ("—", "distilled")
 
 
 def test_the_data_source_is_listed_with_its_type() -> None:
@@ -72,7 +73,7 @@ def test_a_representation_without_a_distillate_is_ingested(tmp_path: Path) -> No
     shutil.copytree(MINIMAL, root)
     (root / "20_distillates" / "documents" / "report-garden-water-2026.md").unlink()
     row = _row(root, "Annual Water Report")
-    assert (row.distillate, row.status) == ("—", "ingested")
+    assert (row.distillate, row.coverage, row.status) == ("—", "—", "ingested")
 
 
 def test_an_original_that_no_representation_names_is_new(tmp_path: Path) -> None:
@@ -118,9 +119,9 @@ def test_a_missing_source_folder_is_no_finding() -> None:
 def test_the_table_carries_the_declared_columns() -> None:
     table = render(rows(MINIMAL)).splitlines()
     assert table[0] == (
-        "| Source | Type | Channel | Markdown representation | Distillate | Status |"
+        "| Source | Type | Channel | Markdown representation | Distillate | Coverage | Status |"
     )
-    assert table[1] == "|---|---|---|---|---|---|"
+    assert table[1] == "|---|---|---|---|---|---|---|"
     assert len(table) == 2 + len(rows(MINIMAL))
 
 
@@ -166,3 +167,14 @@ def test_a_missing_state_document_is_a_clear_error(tmp_path: Path) -> None:
     with pytest.raises(SystemExit) as raised:
         write(tmp_path, "| |")
     assert "knowledge/state.md" in str(raised.value)
+
+
+def test_coverage_counts_the_blocks_the_distillates_anchor(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "10_markdown" / "documents" / "report-garden-water-2026.md"
+    path.write_text(
+        path.read_text(encoding="utf-8") + "\nAn unread paragraph. ^u0\n",
+        encoding="utf-8",
+    )
+    assert _row(root, "Annual Water Report").coverage == "3/4"

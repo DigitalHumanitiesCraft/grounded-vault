@@ -56,7 +56,9 @@ Three instances check the vault, with strictly separated authority. **Validation
 
 Chapters are written and accepted one at a time, so the validator also judges one at a time. `--chapter 40_output/<slug>` restricts the run to that chapter and the chain it hangs on, meaning the assertions it footnotes, the distillates grounding them and the Markdown representations beneath, and it reports in a closing line which vault-wide checks that scope leaves out.
 
-Quotations from citable-only publications are checked character for character at intake time, while the full text is at hand, and the check is recorded with its date in `checked.quote` on the distillate. Later validation runs cannot repeat it, because the full text of such a source does not lie in the vault; they check that the record exists.
+Quotations from citable-only publications are checked character for character at intake time, while the full text is at hand, and the check is recorded with its date in `checked.quote` on the distillate, together with the text version it ran on in `checked-against`. Later validation runs cannot repeat it, because the full text of such a source does not lie in the vault; they check that both records exist.
+
+The chain checks downwards, whether every statement has its passage. The source inventory carries the one figure that faces the other way, the share of a document's blocks that distillates anchor, and the validator warns where a source is left mostly unread, because a vault that says little never becomes unsound and that silence would otherwise stay invisible.
 
 The architecture fixes a check contract per instance; the mechanism that fulfils it is a project choice. Statuses progress `grounded` → `validated` → `verified` (plus `contested` where sources conflict), and a status is only ever set by a check that actually ran, with outcome and date recorded on the document (audit trail). A document never stands higher than the anchors it rests on, so one unreviewed anchor holds the whole chain above it at `grounded`.
 

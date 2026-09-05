@@ -30,7 +30,7 @@ This document defines the rules of the vault. It sets out the layer model, the c
 | Assertions | `30_assertions/` | atomic cross-source statements, topic maps | grounding anchors into distillate statements |
 | Output | `40_output/` | one file per chapter | footnote anchors into assertions, posits marked |
 
-The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand. The files are the one record of what the vault holds, so there is no second bookkeeping that could drift away from them.
+The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand. The files are the one record of what the vault holds, so there is no second bookkeeping that could drift away from them. For a document representation the inventory also carries its coverage, the blocks some distillate statement anchors against the blocks the file holds. The chain checks downwards, whether every statement has a passage, and nothing in it asks whether the passages were used, so a vault that says little never becomes unsound. Coverage is the one figure that faces the other way, and validation raises `W-COVERAGE` where it falls below the share an instance sets.
 
 The layers carry these definitions. A **source** is the original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it. A **Markdown representation** is the uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. A **distillate** is the set of single statements extracted from one source, each anchored to the passage of the representation it was taken from. An **assertion** is a single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement. The **output** is the final output of the vault, one or more documents such as a report, proposal, thesis or paper; its document type is the chapter, and a **chapter** is an output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
 
@@ -163,6 +163,7 @@ reference: ""                # publication type: CSL JSON id from references/
 topics: ["[[<Topic>]]"]
 status: grounded             # grounded | validated | verified | superseded
 checked: {}
+checked-against: ""          # publication type: the text version checked.quote ran on
 superseded-by: ""            # optional, wikilink to the successor distillate
 created: 2026-01-01
 updated: 2026-01-01
@@ -199,12 +200,14 @@ updated: 2026-01-01
 Every core statement carries exactly one grounding anchor into its source and ends with a statement ID (`^s1`, `^s2`, …), the anchor assertions bind to. The anchor form varies by source type:
 
 - **document**: a block reference into the Markdown representation, as above.
-- **publication**: a verbatim quotation with citation instead of a block reference. The quotation must appear character for character in the source; the intake-time check is recorded as `checked.quote`.
+- **publication**: a verbatim quotation with citation instead of a block reference. The quotation must appear character for character in the source; the intake-time check is recorded as `checked.quote`, and `checked-against` names the text version that check ran on, such as a preprint version, a publisher PDF or a page revision with its date. A publication has no representation in the vault, so nothing else records which text the quotations follow, and a record that later points to another version ages the quotations without moving any date. Validation raises `W-VERSION` while the field is missing.
 
   ```markdown
   - <statement in own words> ^s1
     > "<verbatim quotation>" (<identifier>, p. <n>)
   ```
+
+  The quotation block opens with the verbatim text in quotation marks and closes with the identifier and locator in parentheses. It may run over several `>` lines, and validation reads it as one block against that form.
 
 - **data**: a reproducible computation instead of a block reference, named on an indented line. The script lives in `tools/analysis/` and is deterministic.
 
