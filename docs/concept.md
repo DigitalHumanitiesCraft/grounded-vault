@@ -144,9 +144,9 @@ The footnote is a rendering, and the binding part is an anchor contract. Every l
 
 A code or data-analysis output is a named extension, deliberately not elaborated in the first version. Code carries no footnotes, so the anchoring would shift: specification and decision documents bind to assertions, and the code binds to the specification. Working that out is future work; forcing it into the prose model would dilute the provenance mechanics that are the architecture's value.
 
-## 10. Repository topology (draft)
+## 10. Repository topology
 
-Proposed folder layout of the template, layer numbering kept because it makes the stratification visible in any file listing:
+Folder layout of the template, layer numbering kept because it makes the stratification visible in any file listing:
 
 The numbered chain runs `00_sources → 10_markdown → 20_distillates → 30_assertions → 40_output`. The unnumbered folders lie across the chain rather than inside it.
 
