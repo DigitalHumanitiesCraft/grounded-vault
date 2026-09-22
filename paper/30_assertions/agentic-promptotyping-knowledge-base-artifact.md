@@ -1,10 +1,9 @@
 ---
 type: assertion
 topics: ["[[Agentic Workflow]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-22
 grounding:
   - "[[20_distillates/documents/pollin-2025-dissertation-ch74#^s3]]"
   - "[[20_distillates/documents/promptotyping-specification-2026-07-31#^s4]]"
@@ -13,14 +12,14 @@ grounding:
   - "[[20_distillates/documents/promptotyping-specification-2026-07-31#^s11]]"
 contested-with: []
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-22
 ---
 
-# Promptotyping makes the maintained project knowledge base its organising structure
+# The Promptotyping method paper, in its review draft of 2026-07-31, makes the maintained project knowledge base the organising structure of the method
 
 ## Statement
 
-Promptotyping organises project knowledge as a body of interrelated documents that are bounded representations distilled from fuller research material, kept in a semi-formal documentary form that supports no formal inference. This knowledge base is the organising structure of the method, it evolves and is versioned across the work, and findings arising from implementation and examination are written back into it. Its documents are maintained for human inspection and revision and are available for inclusion in an agent's task-specific working context, which holds the information and access required for one assignment and stays distinct from the persistent knowledge base, so that retrieval and direct access to project resources supplement the maintained account. The dissertation chapter records the corresponding documents as context-compressed Markdown files that carry requirements as epics, user stories and domain contexts.
+In its review draft of 2026-07-31, the Promptotyping method paper states that Promptotyping organises project knowledge as a body of interrelated documents that are bounded representations distilled from fuller research material, kept in a semi-formal documentary form that supports no formal inference. This knowledge base is the organising structure of the method, it evolves and is versioned across the work, and findings arising from implementation and examination are written back into it. Its documents are maintained for human inspection and revision and are available for inclusion in an agent's task-specific working context, which holds the information and access required for one assignment and stays distinct from the persistent knowledge base, so that retrieval and direct access to project resources supplement the maintained account. The dissertation chapter of 2025 records the corresponding documents as context-compressed Markdown files that carry requirements as epics, user stories and domain contexts.
 
 ## Support
 

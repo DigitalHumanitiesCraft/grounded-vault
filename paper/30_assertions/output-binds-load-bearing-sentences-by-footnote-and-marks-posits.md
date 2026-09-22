@@ -1,10 +1,9 @@
 ---
 type: assertion
 topics: ["[[Architecture]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-22
 grounding:
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s4]]"
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s34]]"
@@ -14,14 +13,14 @@ grounding:
   - "[[20_distillates/documents/grounded-vault-operations-c726eb5#^s35]]"
 contested-with: []
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-22
 ---
 
-# The output layer carries an anchor contract under which every load-bearing sentence footnotes an assertion and every own conclusion is marked as a posit
+# At commit c726eb5 of 2026-08-10, the Grounded Vault output layer carries an anchor contract under which every load-bearing sentence footnotes an assertion and every own conclusion is marked as a posit
 
 ## Statement
 
-A chapter is an output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit. The contract sets two requirements, a footnote marker on every load-bearing sentence and a footnote that begins with one of two keywords, and nothing else counts. The one keyword names the assertion the sentence is grounded in, and the other opens a posit footnote that states its rationale and its open evidence question. The referenced assertions and the count of posit footnotes are mirrored in the frontmatter, and validation cross-checks the footnotes against that mirror and that count. The posit keyword is the place where a conclusion without source support enters the vault, since such a conclusion never becomes an assertion and is instead noted at the assertion layer as a posit candidate for the output. Footnotes are the reference notation of the profile, which an instantiation may substitute as long as marker, keyword and mirror survive.
+In the schema at commit c726eb5 of 2026-08-10, a chapter is an output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit. The contract sets two requirements, a footnote marker on every load-bearing sentence and a footnote that begins with one of two keywords, and nothing else counts. The one keyword names the assertion the sentence is grounded in, and the other opens a posit footnote that states its rationale and its open evidence question. The referenced assertions and the count of posit footnotes are mirrored in the frontmatter, and validation cross-checks the footnotes against that mirror and that count. The posit keyword is the place where a conclusion without source support enters the vault, since such a conclusion never becomes an assertion and is instead noted at the assertion layer as a posit candidate for the output. Footnotes are the reference notation of the profile, which an instantiation may substitute as long as marker, keyword and mirror survive.
 
 ## Support
 

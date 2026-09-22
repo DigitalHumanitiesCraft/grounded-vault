@@ -2,7 +2,7 @@
 type: chapter
 status: grounded
 checked:
-  validation: 2026-08-21
+  validation: 2026-09-22
 assertions:
   - "[[30_assertions/generated-citations-often-fail-to-support-their-sentences]]"
   - "[[30_assertions/source-binding-lowers-unsupported-citation-without-eliminating-it]]"
@@ -34,14 +34,14 @@ assertions:
   - "[[30_assertions/agentic-promptotyping-knowledge-base-artifact]]"
 posits: 6
 created: 2026-08-21
-updated: 2026-08-21
+updated: 2026-09-22
 ---
 
 # Grounded Vault and the Support Gap
 
 ## Abstract
 
-Generated prose can cite accessible documents while leaving many sentences unsupported by the cited passages.[^1] Grounded Vault addresses this support gap through a five-layer repository architecture in which output sentences resolve through assertions and source-specific anchors to recorded material.[^6] Deterministic validation checks the form and resolution of the chain, adversarial machine review judges each support relation, and human verification alone establishes evidence.[^20] A first review pass over the research instance reported 501 support pairs across 46 documents and located most checking work at the distillate layer.[^24] The architecture makes the state of support inspectable while leaving factual truth and substantive text quality to further judgment.[^4]
+Generated prose can cite accessible documents while leaving many sentences unsupported by the cited passages.[^1] In its template state at commit `c726eb5` of 2026-08-10, Grounded Vault addresses this support gap through a five-layer repository architecture in which output sentences resolve through assertions and source-specific anchors to recorded material.[^6] At commit `c726eb5`, deterministic validation checks the form and resolution of the chain, adversarial machine review judges each support relation, and human verification alone establishes evidence.[^20] A first review pass over the research instance reported 501 support pairs across 46 documents and located most checking work at the distillate layer.[^24] The architecture makes the state of support inspectable while leaving factual truth and substantive text quality to further judgment.[^4]
 
 ## The support gap
 
@@ -51,11 +51,11 @@ Attribution research treats support by a supplied source as a separate judgment 
 
 ## The layer chain
 
-The architecture arranges work across sources, Markdown representations, distillates, assertions, and output.[^6] Each layer carries its own anchor form, while the source layer remains the ground against which later forms can be checked.[^6] Anchors are minted only by their own layer and each layer points directly to the layer beneath it.[^7]
+At template commit `c726eb5` of 2026-08-10, the architecture arranges work across sources, Markdown representations, distillates, assertions, and output.[^6] In that state each layer carries its own anchor form, while the source layer remains the ground against which later forms can be checked.[^6] The schema at `c726eb5` mints anchors only at their own layer and lets each layer point directly to the layer beneath it.[^7]
 
-The storage conditions of a source determine its source type and therefore its anchor form.[^8] Storable documents use block references into an immutable Markdown representation, citable publications use checked verbatim quotations, and data findings use deterministic computations.[^8] A revised document enters as a new dated representation so existing block anchors continue to resolve.[^9]
+Under the schema at `c726eb5`, the storage conditions of a source determine its source type and therefore its anchor form.[^8] Under that schema, storable documents use block references into an immutable Markdown representation, citable publications use checked verbatim quotations, and data findings use deterministic computations.[^8] The schema at `c726eb5` lets a revised document enter as a new dated representation so existing block anchors continue to resolve.[^9]
 
-The output contract places a footnote to an assertion on every load-bearing sentence and marks unsupported conclusions as posits with an explicit evidence question.[^10] Assertions are the synthesis layer where statements from different source types converge before they can enter the manuscript.[^6] The status mirror in the chapter frontmatter allows validation to compare the declared assertion set and posit count with the footnotes that occur in the text.[^10]
+The output contract at `c726eb5` places a footnote to an assertion on every load-bearing sentence and marks unsupported conclusions as posits with an explicit evidence question.[^10] At that commit, assertions are the synthesis layer where statements from different source types converge before they can enter the manuscript.[^6] The status mirror that the schema at `c726eb5` sets in the chapter frontmatter allows validation to compare the declared assertion set and posit count with the footnotes that occur in the text.[^10]
 
 ## The file substrate
 
@@ -71,15 +71,15 @@ The World Wide Web Consortium provenance model describes entities, activities, a
 
 ## Grounding and evidence
 
-Grounding records that a statement points to a source location. Attribution research gives that support relation its own evaluation axis and keeps factual correctness outside the attribution verdict.[^4] Grounded Vault reserves `verified` for human judgment and permits validation plus machine review to raise a document only to `validated`.[^20]
+Grounding records that a statement points to a source location. Attribution research gives that support relation its own evaluation axis and keeps factual correctness outside the attribution verdict.[^4] At commit `c726eb5`, Grounded Vault reserves `verified` for human judgment and permits validation plus machine review to raise a document only to `validated`.[^20]
 
-The status of every document is bounded by the lowest status among the anchors on which it rests.[^20] Dated entries in the `checked` map record which checking operations actually ran.[^20] Contested and superseded anchors sit outside the ascending status ladder and keep dependent documents at the entry status.[^20]
+Under the schema at `c726eb5`, the status of every document is bounded by the lowest status among the anchors on which it rests.[^20] In that schema, dated entries in the `checked` map record which checking operations actually ran.[^20] In the same schema, contested and superseded anchors sit outside the ascending status ladder and keep dependent documents at the entry status.[^20]
 
 ## Agentic production and review
 
-Promptotyping organises project work around a maintained and versioned knowledge base whose documents can enter a task-specific working context.[^28] Context engineering treats the selection and maintenance of that context as an engineering task, with experimental evidence that the position and volume of relevant information affect model performance.[^27] Grounded Vault adds a production schema for knowledge that must remain traceable through later synthesis.[^31]
+In the review draft of its method paper of 2026-07-31, Promptotyping organises project work around a maintained and versioned knowledge base whose documents can enter a task-specific working context.[^28] Context engineering treats the selection and maintenance of that context as an engineering task, with experimental evidence that the position and volume of relevant information affect model performance.[^27] Grounded Vault adds a production schema for knowledge that must remain traceable through later synthesis.[^31]
 
-Machine-generated summaries of research texts broaden the scope of original findings more often than the source abstracts, including under prompts that ask for accuracy.[^21] Pairwise review therefore compares a bare statement with its named source location and withholds the producing agent's reasoning.[^20] Language model evaluators have shown preference for their own generations, and this preference correlates with their capacity to recognise those generations.[^22] Evaluator panels drawn from disjoint model families reduced intra-model bias in the reported experiments.[^23]
+Machine-generated summaries of research texts broaden the scope of original findings more often than the source abstracts, including under prompts that ask for accuracy.[^21] Pairwise review at commit `c726eb5` therefore compares a bare statement with its named source location and withholds the producing agent's reasoning.[^20] Language model evaluators have shown preference for their own generations, and this preference correlates with their capacity to recognise those generations.[^22] Evaluator panels drawn from disjoint model families reduced intra-model bias in the reported experiments.[^23]
 
 ## Findings from the first review pass
 
@@ -91,11 +91,11 @@ The concentration of findings at the distillate layer indicates where this insta
 
 ## Limits of the method
 
-A resolvable anchor guarantees traceability to a recorded location.[^7] The support relation still requires review, and attribution alone supplies no verdict about factual correctness.[^4] Internal consistency of provenance also leaves trust decisions to a later judgment.[^18]
+Under the schema at `c726eb5`, a resolvable anchor guarantees traceability to a recorded location.[^7] The support relation still requires review, and attribution alone supplies no verdict about factual correctness.[^4] Internal consistency of provenance also leaves trust decisions to a later judgment.[^18]
 
 The architecture has not been compared with an equivalent unanchored writing process under controlled conditions.[^33] Its current evidence supports claims about traceability, conformance, and the distribution of recorded review findings.[^24] A claim that the method improves substantive output quality requires a separate comparison.[^33]
 
-Full anchor depth also depends on retaining the source material when the Markdown representation and its block identifiers are created.[^9] Retrospective reconstruction can document a later source state but cannot prove that it matches the material used in the earlier transformation.[^34] This dependency is why the source situation and storage rights are decided at intake.[^8]
+Under the schema at `c726eb5`, full anchor depth also depends on retaining the source material when the Markdown representation and its block identifiers are created.[^9] Retrospective reconstruction can document a later source state but cannot prove that it matches the material used in the earlier transformation.[^34] This dependency is why that schema decides the source situation and storage rights at intake.[^8]
 
 [^1]: Grounded in [[30_assertions/generated-citations-often-fail-to-support-their-sentences]].
 [^2]: Grounded in [[30_assertions/source-binding-lowers-unsupported-citation-without-eliminating-it]].

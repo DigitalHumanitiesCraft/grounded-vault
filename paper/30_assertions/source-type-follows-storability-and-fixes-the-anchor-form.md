@@ -1,10 +1,9 @@
 ---
 type: assertion
 topics: ["[[Architecture]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-22
 grounding:
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s7]]"
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s15]]"
@@ -16,14 +15,14 @@ grounding:
   - "[[20_distillates/documents/grounded-vault-operations-c726eb5#^s15]]"
 contested-with: []
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-22
 ---
 
-# The profile knows three source types, document, publication and data, and the storability of a source decides which of them applies and which anchor form it permits
+# At commit c726eb5 of 2026-08-10, the Grounded Vault profile knows three source types, document, publication and data, and the storability of a source decides which of them applies and which anchor form it permits
 
 ## Statement
 
-The controlled vocabulary of the source type holds document, publication and data. Which of the three applies follows from whether the content of a source may be stored in the vault and from the anchor that this storage decision permits. A document is a source whose full text may be stored, and it is anchored by block reference into its Markdown representation, which is also the anchor form its distillate statements take. A publication is a source that is only cited, so what lies in the vault is the bibliographic record and the anchor is the verbatim quotation together with the identifier, the quotation having to appear character for character in the source and its intake check being recorded as `checked.quote`. A publication source receives no Markdown representation, because its CSL JSON record is the root of this source type. A data source is a file whose anchor is a deterministic computation over that file, named on an indented line and run from a script in the analysis folder of the tools, because an aggregate or a statistical finding exists at no single passage. The criterion is storability, and the publication status of a source decides nothing by itself, so an open-access article that may be stored is treated as a document, and wherever a full text may be stored the type document is preferred over publication, since its anchors resolve inside the vault.
+In the schema at commit c726eb5 of 2026-08-10, the controlled vocabulary of the source type holds document, publication and data. Which of the three applies follows from whether the content of a source may be stored in the vault and from the anchor that this storage decision permits. A document is a source whose full text may be stored, and it is anchored by block reference into its Markdown representation, which is also the anchor form its distillate statements take. A publication is a source that is only cited, so what lies in the vault is the bibliographic record and the anchor is the verbatim quotation together with the identifier, the quotation having to appear character for character in the source and its intake check being recorded as `checked.quote`. A publication source receives no Markdown representation, because its CSL JSON record is the root of this source type. A data source is a file whose anchor is a deterministic computation over that file, named on an indented line and run from a script in the analysis folder of the tools, because an aggregate or a statistical finding exists at no single passage. The criterion is storability, and the publication status of a source decides nothing by itself, so an open-access article that may be stored is treated as a document, and wherever a full text may be stored the type document is preferred over publication, since its anchors resolve inside the vault.
 
 ## Support
 

@@ -2,7 +2,7 @@
 type: moc
 topic: "Architecture"
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-22
 ---
 
 # MOC: Architecture
@@ -16,12 +16,12 @@ The built substrate of the method. It covers the layer chain, the source typolog
 - [[30_assertions/obsidian-link-registers-map-files-to-files]], the declared types of the link registers provide no level below the file.
 - [[30_assertions/block-references-are-specific-to-obsidian]], the vendor states that block references sit outside standard Markdown and work only in Obsidian.
 
-- [[30_assertions/layer-model-assigns-each-layer-its-anchor-form]], the five layers and the anchor form each of them carries.
-- [[30_assertions/anchors-are-minted-at-their-own-layer-and-bind-one-layer-down]], the two rules that keep the chain from skipping a layer.
-- [[30_assertions/status-ladder-is-machine-enforced-and-takes-the-minimum-of-the-anchors]], how a status rises and why it cannot rise above its foundation.
-- [[30_assertions/source-type-follows-storability-and-fixes-the-anchor-form]], storability decides the type, and the type decides the anchor.
-- [[30_assertions/output-binds-load-bearing-sentences-by-footnote-and-marks-posits]], the anchor contract of the finished text.
-- [[30_assertions/markdown-representation-is-immutable-after-ingest]], why a converted representation is frozen and how a revised source enters.
+- [[30_assertions/layer-model-assigns-each-layer-its-anchor-form]], at commit c726eb5, the five layers and the anchor form each of them carries.
+- [[30_assertions/anchors-are-minted-at-their-own-layer-and-bind-one-layer-down]], at commit c726eb5, the two rules that keep the chain from skipping a layer.
+- [[30_assertions/status-ladder-is-machine-enforced-and-takes-the-minimum-of-the-anchors]], at commit c726eb5, how a status rises and why it cannot rise above its foundation.
+- [[30_assertions/source-type-follows-storability-and-fixes-the-anchor-form]], at commit c726eb5, storability decides the type, and the type decides the anchor.
+- [[30_assertions/output-binds-load-bearing-sentences-by-footnote-and-marks-posits]], at commit c726eb5, the anchor contract of the finished text.
+- [[30_assertions/markdown-representation-is-immutable-after-ingest]], at commit c726eb5, why a converted representation is frozen and how a revised source enters.
 
 ## Open questions
 

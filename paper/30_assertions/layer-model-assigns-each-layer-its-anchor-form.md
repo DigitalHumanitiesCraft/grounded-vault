@@ -1,10 +1,9 @@
 ---
 type: assertion
 topics: ["[[Architecture]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-22
 grounding:
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s2]]"
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s4]]"
@@ -12,14 +11,14 @@ grounding:
   - "[[20_distillates/documents/grounded-vault-operations-c726eb5#^s25]]"
 contested-with: []
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-22
 ---
 
-# The architecture runs over five layers, and each layer carries its own anchor form
+# At commit c726eb5 of 2026-08-10, the Grounded Vault architecture runs over five layers, and each layer carries its own anchor form
 
 ## Statement
 
-The Grounded Vault profile arranges its material in five layers, and each layer carries the anchor form the schema assigns to it. Sources are the ground and carry no anchor, since the original file is kept exactly as it arrived so that every later form of its content can be checked against it. The Markdown representation holds archived full texts and datasets with schema, and it carries block IDs together with the file plus schema pairing, the block IDs being stamped once so that later layers anchor into passages that never change afterwards. Distillates hold the single statements extracted from one source, each carrying a grounding anchor into that source, and they mint statement IDs. Assertions carry grounding anchors into distillate statements, and each assertion is a single source-supported statement synthesized from the distillates of a topic and grounded in at least one such statement. The output carries footnote anchors into assertions with posits marked, and its chapter type requires a footnote to an assertion on every load-bearing sentence. The assertion layer is the point where the source types converge and where the vault synthesizes, one file per assertion.
+At commit c726eb5 of 2026-08-10, the schema and operations documents of the Grounded Vault profile arrange its material in five layers, and each layer carries the anchor form the schema assigns to it. Sources are the ground and carry no anchor, since the original file is kept exactly as it arrived so that every later form of its content can be checked against it. The Markdown representation holds archived full texts and datasets with schema, and it carries block IDs together with the file plus schema pairing, the block IDs being stamped once so that later layers anchor into passages that never change afterwards. Distillates hold the single statements extracted from one source, each carrying a grounding anchor into that source, and they mint statement IDs. Assertions carry grounding anchors into distillate statements, and each assertion is a single source-supported statement synthesized from the distillates of a topic and grounded in at least one such statement. The output carries footnote anchors into assertions with posits marked, and its chapter type requires a footnote to an assertion on every load-bearing sentence. The assertion layer is the point where the source types converge and where the vault synthesizes, one file per assertion.
 
 ## Support
 

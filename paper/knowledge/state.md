@@ -9,7 +9,7 @@ method:
 status: active
 language: en
 created: 2026-08-21
-updated: 2026-08-21
+updated: 2026-09-22
 related: [specification, journal]
 ---
 
@@ -55,8 +55,9 @@ related: [specification, journal]
 
 | Chapter | File | Status | Notes |
 |---|---|---|---|
-| Grounded Vault and the Support Gap | [[40_output/grounded-vault-method]] | grounded | Canonical internal method manuscript. Deterministic validation passed on 2026-08-21; machine review and human verification remain open. |
+| Grounded Vault and the Support Gap | [[40_output/grounded-vault-method]] | grounded | Canonical internal method manuscript. Deterministic validation passed on 2026-09-22 after the subject binding pass; machine review and human verification remain open. |
 
 ## Open work
 
 - Machine review and human verification remain open after deterministic validation.
+- Machine review has to run again on the seven assertions reformulated in the subject binding pass of 2026-09-22 and on the chapter sentences grounded in them, before they can return to `validated`.

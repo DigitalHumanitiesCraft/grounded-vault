@@ -1,10 +1,9 @@
 ---
 type: assertion
 topics: ["[[Architecture]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-22
 grounding:
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s9]]"
   - "[[20_distillates/documents/grounded-vault-schema-c726eb5#^s11]]"
@@ -15,14 +14,14 @@ grounding:
   - "[[20_distillates/documents/grounded-vault-operations-c726eb5#^s57]]"
 contested-with: []
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-22
 ---
 
-# The status of a document runs on a machine-enforced ladder from grounded through validated to verified and never rises above the minimum of the states of its anchors
+# At commit c726eb5 of 2026-08-10, the status of a Grounded Vault document runs on a machine-enforced ladder from grounded through validated to verified and never rises above the minimum of the states of its anchors
 
 ## Statement
 
-A status records the outcome of checks that actually ran, and every check writes its date into the `checked` map of the document it checked. The controlled vocabulary holds grounded, validated and verified, plus contested for assertions and superseded for distillates. Grounded is the entry status of every freshly produced document and requires no entry. Validated is reached when validation and machine review have passed and requires both dates to be recorded, and those two checks together lift a document that far and never higher. Verified additionally requires a recorded verification, which alone lifts a document to that step and which the machine checks prepare without ever replacing it, and the ladder reaches verified when the expert has passed. Every entry of the map carries an ISO date, because a record without one cannot be held against the content it judges. The status of a document is the minimum of the states of its anchors, so one unreviewed anchor keeps the whole document at grounded, and a document resting on a contested or superseded anchor stays at grounded as well, since those two states lie beside the ladder. The discipline is enforced by machine, and the validation checks carry codes for a status lacking a required check, for a check recorded without a date, and for a document standing higher on the ladder than an anchor it rests on.
+In the schema and operations documents at commit c726eb5 of 2026-08-10, a status records the outcome of checks that actually ran, and every check writes its date into the `checked` map of the document it checked. The controlled vocabulary holds grounded, validated and verified, plus contested for assertions and superseded for distillates. Grounded is the entry status of every freshly produced document and requires no entry. Validated is reached when validation and machine review have passed and requires both dates to be recorded, and those two checks together lift a document that far and never higher. Verified additionally requires a recorded verification, which alone lifts a document to that step and which the machine checks prepare without ever replacing it, and the ladder reaches verified when the expert has passed. Every entry of the map carries an ISO date, because a record without one cannot be held against the content it judges. The status of a document is the minimum of the states of its anchors, so one unreviewed anchor keeps the whole document at grounded, and a document resting on a contested or superseded anchor stays at grounded as well, since those two states lie beside the ladder. The discipline is enforced by machine, and the validation checks carry codes for a status lacking a required check, for a check recorded without a date, and for a document standing higher on the ladder than an anchor it rests on.
 
 ## Support
 

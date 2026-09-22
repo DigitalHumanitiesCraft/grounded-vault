@@ -2,7 +2,7 @@
 type: moc
 topic: "Agentic Workflow"
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-22
 ---
 
 # MOC: Agentic Workflow
@@ -10,7 +10,7 @@ updated: 2026-08-10
 How agents produce and check the structure. It covers the separation of production and checking, the operator's place in the loop, and the design choices of the machine review. Supporting strands hold context engineering as the practice the method instantiates and Promptotyping as the prior method this vault profiles.
 
 - [[30_assertions/agentic-context-engineering-as-design-task]], the term supplies definition and criterion for context assembly, the position experiments supply its empirical subject matter.
-- [[30_assertions/agentic-promptotyping-knowledge-base-artifact]], Promptotyping organizes work around a maintained, versioned project knowledge base.
+- [[30_assertions/agentic-promptotyping-knowledge-base-artifact]], the method paper's review draft of 2026-07-31 organizes Promptotyping work around a maintained, versioned project knowledge base.
 
 ## Open questions
 
