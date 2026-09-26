@@ -17,6 +17,10 @@ related: [schema, state, journal]
 
 This document defines the procedures of the vault, one section per chain. Every chain produces or checks artifacts defined in [[knowledge/schema]] and updates the registers in [[knowledge/state]]. Decisions made along the way go to [[knowledge/journal]].
 
+## Production order
+
+The first production cycle runs vertically. One source is carried through every chain below, from acquisition to a written paragraph of a chapter, and validated after each step, before a second source is touched. The tempting order is the horizontal one, converting every original first and then writing every distillate, because each step feels cheaper when repeated. That order produces nothing checkable until the last layer is reached, and a defect in the anchor mechanics then sits in every file at once instead of in one. Agents left to themselves choose it, so the rule has to be explicit.
+
 ## Acquire
 
 How a source enters the vault is orthogonal to its type; the channel is recorded in the `channel` field of the Markdown representation and changes nothing about checking.
@@ -24,6 +28,8 @@ How a source enters the vault is orthogonal to its type; the channel is recorded
 - **handover** and **collection**: place the original in `00_sources/`.
 - **import**: export records from the reference library as CSL JSON into `references/`, one file per batch of records.
 - **deep-research**: run the research prompt below. Capture every located publication in the reference manager and export it as CSL JSON into `references/`. The research report itself never becomes a source; all anchors bind to the located publications.
+
+Originals in `00_sources/` stay out of version control by default, because third-party rights usually forbid redistribution. An original whose rights the project holds is committed by force-adding it past `.gitignore`.
 
 ### Deep research prompt skeleton
 
