@@ -29,13 +29,13 @@ Which of the three source types a source belongs to follows from whether its con
 
 ## Repository layout
 
-The five numbered folders form the production chain, each one holding the layer that the folder name announces.
+The five numbered folders form the production chain, each one holding the layer that the folder name announces. What each layer and its parts are is defined once in `knowledge/index.md` § Terminology.
 
-- `00_sources/` holds the originals exactly as they arrived, kept untouched so that every later form of their content can be checked against them. By default the originals stay local and uncommitted, because third-party rights usually forbid redistribution, and an instance commits exactly those originals whose rights it holds.
-- `10_markdown/` holds the uniform Markdown form of each source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards, with the full texts in `documents/` and the datasets plus their schema description in `data/`.
-- `20_distillates/` holds one distillate per source, meaning the source-bound knowledge document of that source, whose core statements are each anchored to the passage of the Markdown representation they were taken from and carry their own statement ID.
-- `30_assertions/` holds the atomic statements that are bound to no single source, each synthesized from the distillates of a topic and grounded in at least one distillate statement, together with one topic map (`MOC-*.md`) per topic of the controlled topic set.
-- `40_output/` holds the final output of the vault, one or more documents such as a report, proposal, thesis or paper, kept as one file per chapter, in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
+- `00_sources/` holds the sources, the originals as they arrived. By default the originals stay local and uncommitted, because third-party rights usually forbid redistribution, and an instance commits exactly those originals whose rights it holds.
+- `10_markdown/` holds the Markdown representations, the full texts in `documents/` and the datasets plus their schema description in `data/`.
+- `20_distillates/` holds the distillates, one per source, in one subfolder per source type.
+- `30_assertions/` holds the assertions, one file each, together with one topic map (`MOC-*.md`) per topic of the controlled topic set.
+- `40_output/` holds the output, one or more documents such as a report, proposal, thesis or paper, kept as one file per chapter.
 
 The remaining folders lie across the chain rather than inside it.
 

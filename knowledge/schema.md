@@ -32,7 +32,7 @@ This document defines the rules of the vault. It sets out the layer model, the c
 
 The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand. The files are the one record of what the vault holds, so there is no second bookkeeping that could drift away from them. For a document representation the inventory also carries its coverage, the blocks some distillate statement anchors against the blocks the file holds. The chain checks downwards, whether every statement has a passage, and nothing in it asks whether the passages were used, so a vault that says little never becomes unsound. Coverage is the one figure that faces the other way, and validation raises `W-COVERAGE` where it falls below the share an instance sets.
 
-The layers carry these definitions. A **source** is the original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it. A **Markdown representation** is the uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. A **distillate** is the source-bound knowledge document of one source, whose core statements are each anchored to the passage of the representation they were taken from. An **assertion** is a single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement. The **output** is the final output of the vault, one or more documents such as a report, proposal, thesis or paper; its document type is the chapter, and a **chapter** is an output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
+The terms for the layers and their parts are defined once in [[knowledge/index]] § Terminology. This document fixes the form of what they name.
 
 Two rules constrain the chain. Anchors are minted only at the layer they belong to; a Markdown representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the output binds to assertions, assertions bind to distillate statements, distillates bind to the blocks of the Markdown representation.
 
@@ -108,7 +108,7 @@ Each type carries its frontmatter as a code block, followed by the section skele
 
 ### 1. Markdown representation (source-type: document)
 
-The uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards. Exactly one per source, stored in `10_markdown/documents/`. A revised source enters as a new file with a date-suffixed slug; existing anchors keep resolving against the old file.
+Exactly one per source, stored in `10_markdown/documents/`. A revised source enters as a new file with a date-suffixed slug; existing anchors keep resolving against the old file.
 
 ```yaml
 ---
@@ -152,7 +152,7 @@ The body describes columns, units, encodings and known limitations. The anchor o
 
 ### 3. Distillate
 
-The source-bound knowledge document of one source. It condenses what the source says into core statements, each anchored to the passage of the representation it was taken from, and holds beside them the terms as the source sets them, the questions it leaves open and an optional appraisal. The core statements are the part assertions can ground in; the other sections carry no IDs. One file per source in `20_distillates/<source-type>s/`, same slug as its Markdown representation. The core statements reproduce their source without merging it with other sources; synthesis belongs to assertions, and judging the source belongs to the Appraisal section defined below.
+One file per source in `20_distillates/<source-type>s/`, same slug as its Markdown representation. The core statements reproduce their source without merging it with other sources; synthesis belongs to assertions, and judging the source belongs to the Appraisal section defined below.
 
 ```yaml
 ---
@@ -224,7 +224,7 @@ The **Open questions** section holds questions and no findings. A finding that c
 
 ### 4. Assertion
 
-A single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement. One file per assertion in `30_assertions/`. This is the layer where source types converge. Source-supported means that the assertion rests on sources and never on the author alone; it does not mean that it is bound to one source. A distillate statement reports what its one source says, while an assertion states the matter, so a second source can join its grounding without the assertion changing. An assertion resting on a single source is allowed, and the displaced-subject cases below say when it has to name that source.
+One file per assertion in `30_assertions/`. This is the layer where source types converge. An assertion resting on a single source is allowed, and the displaced-subject cases below say when it has to name that source.
 
 ```yaml
 ---
@@ -318,7 +318,7 @@ The body gives the definition in one or two sentences with a grounding anchor wh
 
 ### 7. Chapter
 
-An output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit. One file per chapter in `40_output/`, continuous prose in the project's working language and style sheet. The type name `chapter` denotes the acceptance-capable unit of the output, one file that is checked and accepted on its own; in an article genre it corresponds to a section.
+One file per chapter in `40_output/`, continuous prose in the project's working language and style sheet. The type name `chapter` denotes the acceptance-capable unit of the output, one file that is checked and accepted on its own; in an article genre it corresponds to a section.
 
 ```yaml
 ---
