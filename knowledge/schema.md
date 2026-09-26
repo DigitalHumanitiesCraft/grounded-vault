@@ -27,7 +27,7 @@ This document defines the rules of the vault. It sets out the layer model, the c
 | Sources | `00_sources/` | originals, local only | none; this is the ground |
 | Markdown representation | `10_markdown/` | archived full texts, datasets with schema | block IDs, file plus schema |
 | Distillates | `20_distillates/` | one distillate per source | grounding anchors into its source, statement IDs |
-| Assertions | `30_assertions/` | atomic cross-source statements, topic maps | grounding anchors into distillate statements |
+| Assertions | `30_assertions/` | atomic statements not bound to one source, topic maps | grounding anchors into distillate statements |
 | Output | `40_output/` | one file per chapter | footnote anchors into assertions, posits marked |
 
 The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand. The files are the one record of what the vault holds, so there is no second bookkeeping that could drift away from them. For a document representation the inventory also carries its coverage, the blocks some distillate statement anchors against the blocks the file holds. The chain checks downwards, whether every statement has a passage, and nothing in it asks whether the passages were used, so a vault that says little never becomes unsound. Coverage is the one figure that faces the other way, and validation raises `W-COVERAGE` where it falls below the share an instance sets.

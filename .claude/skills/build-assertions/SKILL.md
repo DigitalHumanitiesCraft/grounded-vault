@@ -1,6 +1,6 @@
 ---
 name: build-assertions
-description: Synthesize cross-source assertions in 30_assertions from the distillates of a topic and register them in the topic map. Use when the distillates of a topic are to be turned into atomic statements, when a contradiction between sources has to be recorded, or when existing assertions are revised after machine review.
+description: Synthesize assertions in 30_assertions from the distillates of a topic and register them in the topic map. Use when the distillates of a topic are to be turned into atomic statements, when a contradiction between sources has to be recorded, or when existing assertions are revised after machine review.
 ---
 
 # Build assertions
