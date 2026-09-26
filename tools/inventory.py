@@ -38,7 +38,7 @@ from pathlib import Path
 
 import yaml
 
-from validate import Report, _parse_doc, anchored_blocks, split_frontmatter
+from validate import Report, anchored_blocks, parse_doc, split_frontmatter
 
 STATE = "knowledge/state.md"
 BEGIN = "<!-- inventory:begin -->"
@@ -197,7 +197,7 @@ def _coverage(root: Path) -> dict[str, str]:
     docs = {}
     for folder in ("10_markdown", DISTILLATE_FOLDER):
         for path in _markdown_files(root, folder):
-            if doc := _parse_doc(path, root, Report()):
+            if doc := parse_doc(path, root, Report()):
                 docs[doc.rel] = doc
     anchored = anchored_blocks(docs)
     return {

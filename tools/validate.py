@@ -196,7 +196,7 @@ def split_frontmatter(text: str) -> tuple[str, str] | None:
     return text[4:end], text[end + 4 :]
 
 
-def _parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
+def parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
     rel = path.relative_to(root).with_suffix("").as_posix()
     text = path.read_text(encoding="utf-8")
     split = split_frontmatter(text)
@@ -976,7 +976,7 @@ def validate(
     docs: dict[str, Doc] = {}
     for folder in CONTENT_FOLDERS:
         for path in sorted((root / folder).rglob("*.md")):
-            if doc := _parse_doc(path, root, report):
+            if doc := parse_doc(path, root, report):
                 docs[doc.rel] = doc
     reference_ids = _load_reference_ids(root)
     topic_names = {
