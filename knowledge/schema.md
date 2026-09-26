@@ -224,7 +224,7 @@ The **Open questions** section holds questions and no findings. A finding that c
 
 ### 4. Assertion
 
-A single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement. One file per assertion in `30_assertions/`. This is the layer where source types converge.
+A single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement. One file per assertion in `30_assertions/`. This is the layer where source types converge. Source-supported means that the assertion rests on sources and never on the author alone; it does not mean that it is bound to one source. A distillate statement reports what its one source says, while an assertion states the matter, so a second source can join its grounding without the assertion changing. An assertion resting on a single source is allowed, and the displaced-subject cases below say when it has to name that source.
 
 ```yaml
 ---
