@@ -1,6 +1,6 @@
 """Generate the project page docs/index.html from the repository's own documents.
 
-Data flow: README.md, docs/concept.md and the knowledge documents are read in a
+Data flow: README.md, docs/concept.md and the project knowledge documents are read in a
 fixed order, their YAML frontmatter is stripped, their Markdown is converted to
 HTML and the sections are wrapped in one self-contained page with inline CSS.
 Repository-relative links are resolved against each source document and point

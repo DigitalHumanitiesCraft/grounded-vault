@@ -6,7 +6,7 @@ An entry is written when a change makes an existing instance do something or let
 
 ## 2026-09-26
 
-**The distillate is defined as a knowledge document.** `knowledge/index.md`, `knowledge/schema.md`, `README.md` and `docs/concept.md` defined the distillate as the set of single statements extracted from a source, which reduced it to its list of core statements. It is now defined as the distilled knowledge document of one source, whose core statements carry the anchors while terms, open questions and appraisal stand beside them. No rule, skeleton or check changed; running instances may carry the wording into their own `knowledge/index.md` and `knowledge/schema.md`.
+**The distillate is defined as a knowledge document.** `knowledge/index.md`, `knowledge/schema.md`, `README.md` and `docs/concept.md` defined the distillate as the set of single statements extracted from a source, which reduced it to its list of core statements. It is now defined as the distilled knowledge document of one source, whose core statements carry the anchors while terms, open questions and appraisal stand beside them. `knowledge/index.md` now defines knowledge document as the genus in the Promptotyping sense, with two kinds: the distillate, bound to one source and under the content schema, and the project knowledge document, one of the six files in `knowledge/`, which rests on no source and stays exempt. This resolves a collision, since the schema had called only the six files knowledge documents and exempted them from the content schema. No rule, skeleton or check changed; running instances may carry the wording into their own `knowledge/index.md` and `knowledge/schema.md`.
 
 ## 2026-09-05
 

@@ -23,7 +23,7 @@ Navigation and terminology of the vault. Human readers start at [[HOME]]; agents
 - **Produce or check content**: [[knowledge/schema]] for what a well-formed artifact is, [[knowledge/operations]] for the chain that produces it.
 - **Understand a past decision**: [[knowledge/journal]], append-only, newest last.
 
-## The six knowledge documents
+## The six project knowledge documents
 
 | Document | Holds | Changes |
 |---|---|---|
@@ -38,9 +38,11 @@ A document is split only when its sections develop divergent update rhythms or d
 
 ## Terminology
 
+- **Knowledge document**: A bounded, maintained document that distills fuller material into what a task needs, readable for humans and agents alike, as [Promptotyping](https://dhcraft.org/Promptotyping/) defines it. It holds interpretation that has been checked and adopted, which separates it from a derived artifact that could simply be regenerated. The vault knows two kinds, the distillate and the project knowledge document, and the bare term is used only where both are meant.
+- **Project knowledge document**: One of the six documents in `knowledge/`, which describe the vault itself, its terms, parameters, schema, procedures, state and decisions. It rests on no source, carries no anchor and stands outside the content schema.
 - **Source**: The original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it.
 - **Markdown representation**: The uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards.
-- **Distillate**: The distilled knowledge document of one source, which condenses what the source says into core statements, each anchored to the passage of the representation it was taken from, and holds the source's terms, open questions and optional appraisal beside them.
+- **Distillate**: The source-bound knowledge document, one per source. It condenses what the source says into core statements, each anchored to the passage of the representation it was taken from, and holds the source's terms, open questions and optional appraisal beside them. Being bound to a source, it falls under the content schema and its checks.
 - **Assertion**: A single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement.
 - **Chapter**: An output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
 - **Source type**: a class of sources defined by its Markdown representation, its distillation operation and its grounding anchor.

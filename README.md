@@ -33,13 +33,13 @@ The five numbered folders form the production chain, each one holding the layer 
 
 - `00_sources/` holds the originals exactly as they arrived, kept untouched so that every later form of their content can be checked against them. By default the originals stay local and uncommitted, because third-party rights usually forbid redistribution, and an instance commits exactly those originals whose rights it holds.
 - `10_markdown/` holds the uniform Markdown form of each source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards, with the full texts in `documents/` and the datasets plus their schema description in `data/`.
-- `20_distillates/` holds one distillate per source, meaning the distilled knowledge document of that source, whose core statements are each anchored to the passage of the Markdown representation they were taken from and carry their own statement ID.
+- `20_distillates/` holds one distillate per source, meaning the source-bound knowledge document of that source, whose core statements are each anchored to the passage of the Markdown representation they were taken from and carry their own statement ID.
 - `30_assertions/` holds the atomic cross-source statements, each synthesized from the distillates of a topic and grounded in at least one distillate statement, together with one topic map (`MOC-*.md`) per topic of the controlled topic set.
 - `40_output/` holds the final output of the vault, one or more documents such as a report, proposal, thesis or paper, kept as one file per chapter, in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
 
 The remaining folders lie across the chain rather than inside it.
 
-- `knowledge/` is the governance layer, six Promptotyping documents holding terminology, parameters, schema, procedures, volatile state and the decision history.
+- `knowledge/` is the governance layer, six project knowledge documents in the Promptotyping sense, holding terminology, parameters, schema, procedures, volatile state and the decision history.
 - `references/` holds the bibliographic records of citable-only sources as CSL JSON, one array per file, and is needed only while the source type `publication` is active.
 - `glossary/` holds one file per central technical term of the content, serving as definition, wikilink hub and tag keyword, and is filled as the need arises.
 - `tools/` holds the validator `validate.py`, the source inventory generator `inventory.py`, the project page generator `build_docs.py`, and in `tools/analysis/` the deterministic scripts that data anchors re-run, one script per task.
@@ -48,7 +48,7 @@ The remaining folders lie across the chain rather than inside it.
 - `.github/` holds the CI workflow `checks.yml`, which runs the validator and the test suite on every push and pull request.
 - `.claude/` holds the harness-specific skills that the action layer `CLAUDE.md` routes into, exchangeable together with that file.
 
-`docs/index.html` is generated from `README.md`, `docs/concept.md` and the knowledge documents by `python tools/build_docs.py --date <date>` and is never edited by hand.
+`docs/index.html` is generated from `README.md`, `docs/concept.md` and the project knowledge documents by `python tools/build_docs.py --date <date>` and is never edited by hand.
 
 ## Checking
 

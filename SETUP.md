@@ -10,7 +10,7 @@ Every `{{…}}` marker in the repository belongs to one of two classes. Class A 
 
 | Marker | Definition |
 |---|---|
-| `{{PROJECT_NAME}}` | The name of this vault instance, used as the title of `HOME.md` and `CLAUDE.md` and in the Promptotyping header of every knowledge document. |
+| `{{PROJECT_NAME}}` | The name of this vault instance, used as the title of `HOME.md` and `CLAUDE.md` and in the Promptotyping header of every project knowledge document. |
 | `{{REPOSITORY}}` | The repository this instance lives in, as a URL or an `owner/name` slug. |
 | `{{DATE}}` | The instantiation date in ISO 8601, written into `created` and `updated` and into the first entry of the settled decisions. |
 
