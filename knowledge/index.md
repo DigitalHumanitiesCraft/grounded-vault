@@ -40,7 +40,7 @@ A document is split only when its sections develop divergent update rhythms or d
 
 - **Source**: The original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it.
 - **Markdown representation**: The uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards.
-- **Distillate**: The set of single statements extracted from one source, each anchored to the passage of the representation it was taken from.
+- **Distillate**: The distilled knowledge document of one source, which condenses what the source says into core statements, each anchored to the passage of the representation it was taken from, and holds the source's terms, open questions and optional appraisal beside them.
 - **Assertion**: A single source-supported statement synthesized from the distillates of a topic and grounded in at least one distillate statement.
 - **Chapter**: An output text in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
 - **Source type**: a class of sources defined by its Markdown representation, its distillation operation and its grounding anchor.
