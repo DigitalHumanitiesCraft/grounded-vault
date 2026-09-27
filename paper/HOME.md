@@ -21,6 +21,8 @@ This instance contains one English manuscript that develops the Grounded Vault m
 - [[knowledge/journal]] records provenance and decisions.
 - The root `knowledge/` directory defines the shared schema and operations.
 
-## Status vocabulary
+## Glossary
 
-`grounded` records a produced anchor structure. `validated` additionally records deterministic validation and adversarial machine review. `verified` records human expert verification. `contested` preserves an unresolved source conflict.
+- [[glossary/distillate]], [[glossary/excerpt]], [[glossary/grounding]], [[glossary/evidence]] and [[glossary/provenance]] define the terms the manuscript argues with.
+
+The status ladder and its states are defined in the root `knowledge/index.md` § Terminology.

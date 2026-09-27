@@ -56,10 +56,16 @@ related: [specification, journal]
 
 | Chapter | File | Status | Notes |
 |---|---|---|---|
-| Grounded Vault and the Support Gap | [[40_output/grounded-vault-method]] | grounded | Canonical internal method manuscript. Deterministic validation passed on 2026-08-21, in chapter scope on 2026-09-05 after the version records were filled, and on 2026-09-22 after the subject binding pass; machine review and human verification remain open. |
+| Grounded Vault and the Support Gap | [[40_output/grounded-vault-method]] | grounded | Canonical internal method manuscript. Deterministic validation passed on 2026-08-21, in chapter scope on 2026-09-05 after the version records were filled, and on 2026-09-22 after the subject binding pass. Machine review and human verification remain open. |
 
 ## Open work
 
-- Act on the eight coverage warnings: extend the distillate or record the scoping decision in the journal.
+- Act on the eight coverage warnings by extending the distillate or recording the scoping decision in the journal. PDF conversions stamped table cells, captions, keywords and licence notes as blocks, which lowers the share structurally and belongs in that journal entry.
 - Machine review with a reviewer from another model family, then human verification. It has to cover the seven assertions reformulated in the subject binding pass of 2026-09-22 and the chapter sentences grounded in them, before they can return to `validated`.
 - Machine review of the new terminology distillate `grounded-vault-index-79cd1d3`, which entered at `grounded`.
+- Manuscript sentences whose footnote does not carry them. The definition of grounding at the start of the checking section has no footnote and departs from the current terminology. The sentence on the reference implementation grounds a statement about Grounded Vault in an assertion about Obsidian. The closing sentences of the introduction and of the review findings extend attribution research and review counts to the architecture. The pairwise review sentence derives anti-anchoring from the status ladder assertion. Each needs a new assertion or a posit footnote.
+- Assertions on the review run of 2026-08-10 and the topic map on instances say "this instance" for the source instance `chpollin/grounded-vault-paper`, which since the import reads as a self-description. Naming the source instance returns the three assertions to `grounded`.
+- The subject binding pass stopped at pinned template sources. The Obsidian help and API pages are state reports as of 2026-08-10, and the vendor post on context engineering is a self-report, while the manuscript presents both as current.
+- The manuscript describes the method at `c726eb5` only. Rules added since, such as coverage, version records, the displaced subject and the distillate as knowledge document, would need the current schema and operations ingested as new date-suffixed representations.
+- Glossary entries `excerpt`, `evidence`, `grounding` and `provenance` carry no anchor, and `excerpt` still follows the earlier distillate definition. The terminology representation `grounded-vault-index-79cd1d3` holds the current definitions.
+- Open questions of several imported distillates and of the topic map on instances hold findings, which the template rule of 2026-08-10 moves into core statements.

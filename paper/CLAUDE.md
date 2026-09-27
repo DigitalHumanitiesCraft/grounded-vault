@@ -12,10 +12,9 @@ The instance has one output line and one manuscript, `40_output/grounded-vault-m
 
 ## Hard rules
 
-- Every load-bearing sentence in the manuscript carries an unaliased footnote to an assertion.
-- Every own conclusion is marked as a posit with its rationale and open evidence question.
+The hard rules of the root `CLAUDE.md` apply unchanged, among them the footnote and posit contract of `../knowledge/schema.md` § 7 Chapter. This instance adds four.
+
+- Chapter footnotes to assertions carry no alias.
 - Anchors and statement IDs imported from the source instance remain unchanged.
-- New decisions go to `knowledge/journal.md`, which is append-only. Volatile state goes to `knowledge/state.md`.
-- Set a status only after the corresponding check ran. Human verification alone may set `verified`.
-- Run `python tools/validate.py paper` and the chapter-scoped validation before reporting manuscript work as complete.
+- Before reporting manuscript work as complete, run `python tools/validate.py paper` and `python tools/validate.py paper --chapter 40_output/grounded-vault-method` from the repository root.
 - Manuscript prose follows the style sheet in `knowledge/specification.md`.

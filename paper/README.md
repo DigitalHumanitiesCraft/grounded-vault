@@ -6,7 +6,7 @@ The manuscript has no submission target. It develops the method for internal res
 
 ## Provenance
 
-The research foundation was imported from the read-only source repository `chpollin/grounded-vault-paper` at commit `3045fb48b4ca4570498ff8628ca9995d40aa9374` on 21 August 2026. The imported `10_markdown/`, `20_distillates/`, `30_assertions/`, `glossary/`, `references/`, and `tools/analysis/` files retain their original bytes and anchors.
+The research foundation was imported from the read-only source repository `chpollin/grounded-vault-paper` at commit `3045fb48b4ca4570498ff8628ca9995d40aa9374` on 21 August 2026. The imported `10_markdown/`, `20_distillates/`, `30_assertions/`, `glossary/`, `references/`, and `tools/analysis/` files kept their original bytes and anchors at import. Later changes to them are recorded in [`knowledge/journal.md`](knowledge/journal.md), and anchors and statement IDs stay unchanged.
 
 The former blog chapter `40_output/blog/blog-stuetzungsluecke-2026-08.md` remains in the source repository as a validated historical output. Its argument and empirical findings have been incorporated into the single manuscript in this directory. Future manuscript and knowledge changes belong here.
 
