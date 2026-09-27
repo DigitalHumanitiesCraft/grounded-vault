@@ -6,37 +6,184 @@ be caught. The warning tests use temporary vaults, because a warning states that
 a check found no subject, which neither shipped fixture can show.
 """
 
+import json
 import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-REPO = Path(__file__).parents[1]
-sys.path.insert(0, str(REPO / "tools"))
+import pytest
 
-from validate import VAULT_WIDE_CHECKS, validate  # noqa: E402
+from validate import VAULT_WIDE_CHECKS, Report, parse_doc, split_frontmatter, validate
+
+REPO = Path(__file__).parents[1]
 
 MINIMAL = REPO / "tests" / "fixtures" / "minimal"
 BROKEN = REPO / "tests" / "fixtures" / "broken"
 
+# The sub-rules of each code are pinned one by one in BROKEN_FINDINGS below.
 EXPECTED_BROKEN_CODES = {
-    "E-ANCHOR",  # dead block reference and dead frontmatter target
-    "E-TOPIC",  # topic outside the controlled topic set
-    "E-LAYER",  # anchor pointing past or beside its grounding layer
-    "E-GROUNDING",  # assertion without a single grounding anchor
-    "E-DUPLICATE",  # duplicate block and statement IDs
-    "E-ORPHAN",  # assertion in no topic map
-    "E-CONTESTED",  # one-sided contested relation
-    "E-FRONTMATTER",  # illegal status value
-    "E-STATEMENT",  # core statement without a statement ID
-    "E-STATUS",  # status without recorded checks
-    "E-LADDER",  # status above the status of the anchors it rests on
-    "E-FOOTNOTE",  # wrong keyword and undefined marker
-    "E-MIRROR",  # frontmatter mirror out of sync
-    "E-COMPUTATION",  # computation script missing
-    "E-QUOTE",  # intake-time quotation check not recorded
+    "E-ANCHOR",
+    "E-TOPIC",
+    "E-LAYER",
+    "E-GROUNDING",
+    "E-DUPLICATE",
+    "E-ORPHAN",
+    "E-CONTESTED",
+    "E-FRONTMATTER",
+    "E-STATEMENT",
+    "E-STATUS",
+    "E-LADDER",
+    "E-FOOTNOTE",
+    "E-MIRROR",
+    "E-COMPUTATION",
+    "E-QUOTE",
 }
+
+DOC_DEFECTS = "20_distillates/documents/statement-defects"
+COMPUTATION_DEFECTS = "20_distillates/data/computation-defects"
+INCOMPLETE = "10_markdown/documents/incomplete-representation"
+
+# One entry per sub-rule of an error code: the code, the specimen and a part of
+# the message only that sub-rule writes. A code can keep firing from one branch
+# while another branch has gone silent, which a test on codes alone never sees.
+BROKEN_FINDINGS = [
+    ("E-ANCHOR", "20_distillates/documents/note", "block ^dead not found"),
+    ("E-ANCHOR", "10_markdown/data/dead-data", "does-not-exist.csv"),
+    (
+        "E-ANCHOR",
+        "30_assertions/grounding-without-statement",
+        "without statement anchor",
+    ),
+    ("E-ANCHOR", "20_distillates/publications/no-quote-check", "not in references/"),
+    ("E-TOPIC", "20_distillates/documents/note", "outside the controlled topic set"),
+    (
+        "E-LAYER",
+        "20_distillates/documents/representation-wrong-layer",
+        "representation must",
+    ),
+    ("E-LAYER", "20_distillates/documents/sideways", "distillate statement must"),
+    ("E-LAYER", "30_assertions/wrong-layer-grounding", "grounding must"),
+    ("E-LAYER", "40_output/02-layer", "chapter footnote must"),
+    ("E-GROUNDING", "30_assertions/empty-grounding", "without a single grounding"),
+    ("E-DUPLICATE", "10_markdown/documents/duplicate-blocks", "duplicate block ID"),
+    (
+        "E-DUPLICATE",
+        "20_distillates/documents/duplicate-statements",
+        "duplicate statement ID",
+    ),
+    ("E-ORPHAN", "30_assertions/orphan-assertion", "reachable from no topic map"),
+    ("E-CONTESTED", "30_assertions/contested-alone", "without contested-with links"),
+    ("E-CONTESTED", "30_assertions/contested-missing", "counterpart missing"),
+    ("E-CONTESTED", "30_assertions/one-sided", "does not link back"),
+    ("E-CONTESTED", "30_assertions/one-sided", "not itself at status contested"),
+    (
+        "E-FRONTMATTER",
+        "20_distillates/documents/unterminated",
+        "unterminated frontmatter",
+    ),
+    ("E-FRONTMATTER", "20_distillates/documents/not-a-mapping", "not a mapping"),
+    (
+        "E-FRONTMATTER",
+        "30_assertions/misplaced-glossary",
+        "does not belong in this folder",
+    ),
+    (
+        "E-FRONTMATTER",
+        "30_assertions/misplaced-glossary",
+        "missing required field: term",
+    ),
+    ("E-FRONTMATTER", "30_assertions/bad-status", "illegal status value"),
+    (
+        "E-FRONTMATTER",
+        "20_distillates/documents/illegal-source-type",
+        "illegal source-type",
+    ),
+    (
+        "E-FRONTMATTER",
+        "20_distillates/publications/no-reference",
+        "needs a reference id",
+    ),
+    (
+        "E-FRONTMATTER",
+        "20_distillates/documents/no-representation",
+        "needs a representation link",
+    ),
+    (
+        "E-FRONTMATTER",
+        "20_distillates/documents/unquoted-topics",
+        "not a quoted wikilink",
+    ),
+    ("E-FRONTMATTER", INCOMPLETE, "missing required field: source"),
+    ("E-FRONTMATTER", INCOMPLETE, "missing required field: converter"),
+    ("E-FRONTMATTER", INCOMPLETE, "metadata must be a mapping"),
+    ("E-FRONTMATTER", "10_markdown/data/no-data", "missing required field: data"),
+    (
+        "E-FRONTMATTER",
+        "10_markdown/documents/publication-representation",
+        "publication has no Markdown representation",
+    ),
+    (
+        "E-STATEMENT",
+        "20_distillates/documents/no-core-statements",
+        "no core statements",
+    ),
+    ("E-STATEMENT", "20_distillates/documents/no-statement-id", "without statement ID"),
+    (
+        "E-STATEMENT",
+        "20_distillates/documents/appraisal-anchor",
+        "outside the Core statements",
+    ),
+    ("E-STATEMENT", DOC_DEFECTS, "without block anchor"),
+    ("E-STATEMENT", DOC_DEFECTS, "carries 2 block anchors"),
+    ("E-STATEMENT", DOC_DEFECTS, "not into its representation"),
+    (
+        "E-STATEMENT",
+        "20_distillates/publications/malformed-quotation",
+        "without a quotation",
+    ),
+    ("E-STATEMENT", COMPUTATION_DEFECTS, "without computation"),
+    ("E-STATUS", "30_assertions/validated-unchecked", "without checked.validation"),
+    ("E-STATUS", "20_distillates/documents/checked-not-a-map", "checked must be a map"),
+    ("E-STATUS", "20_distillates/documents/checked-bad-date", "records no ISO date"),
+    ("E-LADDER", "30_assertions/ladder-jump", "above its anchor"),
+    ("E-FOOTNOTE", "40_output/01-bad", "starts with neither"),
+    ("E-FOOTNOTE", "40_output/01-bad", "used but never defined"),
+    ("E-FOOTNOTE", "40_output/06-footnotes", "defined but never used"),
+    ("E-FOOTNOTE", "40_output/06-footnotes", "grounds in no assertion"),
+    ("E-FOOTNOTE", "40_output/06-footnotes", "which is not an assertion"),
+    ("E-MIRROR", "40_output/01-bad", "frontmatter assertions"),
+    ("E-MIRROR", "40_output/07-posits", "frontmatter posits 2 != 1"),
+    (
+        "E-COMPUTATION",
+        "20_distillates/data/missing-script",
+        "computation script missing",
+    ),
+    (
+        "E-COMPUTATION",
+        "20_distillates/data/outside-analysis",
+        "outside tools/analysis/",
+    ),
+    (
+        "E-COMPUTATION",
+        COMPUTATION_DEFECTS,
+        "outside tools/analysis/: tools/analysis/../../",
+    ),
+    ("E-COMPUTATION", COMPUTATION_DEFECTS, "no script named"),
+    ("E-COMPUTATION", COMPUTATION_DEFECTS, "takes no arguments"),
+    (
+        "E-COMPUTATION",
+        COMPUTATION_DEFECTS,
+        "computation failed: tools/analysis/fails.py",
+    ),
+    (
+        "E-COMPUTATION",
+        COMPUTATION_DEFECTS,
+        "stated result '41' but computation yields '42'",
+    ),
+    ("E-QUOTE", "20_distillates/publications/no-quote-check", "checked.quote"),
+]
 
 # Warnings the broken fixture carries; each has its own test below, because the
 # broken-fixture tests above speak about error codes only.
@@ -66,12 +213,7 @@ def _rels(entries: list[tuple[str, str, str]], code: str) -> set[str]:
     return {rel for found, rel, _ in entries if found == code}
 
 
-def test_minimal_is_clean() -> None:
-    report = validate(MINIMAL)
-    assert report.errors == [], report.errors
-
-
-def test_minimal_computations_reproduce_by_default() -> None:
+def test_minimal_is_clean_with_its_computations_rerun() -> None:
     report = validate(MINIMAL)
     assert report.errors == [], report.errors
 
@@ -98,6 +240,19 @@ def test_broken_reports_no_false_alarms_outside_expected_classes() -> None:
     assert not unexpected, f"unexpected error classes: {unexpected}"
 
 
+@pytest.fixture(scope="module")
+def broken_errors() -> list[tuple[str, str, str]]:
+    return validate(BROKEN).errors
+
+
+@pytest.mark.parametrize(("code", "rel", "part"), BROKEN_FINDINGS)
+def test_every_sub_rule_fires_on_its_specimen(
+    broken_errors: list[tuple[str, str, str]], code: str, rel: str, part: str
+) -> None:
+    messages = [m for c, r, m in broken_errors if c == code and r == rel]
+    assert any(part in m for m in messages), messages
+
+
 def test_every_code_the_validator_emits_has_a_specimen() -> None:
     """No finding class may exist that the suite never sees fire.
 
@@ -120,12 +275,22 @@ def test_every_code_the_validator_emits_has_a_specimen() -> None:
     )
 
 
+def test_operations_documents_exactly_the_emitted_codes() -> None:
+    # The code table in operations.md § Check is what agents read to act on a
+    # finding, so a code missing there is a finding nobody can interpret.
+    source = (REPO / "tools" / "validate.py").read_text(encoding="utf-8")
+    operations = (REPO / "knowledge" / "operations.md").read_text(encoding="utf-8")
+    documented = set(re.findall(r"^\| `([EW]-[A-Z-]+)`", operations, re.MULTILINE))
+    assert documented == set(EMITTED_CODE.findall(source))
+
+
 def test_every_layer_violation_is_caught_at_its_own_layer() -> None:
     report = validate(BROKEN)
     assert _rels(report.errors, "E-LAYER") == {
         "30_assertions/wrong-layer-grounding",
         "40_output/02-layer",
         "20_distillates/documents/sideways",
+        "20_distillates/documents/representation-wrong-layer",
     }
 
 
@@ -156,7 +321,7 @@ def test_a_surviving_template_placeholder_is_a_warning() -> None:
     report = validate(BROKEN)
     placeholders = [w for w in report.warnings if w[0] == "W-PLACEHOLDER"]
     assert [rel for _, rel, _ in placeholders] == [
-        "10_markdown/documents/placeholder-note.md"
+        "10_markdown/documents/placeholder-note"
     ]
     assert "PROJECT_NAME" in placeholders[0][2]
 
@@ -168,9 +333,9 @@ def test_placeholders_are_scanned_outside_the_content_folders(tmp_path: Path) ->
     (tmp_path / "HOME.md").write_text("{{PROJECT_NAME}}", encoding="utf-8")
     report = validate(tmp_path)
     assert _rels(report.warnings, "W-PLACEHOLDER") == {
-        "knowledge/index.md",
-        "CLAUDE.md",
-        "HOME.md",
+        "knowledge/index",
+        "CLAUDE",
+        "HOME",
     }
 
 
@@ -633,7 +798,7 @@ def test_a_placeholder_under_the_chapter_is_reported(tmp_path: Path) -> None:
     )
     report = validate(root, chapter=CHAPTER)
     assert _rels(report.warnings, "W-PLACEHOLDER") == {
-        "20_distillates/documents/report-garden-water-2026.md"
+        "20_distillates/documents/report-garden-water-2026"
     }
 
 
@@ -666,16 +831,6 @@ def test_a_quotation_may_run_over_several_lines(tmp_path: Path) -> None:
     path.write_text(text, encoding="utf-8")
     report = validate(root)
     assert _rels(report.errors, "E-STATEMENT") == set()
-
-
-def test_a_computation_outside_the_analysis_folder_is_refused() -> None:
-    report = validate(BROKEN)
-    messages = [
-        message
-        for code, rel, message in report.errors
-        if code == "E-COMPUTATION" and rel == "20_distillates/data/outside-analysis"
-    ]
-    assert messages and "outside tools/analysis/" in messages[0], messages
 
 
 def _vault_with_an_unread_source(tmp_path: Path) -> Path:
@@ -726,4 +881,92 @@ def test_coverage_stays_out_of_the_chapter_mode(tmp_path: Path) -> None:
     root = _vault_with_an_unread_source(tmp_path)
     result = _run_cli(root, "--no-computations", "--chapter", CHAPTER)
     assert result.returncode == 0, result.stdout
-    assert "W-COVERAGE" in result.stdout
+    assert "W-COVERAGE" not in result.stderr
+
+
+def test_an_empty_frontmatter_block_parses_as_an_empty_mapping(tmp_path: Path) -> None:
+    assert split_frontmatter("---\n---\n\n# Body\n") == ("", "\n\n# Body\n")
+    path = tmp_path / "empty.md"
+    path.write_text("---\n---\n", encoding="utf-8")
+    report = Report()
+    doc = parse_doc(path, tmp_path, report)
+    assert doc is not None and doc.fm == {}
+    assert report.errors == []
+
+
+def test_a_byte_order_mark_does_not_hide_the_frontmatter(tmp_path: Path) -> None:
+    assert split_frontmatter("\ufeff---\na: 1\n---\nbody") == ("a: 1", "\nbody")
+    path = tmp_path / "bom.md"
+    path.write_text("---\ntype: glossary\n---\n", encoding="utf-8-sig")
+    doc = parse_doc(path, tmp_path, Report())
+    assert doc is not None and doc.fm == {"type": "glossary"}
+
+
+def test_a_scalar_link_field_counts_as_one_link(tmp_path: Path) -> None:
+    """A scalar used to be iterated character by character, one finding per letter."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "20_distillates" / "documents" / "report-garden-water-2026.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            'topics: ["[[Water]]"]', 'topics: "[[Water]]"'
+        ),
+        encoding="utf-8",
+    )
+    assert validate(root, run_computations=False).errors == []
+
+
+def test_a_scalar_grounding_still_holds_the_ladder(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(BROKEN, root)
+    path = root / "30_assertions" / "ladder-jump.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            'grounding:\n  - "[[20_distillates/documents/note#^s3]]"',
+            'grounding: "[[20_distillates/documents/note#^s3]]"',
+        ),
+        encoding="utf-8",
+    )
+    report = validate(root, run_computations=False)
+    assert "30_assertions/ladder-jump" in _rels(report.errors, "E-LADDER")
+
+
+def test_a_computation_printing_non_ascii_reproduces(tmp_path: Path) -> None:
+    """The Windows console code page cannot encode the sign, UTF-8 mode can."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    script = root / "tools" / "analysis" / "reduction.py"
+    script.write_text(
+        script.read_text(encoding="utf-8").replace(
+            "print(reduction)", 'print(f"\\u2248 {reduction}")'
+        ),
+        encoding="utf-8",
+    )
+    path = root / "20_distillates" / "data" / "water-readings-2025.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "\u2192 `31.4`", "\u2192 `\u2248 31.4`"
+        ),
+        encoding="utf-8",
+    )
+    assert validate(root).errors == []
+
+
+def test_a_computation_that_exceeds_its_timeout_is_a_finding(monkeypatch) -> None:
+    def too_slow(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    monkeypatch.setattr("validate.subprocess.run", too_slow)
+    report = validate(MINIMAL)
+    (message,) = [m for c, _, m in report.errors if c == "E-COMPUTATION"]
+    assert "timed out" in message
+
+
+def test_a_single_reference_object_resolves(tmp_path: Path) -> None:
+    """A reference manager may export one record as an object instead of an array."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "references" / "example-corpus.csl.json"
+    records = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps(records[0]), encoding="utf-8")
+    assert validate(root, run_computations=False).errors == []

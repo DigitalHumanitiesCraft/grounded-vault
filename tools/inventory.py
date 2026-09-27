@@ -19,6 +19,10 @@ source the distillates left mostly unread is visible in the register.
 there, so an original that has not been ingested yet shows up as a `new` row, and
 skipped when it is not, in which case that state is simply invisible.
 
+Documents are parsed by the loader of tools/validate.py. A file whose frontmatter
+does not parse has no row, and its finding is printed as a WARN line, so that the
+table never loses a source without saying so.
+
 Usage:
     python tools/inventory.py <vault-root> [--write]
 
@@ -30,24 +34,28 @@ knowledge/state.md.
 from __future__ import annotations
 
 import argparse
-import json
-import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-import yaml
-
-from validate import Report, anchored_blocks, parse_doc, split_frontmatter
+from validate import (
+    DATA_FOLDER,
+    DISTILLATE_LAYER,
+    DOCUMENTS_FOLDER,
+    REPRESENTATION_LAYER,
+    SOURCE_LAYER,
+    Doc,
+    anchored_blocks,
+    field_links,
+    load_docs,
+    load_references,
+    utf8_console,
+    write_text_atomic,
+)
 
 STATE = "knowledge/state.md"
 BEGIN = "<!-- inventory:begin -->"
 END = "<!-- inventory:end -->"
-
-REPRESENTATION_FOLDERS = ("10_markdown/documents", "10_markdown/data")
-DISTILLATE_FOLDER = "20_distillates"
-SOURCE_FOLDER = "00_sources"
-REFERENCE_FOLDER = "references"
 
 COLUMNS = (
     "Source",
@@ -59,8 +67,6 @@ COLUMNS = (
     "Status",
 )
 EMPTY = "—"
-
-WIKILINK = re.compile(r"\[\[([^\]#|]+?)(?:#\^[A-Za-z0-9-]+)?(?:\|[^\]]*)?\]\]")
 
 
 @dataclass
@@ -85,21 +91,9 @@ class Row:
         )
 
 
-def _frontmatter(path: Path) -> dict:
-    """The YAML block of a Markdown file, empty when it carries none."""
-    split = split_frontmatter(path.read_text(encoding="utf-8"))
-    if split is None:
-        return {}
-    try:
-        loaded = yaml.safe_load(split[0])
-    except yaml.YAMLError:
-        return {}
-    return loaded if isinstance(loaded, dict) else {}
-
-
-def _link_target(value: object) -> str | None:
-    match = WIKILINK.search(str(value))
-    return match.group(1).strip() if match else None
+def _first_link(fm: dict, name: str) -> str | None:
+    links = field_links(fm, name)
+    return links[0][0] if links else None
 
 
 def _title(fm: dict, fallback: str) -> str:
@@ -117,21 +111,7 @@ def _escape(cell: str) -> str:
     return cell.replace("|", "\\|")
 
 
-def _markdown_files(root: Path, folder: str) -> list[Path]:
-    directory = root / folder
-    return sorted(directory.rglob("*.md")) if directory.is_dir() else []
-
-
-def _representations(root: Path) -> dict[str, dict]:
-    found: dict[str, dict] = {}
-    for folder in REPRESENTATION_FOLDERS:
-        for path in _markdown_files(root, folder):
-            rel = path.relative_to(root).with_suffix("").as_posix()
-            found[rel] = _frontmatter(path)
-    return found
-
-
-def _distillates(root: Path) -> dict[str, list[tuple[str, dict]]]:
+def _distillates(docs: dict[str, Doc]) -> dict[str, list[tuple[str, dict]]]:
     """Distillates grouped by what they hang on, a representation or a reference id.
 
     A distillate that names neither is grouped under its own path, so it stays a
@@ -140,31 +120,14 @@ def _distillates(root: Path) -> dict[str, list[tuple[str, dict]]]:
     the schema forbids and the inventory must still show.
     """
     found: dict[str, list[tuple[str, dict]]] = {}
-    for path in _markdown_files(root, DISTILLATE_FOLDER):
-        rel = path.relative_to(root).with_suffix("").as_posix()
-        fm = _frontmatter(path)
-        key = (
-            _link_target(fm.get("representation") or "")
-            or str(fm.get("reference") or "").strip()
-        )
-        found.setdefault(key or rel, []).append((rel, fm))
-    return found
-
-
-def _references(root: Path) -> dict[str, str]:
-    """CSL record id to its title, over every JSON file in references/."""
-    found: dict[str, str] = {}
-    directory = root / REFERENCE_FOLDER
-    if not directory.is_dir():
-        return found
-    for path in sorted(directory.glob("*.json")):
-        try:
-            records = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+    for rel, doc in docs.items():
+        if not rel.startswith(DISTILLATE_LAYER):
             continue
-        for record in records if isinstance(records, list) else [records]:
-            if isinstance(record, dict) and record.get("id"):
-                found[str(record["id"])] = str(record.get("title") or record["id"])
+        key = (
+            _first_link(doc.fm, "representation")
+            or str(doc.fm.get("reference") or "").strip()
+        )
+        found.setdefault(key or rel, []).append((rel, doc.fm))
     return found
 
 
@@ -173,14 +136,14 @@ def _originals(root: Path, representations: dict[str, dict]) -> list[str]:
 
     The folder is gitignored, so its absence says nothing and is not a finding.
     """
-    directory = root / SOURCE_FOLDER
+    directory = root / SOURCE_LAYER
     if not directory.is_dir():
         return []
     claimed = {
         target
         for fm in representations.values()
-        for field in ("source", "data")
-        if (target := _link_target(fm.get(field) or ""))
+        for name in ("source", "data")
+        if (target := _first_link(fm, name))
     }
     found = []
     for path in sorted(directory.rglob("*")):
@@ -192,13 +155,8 @@ def _originals(root: Path, representations: dict[str, dict]) -> list[str]:
     return found
 
 
-def _coverage(root: Path) -> dict[str, str]:
+def _coverage(docs: dict[str, Doc]) -> dict[str, str]:
     """Per document representation the anchored blocks over all its blocks."""
-    docs = {}
-    for folder in ("10_markdown", DISTILLATE_FOLDER):
-        for path in _markdown_files(root, folder):
-            if doc := parse_doc(path, root, Report()):
-                docs[doc.rel] = doc
     anchored = anchored_blocks(docs)
     return {
         rel: f"{len(anchored.get(rel, set()) & set(doc.blocks))}/{len(set(doc.blocks))}"
@@ -209,11 +167,22 @@ def _coverage(root: Path) -> dict[str, str]:
     }
 
 
-def rows(root: Path) -> list[Row]:
-    representations = _representations(root)
-    distillates = _distillates(root)
-    references = _references(root)
-    coverage = _coverage(root)
+def rows(root: Path, problems: list[str] | None = None) -> list[Row]:
+    """The inventory rows of the vault; parse and reference problems go into `problems`."""
+    docs, report = load_docs(root, (REPRESENTATION_LAYER, DISTILLATE_LAYER))
+    if problems is not None:
+        problems += [f"{rel}: {code} {message}" for code, rel, message in report.errors]
+    representations = {
+        rel: doc.fm
+        for rel, doc in docs.items()
+        if rel.startswith((DOCUMENTS_FOLDER, DATA_FOLDER))
+    }
+    distillates = _distillates(docs)
+    references = {
+        key: str(record.get("title") or key)
+        for key, record in load_references(root, problems).items()
+    }
+    coverage = _coverage(docs)
     collected: list[Row] = []
 
     for rel, fm in representations.items():
@@ -289,26 +258,26 @@ def render(rows: list[Row]) -> str:
     return "\n".join(lines)
 
 
-def write(root: Path, table: str) -> None:
+def write(root: Path, table: str) -> str | None:
+    """Replace the marked block of the state document; the reason when that is impossible."""
     path = root / STATE
     if not path.is_file():
-        raise SystemExit(f"no {STATE} to write into: {path}")
+        return f"no {STATE} to write into: {path}"
     text = path.read_text(encoding="utf-8")
     start, end = text.find(BEGIN), text.find(END)
     if start < 0 or end < 0 or end < start:
-        raise SystemExit(
+        return (
             f"{STATE} carries no inventory markers; add the two lines "
             f"{BEGIN} and {END} around the source inventory table"
         )
     updated = f"{text[: start + len(BEGIN)]}\n{table}\n{text[end:]}"
     if updated != text:
-        path.write_text(updated, encoding="utf-8")
+        write_text_atomic(path, updated)
+    return None
 
 
-def main() -> None:
-    if sys.platform == "win32":
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
+def main() -> int:
+    utf8_console()
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("root", type=Path, help="vault root directory")
     parser.add_argument(
@@ -319,13 +288,19 @@ def main() -> None:
     args = parser.parse_args()
 
     root = args.root.resolve()
-    table = render(rows(root))
-    if args.write:
-        write(root, table)
-        print(f"wrote the source inventory into {STATE}")
-    else:
+    problems: list[str] = []
+    table = render(rows(root, problems))
+    for problem in problems:
+        print(f"WARN {problem}", file=sys.stderr)
+    if not args.write:
         print(table)
+        return 0
+    if error := write(root, table):
+        print(f"ERROR {error}", file=sys.stderr)
+        return 1
+    print(f"OK wrote the source inventory into {STATE}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -206,7 +206,7 @@ def _render_blocks(lines: list[str], source: Path) -> str:
             block, index = _render_fence(lines, index)
             out.append(block)
         elif heading := _HEADING.match(line):
-            level = min(len(heading.group(1)), 6)
+            level = len(heading.group(1))
             out.append(f"<h{level}>{_inline(heading.group(2), source)}</h{level}>")
             index += 1
         elif (
@@ -393,11 +393,12 @@ def main() -> int:
     try:
         page = build_page(root, args.date)
     except FileNotFoundError as error:
-        print(f"FEHLER: {error}", file=sys.stderr)
+        print(f"ERROR {error}", file=sys.stderr)
         return 1
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(page, encoding="utf-8")
-    print(f"OK: {output} ({len(page)} bytes, {len(SECTIONS)} sections)")
+    # LF on every platform, so that a rebuild on Windows diffs only in content.
+    output.write_text(page, encoding="utf-8", newline="\n")
+    print(f"OK {output} ({len(page)} characters, {len(SECTIONS)} sections)")
     return 0
 
 

@@ -6,18 +6,17 @@ vaults below add the states a conformant fixture cannot show, an original that
 has not been ingested and a state document without the markers.
 """
 
+import json
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 
+from inventory import BEGIN, COLUMNS, END, render, rows, write
+
 REPO = Path(__file__).parents[1]
-sys.path.insert(0, str(REPO / "tools"))
-
-from inventory import BEGIN, END, render, rows, write  # noqa: E402
-
 MINIMAL = REPO / "tests" / "fixtures" / "minimal"
+BROKEN = REPO / "tests" / "fixtures" / "broken"
 
 STATE = f"""---
 title: State
@@ -102,10 +101,9 @@ def test_two_distillates_of_one_source_both_appear() -> None:
     The broken fixture hangs several distillates on one representation; keying
     the table by the representation alone would silently drop all but one.
     """
-    broken = REPO / "tests" / "fixtures" / "broken"
     listed = [
         row.distillate
-        for row in rows(broken)
+        for row in rows(BROKEN)
         if row.representation == "[[10_markdown/documents/note]]"
     ]
     assert len(listed) == len(set(listed)) > 1
@@ -118,15 +116,18 @@ def test_a_missing_source_folder_is_no_finding() -> None:
 
 def test_the_table_carries_the_declared_columns() -> None:
     table = render(rows(MINIMAL)).splitlines()
-    assert table[0] == (
-        "| Source | Type | Channel | Markdown representation | Distillate | Coverage | Status |"
-    )
+    assert table[0] == "| " + " | ".join(COLUMNS) + " |"
     assert table[1] == "|---|---|---|---|---|---|---|"
-    assert len(table) == 2 + len(rows(MINIMAL))
+    assert all(line.count(" | ") == len(COLUMNS) - 1 for line in table[2:])
 
 
-def test_the_generated_table_is_stable() -> None:
-    assert render(rows(MINIMAL)) == render(rows(MINIMAL))
+@pytest.mark.parametrize("fixture", [MINIMAL, BROKEN], ids=["minimal", "broken"])
+def test_the_fixture_inventory_is_what_the_generator_writes(fixture: Path) -> None:
+    """The shipped state documents are generator output, never hand edits."""
+    text = (fixture / "knowledge" / "state.md").read_bytes().decode("utf-8")
+    text = text.replace("\r\n", "\n")
+    block = text[text.index(BEGIN) + len(BEGIN) : text.index(END)].strip("\n")
+    assert block == render(rows(fixture))
 
 
 def test_write_replaces_the_marked_block(tmp_path: Path) -> None:
@@ -158,15 +159,58 @@ def test_missing_markers_are_a_clear_error(tmp_path: Path) -> None:
     (root / "knowledge" / "state.md").write_text(
         "---\ntitle: State\n---\n\n# State\n", encoding="utf-8"
     )
-    with pytest.raises(SystemExit) as raised:
-        write(root, "| |")
-    assert BEGIN in str(raised.value)
+    error = write(root, "| |")
+    assert error is not None and BEGIN in error
 
 
 def test_a_missing_state_document_is_a_clear_error(tmp_path: Path) -> None:
-    with pytest.raises(SystemExit) as raised:
-        write(tmp_path, "| |")
-    assert "knowledge/state.md" in str(raised.value)
+    error = write(tmp_path, "| |")
+    assert error is not None and "knowledge/state.md" in error
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"], ids=["lf", "crlf"])
+def test_write_keeps_the_line_endings_of_the_state_document(
+    tmp_path: Path, newline: str
+) -> None:
+    """Either ending survives on every platform, so a rewrite diffs only in content."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "knowledge" / "state.md"
+    path.write_bytes(STATE.replace("\n", newline).encode("utf-8"))
+    assert write(root, render(rows(root))) is None
+    raw = path.read_bytes()
+    assert b"Water Metering" in raw
+    crlf = raw.count(b"\r\n")
+    assert crlf == (raw.count(b"\n") if newline == "\r\n" else 0)
+
+
+def test_a_document_that_does_not_parse_is_reported() -> None:
+    """The row is lost with the frontmatter, so the loss has to be said."""
+    problems: list[str] = []
+    rows(BROKEN, problems)
+    assert problems == [
+        "20_distillates/documents/not-a-mapping: E-FRONTMATTER frontmatter is not a mapping",
+        "20_distillates/documents/unterminated: E-FRONTMATTER unterminated frontmatter",
+    ]
+
+
+def test_a_single_reference_object_yields_its_row(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "references" / "example-corpus.csl.json"
+    path.write_text(
+        json.dumps(json.loads(path.read_text(encoding="utf-8"))[0]), encoding="utf-8"
+    )
+    assert _row(root, "Water Metering in Community Gardens").status == "distilled"
+
+
+def test_an_unreadable_reference_file_is_reported(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "references" / "broken.json").write_text("[{", encoding="utf-8")
+    problems: list[str] = []
+    rows(root, problems)
+    assert [p.split(":")[0] for p in problems] == ["references/broken.json"]
 
 
 def test_coverage_counts_the_blocks_the_distillates_anchor(tmp_path: Path) -> None:

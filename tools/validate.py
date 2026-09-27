@@ -16,6 +16,11 @@ Warnings report that a check found nothing to check, or found something that
 needs a human decision rather than a verdict. They are always printed and
 counted.
 
+The module is also the shared parsing layer of the other tools. review.py,
+inventory.py and migrate.py import the frontmatter split, document loading,
+link extraction and the folder constants from here, so that what counts as a
+document, a link or a statement cannot drift between them.
+
 Usage:
     python tools/validate.py <vault-root> [--no-computations] [--min-coverage 0.5]
     python tools/validate.py <vault-root> --chapter 40_output/<slug>
@@ -38,15 +43,25 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import yaml
+
+SOURCE_LAYER = "00_sources/"
+REPRESENTATION_LAYER = "10_markdown/"
+DOCUMENTS_FOLDER = "10_markdown/documents/"
+DATA_FOLDER = "10_markdown/data/"
+DISTILLATE_LAYER = "20_distillates/"
+ASSERTION_LAYER = "30_assertions/"
+REFERENCES_FOLDER = "references"
 
 CONTENT_FOLDERS = (
     "10_markdown",
@@ -67,16 +82,19 @@ TYPE_FOLDER = {
     "glossary": "glossary",
 }
 
-REPRESENTATION_LAYER = "10_markdown/"
-DISTILLATE_LAYER = "20_distillates/"
-ASSERTION_LAYER = "30_assertions/"
-FRONTMATTER_LINK_FIELDS = (
-    "grounding",
-    "assertions",
+# Frontmatter fields whose values are wikilinks, which the schema requires quoted.
+LINK_FIELDS = (
     "representation",
+    "data",
     "superseded-by",
     "contested-with",
+    "grounding",
+    "assertions",
+    "topics",
 )
+# The link fields that name a file of the vault and so must resolve. A topic
+# link names its topic, not the path of its topic map.
+RESOLVED_LINK_FIELDS = tuple(name for name in LINK_FIELDS if name != "topics")
 PLACEHOLDER_SCAN_FILES = ("CLAUDE.md", "HOME.md")
 
 # The layer a document type grounds in; the chapter scope walks down this chain.
@@ -91,6 +109,7 @@ VAULT_WIDE_CHECKS = ("W-EMPTY", "W-NO-OUTPUT", "W-COVERAGE")
 DEFAULT_MIN_COVERAGE = 0.5
 # Data anchors re-run scripts from the vault, so only this folder may hold them.
 ANALYSIS_FOLDER = "tools/analysis/"
+COMPUTATION_TIMEOUT = 120
 
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
@@ -102,6 +121,10 @@ STATUS_VOCAB = {
 # The ladder a status climbs. `contested` and `superseded` lie beside it and
 # earn no rank, so a document resting on one of them cannot rise above grounded.
 STATUS_RANK = {"grounded": 0, "validated": 1, "verified": 2}
+REQUIRED_CHECKS = {
+    "validated": ("validation", "machine-review"),
+    "verified": ("validation", "machine-review", "verification"),
+}
 # The frontmatter field naming the anchors whose status a document cannot exceed.
 # A representation carries no status, so a distillate has nothing to exceed.
 ANCHOR_FIELD = {"assertion": "grounding", "chapter": "assertions"}
@@ -144,6 +167,13 @@ REQUIRED_FIELDS = {
     ),
     "glossary": ("type", "term", "created", "updated"),
 }
+# The schema defines a Markdown representation for these two source types only;
+# `source` of a data representation is optional, since the data file may be the
+# original itself.
+REPRESENTATION_FIELDS = {
+    "document": ("source", "converter"),
+    "data": ("data",),
+}
 
 WIKILINK = re.compile(r"\[\[([^\]#|]+?)(?:#\^([A-Za-z0-9-]+))?(?:\|[^\]]*)?\]\]")
 ALIASED_LINK = re.compile(r"\[\[([^\]#|]+?)(?:#\^[A-Za-z0-9-]+)?\|([^\]]*)\]\]")
@@ -156,6 +186,7 @@ COMPUTATION = re.compile(r"computation:\s*`([^`]+)`\s*(?:→|->)\s*`([^`]+)`")
 # verbatim text in quotation marks, then the identifier with its locator.
 QUOTATION = re.compile(r'^["“].+["”]\s*\(.+\)$', re.DOTALL)
 PLACEHOLDER = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 @dataclass
@@ -182,15 +213,43 @@ class Report:
         return {code for code, _, _ in self.errors}
 
 
+def utf8_console() -> None:
+    """Switch the Windows console streams to UTF-8.
+
+    Findings quote arrows and typographic quotation marks from the vault, which
+    the legacy code page of a Windows console cannot encode.
+    """
+    if sys.platform == "win32":
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+
+
+def write_text_atomic(path: Path, text: str) -> None:
+    """Replace a file in one step, keeping the line endings it had on disk.
+
+    The text arrives with LF, as read_text delivers it. A file that carried CRLF
+    gets CRLF back, and a new file gets LF on every platform, so that a rewrite
+    on Windows does not turn a whole file into a diff.
+    """
+    newline = "\r\n" if path.is_file() and b"\r\n" in path.read_bytes() else "\n"
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8", newline=newline)
+    tmp.replace(path)
+
+
 def split_frontmatter(text: str) -> tuple[str, str] | None:
     """The raw YAML block and the body of a Markdown file, None when it has no frontmatter.
 
     The one place the frontmatter delimiter is read; inventory and migrate
     import it, so that what counts as frontmatter cannot drift between tools.
+    A leading byte order mark is tolerated, since some editors on Windows write
+    one, and the search for the closing delimiter starts on the newline of the
+    opening line, so that an empty block closes too.
     """
+    text = text.removeprefix("\ufeff")
     if not text.startswith("---\n"):
         return None
-    end = text.find("\n---", 4)
+    end = text.find("\n---", 3)
     if end < 0:
         return None
     return text[4:end], text[end + 4 :]
@@ -198,7 +257,7 @@ def split_frontmatter(text: str) -> tuple[str, str] | None:
 
 def parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
     rel = path.relative_to(root).with_suffix("").as_posix()
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8-sig")
     split = split_frontmatter(text)
     if split is None:
         what = "unterminated" if text.startswith("---\n") else "missing"
@@ -206,32 +265,87 @@ def parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
         return None
     raw, body = split
     try:
-        fm = yaml.safe_load(raw) or {}
+        fm = yaml.safe_load(raw)
     except yaml.YAMLError as exc:
         report.error("E-FRONTMATTER", rel, f"frontmatter is not valid YAML: {exc}")
+        return None
+    if fm is None:
+        fm = {}
+    if not isinstance(fm, dict):
+        report.error("E-FRONTMATTER", rel, "frontmatter is not a mapping")
         return None
     blocks = [m.group(1) for line in body.splitlines() if (m := BLOCK_ID.search(line))]
     return Doc(path=path, rel=rel, fm=fm, body=body, blocks=blocks)
 
 
-def _load_reference_ids(root: Path) -> set[str]:
-    ids: set[str] = set()
-    refdir = root / "references"
-    if not refdir.is_dir():
-        return ids
-    for path in refdir.glob("*.json"):
+def load_docs(root: Path, folders: Iterable[str]) -> tuple[dict[str, Doc], Report]:
+    """Every Markdown document under the given folders, keyed by its rel.
+
+    A file that fails to parse is left out of the documents and recorded in the
+    report, so that a caller can never lose one without saying so.
+    """
+    report = Report()
+    docs: dict[str, Doc] = {}
+    for folder in folders:
+        for path in sorted((root / folder).rglob("*.md")):
+            if doc := parse_doc(path, root, report):
+                docs[doc.rel] = doc
+    return docs, report
+
+
+def load_references(root: Path, problems: list[str] | None = None) -> dict[str, dict]:
+    """CSL records by id, over every JSON file in references/.
+
+    The schema declares an array per file. A single record object is accepted
+    as well, because a reference manager exporting one record may write it so.
+    A file that is not valid JSON is named in `problems` when the caller passes
+    a list; the validator does not, since every reference id it would have held
+    then fails to resolve as E-ANCHOR.
+    """
+    records: dict[str, dict] = {}
+    for path in sorted((root / REFERENCES_FOLDER).glob("*.json")):
         try:
-            records = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            continue  # reported implicitly when a reference does not resolve
-        for record in records if isinstance(records, list) else []:
-            if isinstance(record, dict) and "id" in record:
-                ids.add(str(record["id"]))
-    return ids
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            if problems is not None:
+                problems.append(f"{path.relative_to(root).as_posix()}: {exc}")
+            continue
+        for record in loaded if isinstance(loaded, list) else [loaded]:
+            if isinstance(record, dict) and record.get("id"):
+                records[str(record["id"])] = record
+    return records
 
 
-def _link_targets(text: str) -> list[tuple[str, str | None]]:
+def link_targets(text: str) -> list[tuple[str, str | None]]:
     return [(m.group(1).strip(), m.group(2)) for m in WIKILINK.finditer(text)]
+
+
+def field_links(fm: dict, name: str) -> list[tuple[str, str | None]]:
+    """The wikilink targets of one frontmatter field, whether it holds one value or a list.
+
+    A value that is not a string contributes nothing here, which keeps a scalar
+    from being iterated character by character; the validator reports such a
+    value as E-FRONTMATTER.
+    """
+    raw = fm.get(name)
+    values = raw if isinstance(raw, list) else [raw]
+    return [
+        link
+        for value in values
+        if isinstance(value, str)
+        for link in link_targets(value)
+    ]
+
+
+def quotation_text(follow: list[str]) -> str:
+    """The quotation block of a publication statement as one line of text.
+
+    Validation holds this string against the declared form and review hands it
+    to the reviewer as the passage, so both judge the same text.
+    """
+    return " ".join(
+        line.lstrip()[1:].strip() for line in follow if line.lstrip().startswith(">")
+    )
 
 
 def _check_frontmatter(doc: Doc, report: Report) -> None:
@@ -254,25 +368,56 @@ def _check_frontmatter(doc: Doc, report: Report) -> None:
         report.error(
             "E-FRONTMATTER", doc.rel, f"illegal status value: {doc.fm['status']!r}"
         )
-    if "source-type" in doc.fm and doc.fm["source-type"] not in SOURCE_TYPES:
-        report.error(
-            "E-FRONTMATTER", doc.rel, f"illegal source-type: {doc.fm['source-type']!r}"
-        )
-    if doctype == "representation" and doc.fm.get("channel") not in CHANNELS:
-        report.error(
-            "E-FRONTMATTER", doc.rel, f"illegal channel: {doc.fm.get('channel')!r}"
-        )
-    if doctype == "distillate" and doc.fm.get("source-type") == "publication":
+    source_type = doc.fm.get("source-type")
+    if "source-type" in doc.fm and source_type not in SOURCE_TYPES:
+        report.error("E-FRONTMATTER", doc.rel, f"illegal source-type: {source_type!r}")
+    if doctype == "representation":
+        _check_representation_fields(doc, source_type, report)
+    if doctype == "distillate" and source_type == "publication":
         if not doc.fm.get("reference"):
             report.error(
                 "E-FRONTMATTER", doc.rel, "publication distillate needs a reference id"
             )
     elif doctype == "distillate" and not doc.fm.get("representation"):
         report.error("E-FRONTMATTER", doc.rel, "distillate needs a representation link")
-    if doctype == "representation" and not (doc.fm.get("source") or doc.fm.get("data")):
+    _check_link_fields(doc, report)
+
+
+def _check_representation_fields(doc: Doc, source_type: object, report: Report) -> None:
+    if doc.fm.get("channel") not in CHANNELS:
         report.error(
-            "E-FRONTMATTER", doc.rel, "representation needs a source or data field"
+            "E-FRONTMATTER", doc.rel, f"illegal channel: {doc.fm.get('channel')!r}"
         )
+    if "metadata" in doc.fm and not isinstance(doc.fm["metadata"], dict):
+        report.error("E-FRONTMATTER", doc.rel, "metadata must be a mapping")
+    if source_type == "publication":
+        report.error(
+            "E-FRONTMATTER",
+            doc.rel,
+            "a publication has no Markdown representation; its record lives in references/",
+        )
+    for key in REPRESENTATION_FIELDS.get(str(source_type), ()):
+        if key not in doc.fm:
+            report.error("E-FRONTMATTER", doc.rel, f"missing required field: {key}")
+
+
+def _check_link_fields(doc: Doc, report: Report) -> None:
+    """A link field holds quoted wikilinks.
+
+    Unquoted, `[[x]]` is a nested YAML list rather than a link, and a field read
+    that way would silently carry no anchor at all.
+    """
+    for name in LINK_FIELDS:
+        raw = doc.fm.get(name)
+        if raw is None or raw == "" or raw == []:
+            continue
+        for value in raw if isinstance(raw, list) else [raw]:
+            if not isinstance(value, str) or not WIKILINK.search(value):
+                report.error(
+                    "E-FRONTMATTER",
+                    doc.rel,
+                    f"{name} value is not a quoted wikilink: {value!r}",
+                )
 
 
 def _check_status_discipline(doc: Doc, report: Report) -> None:
@@ -281,12 +426,7 @@ def _check_status_discipline(doc: Doc, report: Report) -> None:
     if not isinstance(checked, dict):
         report.error("E-STATUS", doc.rel, "checked must be a map of check name to date")
         return
-    needed: tuple[str, ...] = ()
-    if status == "validated":
-        needed = ("validation", "machine-review")
-    elif status == "verified":
-        needed = ("validation", "machine-review", "verification")
-    for check in needed:
+    for check in REQUIRED_CHECKS.get(status, ()):
         if check not in checked:
             report.error(
                 "E-STATUS", doc.rel, f"status {status} without checked.{check}"
@@ -301,8 +441,16 @@ def _check_status_discipline(doc: Doc, report: Report) -> None:
 
 
 def _iso_date(value: object) -> date | None:
+    """A calendar date in the form YYYY-MM-DD, or the date YAML already parsed from it."""
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value).strip()
+    if not ISO_DATE.match(text):
+        return None
     try:
-        return date.fromisoformat(str(value).strip()[:10])
+        return date.fromisoformat(text)
     except ValueError:
         return None
 
@@ -339,18 +487,17 @@ def _check_ladder(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
     own = STATUS_RANK.get(doc.fm.get("status"), 0)
     if field_name is None or own == 0:
         return
-    for raw in doc.fm.get(field_name) or []:
-        for target, _ in _link_targets(str(raw)):
-            other = docs.get(target)
-            if other is None:
-                continue  # E-ANCHOR speaks about the target that does not exist
-            if STATUS_RANK.get(other.fm.get("status"), 0) < own:
-                report.error(
-                    "E-LADDER",
-                    doc.rel,
-                    f"status {doc.fm['status']} above its anchor {target} "
-                    f"at status {other.fm.get('status')!r}",
-                )
+    for target, _ in field_links(doc.fm, field_name):
+        other = docs.get(target)
+        if other is None:
+            continue  # E-ANCHOR speaks about the target that does not exist
+        if STATUS_RANK.get(other.fm.get("status"), 0) < own:
+            report.error(
+                "E-LADDER",
+                doc.rel,
+                f"status {doc.fm['status']} above its anchor {target} "
+                f"at status {other.fm.get('status')!r}",
+            )
 
 
 def _resolve_anchor(
@@ -361,7 +508,7 @@ def _resolve_anchor(
     doc: Doc,
     report: Report,
 ) -> None:
-    if target.startswith("00_sources/"):
+    if target.startswith(SOURCE_LAYER):
         return  # originals are local-only and not resolvable on every clone
     if target not in docs:
         if not (root / f"{target}.md").exists() and not (root / target).exists():
@@ -375,7 +522,7 @@ def _check_layer(
     target: str, expected: str, what: str, doc: Doc, report: Report
 ) -> None:
     """An anchor may only point one layer down, into the layer that grounds it."""
-    if target.startswith("00_sources/"):
+    if target.startswith(SOURCE_LAYER):
         return
     if not target.startswith(expected):
         report.error(
@@ -386,16 +533,12 @@ def _check_layer(
 
 
 def _frontmatter_links(doc: Doc) -> list[tuple[str, str, str | None]]:
-    """Link targets of the frontmatter fields that name other documents."""
-    found: list[tuple[str, str, str | None]] = []
-    for name in FRONTMATTER_LINK_FIELDS:
-        raw = doc.fm.get(name)
-        if not raw:
-            continue
-        values = raw if isinstance(raw, list) else [raw]
-        for value in values:
-            found += [(name, t, b) for t, b in _link_targets(str(value))]
-    return found
+    """Link targets of the frontmatter fields that name other files of the vault."""
+    return [
+        (name, target, block)
+        for name in RESOLVED_LINK_FIELDS
+        for target, block in field_links(doc.fm, name)
+    ]
 
 
 def _check_frontmatter_links(
@@ -414,7 +557,7 @@ def _check_duplicate_ids(doc: Doc, report: Report) -> None:
     elif doctype == "distillate":
         ids = [
             m.group(1)
-            for line, _ in _statement_lines(doc.body)
+            for line, _ in statement_lines(doc.body)
             if (m := BLOCK_ID.search(line))
         ]
         label = "statement ID"
@@ -448,12 +591,12 @@ def _check_placeholders(
             seen.add(name)
             report.warn(
                 "W-PLACEHOLDER",
-                path.relative_to(root).as_posix(),
+                path.relative_to(root).with_suffix("").as_posix(),
                 f"unfilled template placeholder: {{{{{name}}}}}",
             )
 
 
-def _statement_lines(body: str) -> list[tuple[str, list[str]]]:
+def statement_lines(body: str) -> list[tuple[str, list[str]]]:
     """Top-level bullets of the Core statements section, each with its indented follow-up lines."""
     lines = body.splitlines()
     statements: list[tuple[str, list[str]]] = []
@@ -488,15 +631,32 @@ def _ids_outside_core_statements(body: str) -> list[str]:
     return stray
 
 
+def _own_representation(doc: Doc, docs: dict[str, Doc]) -> str | None:
+    """The representation a document distillate's statements must anchor into.
+
+    None when the link is missing, dead or outside the representation layer,
+    because E-FRONTMATTER, E-ANCHOR or E-LAYER already speak about that, and a
+    comparison against a target that is not there would only repeat them.
+    """
+    links = field_links(doc.fm, "representation")
+    if not links:
+        return None
+    target = links[0][0]
+    if target not in docs or not target.startswith(REPRESENTATION_LAYER):
+        return None
+    return target
+
+
 def _check_distillate(
     doc: Doc,
+    docs: dict[str, Doc],
     reference_ids: set[str],
     root: Path,
     report: Report,
     run_computations: bool,
 ) -> None:
     source_type = doc.fm.get("source-type")
-    statements = _statement_lines(doc.body)
+    statements = statement_lines(doc.body)
     if not statements:
         report.error("E-STATEMENT", doc.rel, "no core statements found")
     for stray in _ids_outside_core_statements(doc.body):
@@ -523,36 +683,28 @@ def _check_distillate(
                 doc.rel,
                 "checked.quote names no text version it ran on (checked-against)",
             )
+    own = _own_representation(doc, docs) if source_type == "document" else None
     for line, follow in statements:
+        short = line.strip()[:60]
         if not BLOCK_ID.search(line):
             report.error(
-                "E-STATEMENT",
-                doc.rel,
-                f"core statement without statement ID: {line.strip()[:60]}",
+                "E-STATEMENT", doc.rel, f"core statement without statement ID: {short}"
             )
-        anchored = [t for t, block in _link_targets(line) if block is not None]
+        anchored = [t for t, block in link_targets(line) if block is not None]
         for target in anchored:
             if source_type == "document" or target.startswith(DISTILLATE_LAYER):
                 _check_layer(
                     target, REPRESENTATION_LAYER, "distillate statement", doc, report
                 )
         if source_type == "document":
-            if not anchored:
-                report.error(
-                    "E-STATEMENT",
-                    doc.rel,
-                    f"core statement without block anchor: {line.strip()[:60]}",
-                )
+            _check_document_anchor(doc, anchored, own, short, report)
         elif source_type == "publication":
-            quote = "\n".join(
-                f.strip()[1:].strip() for f in follow if f.lstrip().startswith(">")
-            )
-            if not QUOTATION.match(quote):
+            if not QUOTATION.match(quotation_text(follow)):
                 report.error(
                     "E-STATEMENT",
                     doc.rel,
                     "core statement without a quotation in the form "
-                    f'"<verbatim>" (<identifier>): {line.strip()[:60]}',
+                    f'"<verbatim>" (<identifier>): {short}',
                 )
         elif source_type == "data":
             declared = [m for f in follow if (m := COMPUTATION.search(f))]
@@ -560,12 +712,37 @@ def _check_distillate(
                 report.error(
                     "E-STATEMENT",
                     doc.rel,
-                    f"core statement without computation: {line.strip()[:60]}",
+                    f"core statement without computation: {short}",
                 )
             for m in declared:
                 _check_computation(
                     m.group(1), m.group(2), root, doc, report, run_computations
                 )
+
+
+def _check_document_anchor(
+    doc: Doc, anchored: list[str], own: str | None, short: str, report: Report
+) -> None:
+    """A document statement carries exactly one block anchor, into its own source."""
+    if not anchored:
+        report.error(
+            "E-STATEMENT", doc.rel, f"core statement without block anchor: {short}"
+        )
+        return
+    if len(anchored) > 1:
+        report.error(
+            "E-STATEMENT",
+            doc.rel,
+            f"core statement carries {len(anchored)} block anchors, not exactly one: {short}",
+        )
+    for target in anchored:
+        # A target outside the representation layer is E-LAYER's finding.
+        if own and target.startswith(REPRESENTATION_LAYER) and target != own:
+            report.error(
+                "E-STATEMENT",
+                doc.rel,
+                f"core statement anchors into {target}, not into its representation {own}",
+            )
 
 
 def _check_computation(
@@ -576,57 +753,77 @@ def _check_computation(
     report: Report,
     run_computations: bool,
 ) -> None:
-    scripts = [part for part in command.split() if part.endswith(".py")]
-    if not scripts:
+    parts = command.split()
+    index = next((i for i, part in enumerate(parts) if part.endswith(".py")), None)
+    if index is None:
         report.error(
             "E-COMPUTATION", doc.rel, f"no script named in computation: {command}"
         )
         return
-    # Trust boundary: the validator executes what the vault names, and CI runs
-    # it on every push, so a script anywhere but in the analysis folder is
-    # refused before existence is even checked.
-    if not scripts[0].replace("\\", "/").startswith(ANALYSIS_FOLDER):
+    named = parts[index].replace("\\", "/")
+    if parts[index + 1 :]:
         report.error(
             "E-COMPUTATION",
             doc.rel,
-            f"computation script outside {ANALYSIS_FOLDER}: {scripts[0]}",
+            f"computation script takes no arguments: {command}",
         )
         return
-    script = root / scripts[0]
-    if not script.exists():
+    # Trust boundary: the validator executes what the vault names, and CI runs
+    # it on every push, so a script that does not resolve into the analysis
+    # folder is refused before existence is even checked. Resolving first keeps
+    # a `..` segment from walking out of it.
+    script = (root / named).resolve()
+    if not script.is_relative_to((root / ANALYSIS_FOLDER).resolve()):
         report.error(
-            "E-COMPUTATION", doc.rel, f"computation script missing: {scripts[0]}"
+            "E-COMPUTATION",
+            doc.rel,
+            f"computation script outside {ANALYSIS_FOLDER}: {named}",
         )
         return
-    if run_computations:
+    if not script.is_file():
+        report.error("E-COMPUTATION", doc.rel, f"computation script missing: {named}")
+        return
+    if not run_computations:
+        return
+    try:
+        # UTF-8 on both ends, or a script printing non-ASCII fails under the
+        # Windows code page while it passes on Linux CI.
         result = subprocess.run(
             [sys.executable, str(script)],
             cwd=root,
             capture_output=True,
             text=True,
-            timeout=120,
+            encoding="utf-8",
+            errors="replace",
+            env={**os.environ, "PYTHONUTF8": "1"},
+            timeout=COMPUTATION_TIMEOUT,
             check=False,
         )
-        if result.returncode != 0:
-            report.error(
-                "E-COMPUTATION",
-                doc.rel,
-                f"computation failed: {scripts[0]}: {result.stderr.strip()[:120]}",
-            )
-        elif result.stdout.strip() != stated:
-            report.error(
-                "E-COMPUTATION",
-                doc.rel,
-                f"stated result {stated!r} but computation yields {result.stdout.strip()!r}",
-            )
+    except subprocess.TimeoutExpired:
+        report.error(
+            "E-COMPUTATION",
+            doc.rel,
+            f"computation timed out after {COMPUTATION_TIMEOUT}s: {named}",
+        )
+        return
+    if result.returncode != 0:
+        report.error(
+            "E-COMPUTATION",
+            doc.rel,
+            f"computation failed: {named}: {result.stderr.strip()[:120]}",
+        )
+    elif result.stdout.strip() != stated:
+        report.error(
+            "E-COMPUTATION",
+            doc.rel,
+            f"stated result {stated!r} but computation yields {result.stdout.strip()!r}",
+        )
 
 
 def _check_topics(doc: Doc, topic_names: set[str], report: Report) -> None:
-    for raw in doc.fm.get("topics") or []:
-        # A topic is written as a wikilink; an alias on it would otherwise
-        # slip a name past the controlled set.
-        linked = _link_targets(str(raw))
-        topic = linked[0][0] if linked else str(raw).strip("[] ")
+    # The target, not the alias, is compared, so an alias cannot slip a name
+    # past the controlled set.
+    for topic, _ in field_links(doc.fm, "topics"):
         if topic not in topic_names:
             report.error(
                 "E-TOPIC", doc.rel, f"topic outside the controlled topic set: {topic}"
@@ -634,11 +831,7 @@ def _check_topics(doc: Doc, topic_names: set[str], report: Report) -> None:
 
 
 def _check_assertion(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
-    grounding = [
-        (target, block)
-        for raw in doc.fm.get("grounding") or []
-        for target, block in _link_targets(str(raw))
-    ]
+    grounding = field_links(doc.fm, "grounding")
     if not grounding:
         report.error(
             "E-GROUNDING", doc.rel, "assertion without a single grounding anchor"
@@ -649,11 +842,7 @@ def _check_assertion(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
                 "E-ANCHOR", doc.rel, f"grounding without statement anchor: {target}"
             )
         _check_layer(target, DISTILLATE_LAYER, "grounding", doc, report)
-    contested = [
-        t
-        for raw in doc.fm.get("contested-with") or []
-        for t, _ in _link_targets(str(raw))
-    ]
+    contested = [target for target, _ in field_links(doc.fm, "contested-with")]
     if doc.fm.get("status") == "contested" and not contested:
         report.error(
             "E-CONTESTED", doc.rel, "contested assertion without contested-with links"
@@ -665,16 +854,18 @@ def _check_assertion(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
                 "E-CONTESTED", doc.rel, f"contested counterpart missing: {target}"
             )
             continue
-        back = [
-            t
-            for raw in other.fm.get("contested-with") or []
-            for t, _ in _link_targets(str(raw))
-        ]
+        back = [t for t, _ in field_links(other.fm, "contested-with")]
         if doc.rel not in back:
             report.error(
                 "E-CONTESTED",
                 doc.rel,
                 f"one-sided contested relation: {target} does not link back",
+            )
+        if other.fm.get("status") != "contested":
+            report.error(
+                "E-CONTESTED",
+                doc.rel,
+                f"contested counterpart {target} is not itself at status contested",
             )
 
 
@@ -691,11 +882,7 @@ def _check_contested_coverage(
         other = docs.get(target)
         if other is None or other.fm.get("status") != "contested":
             continue
-        counterparts = {
-            t
-            for raw in other.fm.get("contested-with") or []
-            for t, _ in _link_targets(str(raw))
-        }
+        counterparts = {t for t, _ in field_links(other.fm, "contested-with")}
         if counterparts and not counterparts & grounded:
             report.warn(
                 "W-CONTESTED",
@@ -725,7 +912,7 @@ def _check_chapter(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
     posit_count = 0
     for key, text in defs.items():
         if text.startswith("Grounded in"):
-            targets = [t for t, _ in _link_targets(text)]
+            targets = [t for t, _ in link_targets(text)]
             if not targets:
                 report.error(
                     "E-FOOTNOTE", doc.rel, f"footnote [^{key}] grounds in no assertion"
@@ -733,6 +920,18 @@ def _check_chapter(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
             for target in targets:
                 grounded_assertions.add(target)
                 _check_layer(target, ASSERTION_LAYER, "chapter footnote", doc, report)
+                other = docs.get(target)
+                # A target outside the layer is E-LAYER's, a dead one E-ANCHOR's.
+                if (
+                    other is not None
+                    and other.fm.get("type") != "assertion"
+                    and target.startswith(ASSERTION_LAYER)
+                ):
+                    report.error(
+                        "E-FOOTNOTE",
+                        doc.rel,
+                        f"footnote [^{key}] grounds in {target}, which is not an assertion",
+                    )
         elif text.startswith("Posit:"):
             posit_count += 1
         else:
@@ -742,9 +941,7 @@ def _check_chapter(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
                 f"footnote [^{key}] starts with neither 'Grounded in' nor 'Posit:'",
             )
 
-    mirror = {
-        t for raw in doc.fm.get("assertions") or [] for t, _ in _link_targets(str(raw))
-    }
+    mirror = {target for target, _ in field_links(doc.fm, "assertions")}
     if mirror != grounded_assertions:
         report.error(
             "E-MIRROR",
@@ -776,21 +973,17 @@ def _check_chapter(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
 
 
 def _check_moc_reachability(
-    docs: dict[str, Doc], report: Report, scope: dict[str, Doc] | None = None
+    docs: dict[str, Doc], report: Report, scope: dict[str, Doc]
 ) -> None:
     mocs = [d for d in docs.values() if d.fm.get("type") == "moc"]
-    listed = {target for moc in mocs for target, _ in _link_targets(moc.body)}
-    for doc in (scope if scope is not None else docs).values():
+    listed = {target for moc in mocs for target, _ in link_targets(moc.body)}
+    for doc in scope.values():
         if doc.fm.get("type") == "assertion" and doc.rel not in listed:
             report.error("E-ORPHAN", doc.rel, "assertion reachable from no topic map")
 
 
 def _grounding_set(doc: Doc) -> frozenset[tuple[str, str | None]]:
-    return frozenset(
-        (target, block)
-        for raw in doc.fm.get("grounding") or []
-        for target, block in _link_targets(str(raw))
-    )
+    return frozenset(field_links(doc.fm, "grounding"))
 
 
 def _check_duplicate_grounding(docs: dict[str, Doc], report: Report) -> None:
@@ -878,8 +1071,8 @@ def anchored_blocks(docs: dict[str, Doc]) -> dict[str, set[str]]:
     for doc in docs.values():
         if doc.fm.get("type") != "distillate":
             continue
-        for line, _ in _statement_lines(doc.body):
-            for target, block in _link_targets(line):
+        for line, _ in statement_lines(doc.body):
+            for target, block in link_targets(line):
                 if block is not None:
                     anchored.setdefault(target, set()).add(block)
     return anchored
@@ -944,7 +1137,7 @@ def _links_below(doc: Doc) -> set[str]:
     if below is None:
         return set()
     targets = {target for _, target, _ in _frontmatter_links(doc)}
-    targets |= {target for target, _ in _link_targets(doc.body)}
+    targets |= {target for target, _ in link_targets(doc.body)}
     return {target for target in targets if target.startswith(below)}
 
 
@@ -972,13 +1165,11 @@ def validate(
     chapter: str | None = None,
     min_coverage: float = DEFAULT_MIN_COVERAGE,
 ) -> Report:
-    report = Report()
-    docs: dict[str, Doc] = {}
-    for folder in CONTENT_FOLDERS:
-        for path in sorted((root / folder).rglob("*.md")):
-            if doc := parse_doc(path, root, report):
-                docs[doc.rel] = doc
-    reference_ids = _load_reference_ids(root)
+    # Resolved, because the chapter lookup and the computation trust boundary
+    # compare resolved paths against it.
+    root = Path(root).resolve()
+    docs, report = load_docs(root, CONTENT_FOLDERS)
+    reference_ids = set(load_references(root))
     topic_names = {
         str(d.fm.get("topic")) for d in docs.values() if d.fm.get("type") == "moc"
     }
@@ -1012,13 +1203,13 @@ def validate(
         if doctype in ("distillate", "assertion"):
             _check_topics(doc, topic_names, report)
         if doctype == "distillate":
-            _check_distillate(doc, reference_ids, root, report, run_computations)
+            _check_distillate(doc, docs, reference_ids, root, report, run_computations)
         elif doctype == "assertion":
             _check_assertion(doc, docs, report)
         elif doctype == "chapter":
             _check_chapter(doc, docs, report)
-        for target, block in _link_targets(doc.body):
-            if block is not None or any(target.startswith(f) for f in CONTENT_FOLDERS):
+        for target, block in link_targets(doc.body):
+            if block is not None or target.startswith(CONTENT_FOLDERS):
                 _resolve_anchor(target, block, docs, root, doc, report)
     _check_moc_reachability(docs, report, scope)
     _check_duplicate_grounding(scope, report)
@@ -1032,10 +1223,8 @@ def validate(
     return report
 
 
-def main() -> None:
-    if sys.platform == "win32":
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
+def main() -> int:
+    utf8_console()
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("root", type=Path, help="vault root directory")
     parser.add_argument(
@@ -1058,7 +1247,7 @@ def main() -> None:
     args = parser.parse_args()
 
     report = validate(
-        args.root.resolve(),
+        args.root,
         run_computations=not args.no_computations,
         chapter=args.chapter,
         min_coverage=args.min_coverage,
@@ -1073,11 +1262,11 @@ def main() -> None:
         ready = not report.errors and not report.warnings
         verdict = "READY" if ready else "NOT READY"
         print(f"CHAPTER {verdict} {args.chapter}")
-        sys.exit(0 if ready else 1)
+        return 0 if ready else 1
     if not report.errors:
         print("OK vault conforms to its schema")
-    sys.exit(1 if report.errors else 0)
+    return 1 if report.errors else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

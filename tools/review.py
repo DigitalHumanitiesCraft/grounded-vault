@@ -8,8 +8,8 @@ work splits into three parts that are kept apart on purpose.
    verbatim quotation; data: the computation and its result), and every
    grounding anchor of an assertion is cut against the distillate statement it
    names. Anti-anchoring is structural here: a pair holds the location, the
-   claim and nothing else, so the producing agent's reasoning, its Support
-   prose and even the anchors themselves stay out of the prompt.
+   statement built on it and nothing else, so the producing agent's reasoning,
+   its Support prose and even the anchors themselves stay out of the prompt.
 2. Prompt construction from the skeletons in operations.md, one prompt per pair.
 3. Judging, pluggable. The default mode writes the prompts as a JSONL batch and
    reads verdicts back as JSONL, so any reviewer (another model family is
@@ -26,8 +26,9 @@ Usage:
     python tools/review.py judge <vault-root> --verdicts verdicts.jsonl [--apply]
     python tools/review.py run   <vault-root> --model <model> [--apply]
 
-Parsing conventions are imported from tools/validate.py rather than restated;
-validation gates review, so a vault that reaches this script already conforms.
+Parsing conventions are imported from tools/validate.py rather than restated.
+Validation gates review, so booking under --apply runs the validator first and
+books no document that carries a validation error.
 """
 
 from __future__ import annotations
@@ -43,14 +44,23 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from validate import (
+    ASSERTION_LAYER,
     BLOCK_ID,
     COMPUTATION,
+    DISTILLATE_LAYER,
+    H1,
+    REPRESENTATION_LAYER,
     WIKILINK,
     Doc,
-    Report,
-    _link_targets,
-    _statement_lines,
-    parse_doc,
+    field_links,
+    link_targets,
+    load_docs,
+    quotation_text,
+    split_frontmatter,
+    statement_lines,
+    utf8_console,
+    validate,
+    write_text_atomic,
 )
 
 VERDICTS = (
@@ -67,8 +77,8 @@ that claims to be supported by it. Your task is to refute the statement.
 Judge only whether this passage supports this statement. Answer with exactly
 one verdict: {vocabulary}. Then give one sentence of justification.
 
-PASSAGE: {location}
-STATEMENT: {claim}"""
+PASSAGE: {passage}
+STATEMENT: {statement}"""
 
 ASSERTION_PROMPT = """You are an adversarial reviewer. Below are a distillate statement and an
 assertion that claims to be supported by it. Your task is to refute the
@@ -78,8 +88,8 @@ the assertion is true is out of scope. Answer with exactly one verdict:
 not *fully supports*, name the part of the assertion that the statement does not
 carry.
 
-STATEMENT: {location}
-ASSERTION: {claim}"""
+STATEMENT: {statement}
+ASSERTION: {assertion}"""
 
 VERDICT_PREFIX = re.compile(r"^[^a-z]*(?:verdict\s*[:\-]\s*)?")
 CHECKED_EMPTY = re.compile(r"^checked:[ \t]*\{\s*\}[ \t]*$", re.MULTILINE)
@@ -88,14 +98,20 @@ CHECKED_BLOCK = re.compile(r"^checked:[ \t]*$", re.MULTILINE)
 
 @dataclass(frozen=True)
 class Pair:
-    """One reviewable pair: a location, the claim built on it, nothing else."""
+    """One reviewable pair: a location, the statement built on it, nothing else.
+
+    For a source pair the location is the source passage and the statement is
+    the distillate statement. For an assertion pair the location is the
+    distillate statement and the statement is the assertion sentence, the
+    statement built on it in the sense of the machine-review contract.
+    """
 
     id: str
     kind: str  # source | assertion
     document: str  # the document under review, root-relative without extension
-    anchor: str  # the anchor that ties claim to location, for the report only
+    anchor: str  # the anchor that ties statement to location, for the report only
     location: str
-    claim: str
+    statement: str
 
     @property
     def prompt(self) -> str:
@@ -108,7 +124,7 @@ class Pair:
             "document": self.document,
             "anchor": self.anchor,
             "location": self.location,
-            "claim": self.claim,
+            "statement": self.statement,
             "prompt": self.prompt,
         }
 
@@ -137,9 +153,13 @@ class Outcome:
 
 
 def build_prompt(pair: Pair) -> str:
-    template = SOURCE_PROMPT if pair.kind == "source" else ASSERTION_PROMPT
-    return template.format(
-        vocabulary=" | ".join(VERDICTS), location=pair.location, claim=pair.claim
+    vocabulary = " | ".join(VERDICTS)
+    if pair.kind == "source":
+        return SOURCE_PROMPT.format(
+            vocabulary=vocabulary, passage=pair.location, statement=pair.statement
+        )
+    return ASSERTION_PROMPT.format(
+        vocabulary=vocabulary, statement=pair.location, assertion=pair.statement
     )
 
 
@@ -158,7 +178,7 @@ def parse_verdict(response: str) -> str:
 
 
 def _statement_text(line: str) -> str:
-    """The bare claim of a statement bullet, stripped of its anchor and its own ID."""
+    """The bare statement of a bullet, stripped of its anchor and its own ID."""
     text = line.strip()
     text = text[2:] if text.startswith("- ") else text
     text = BLOCK_ID.sub("", WIKILINK.sub("", text).strip())
@@ -191,34 +211,23 @@ def _block_locations(doc: Doc) -> dict[str, str]:
     return locations
 
 
-def _load_docs(root: Path) -> dict[str, Doc]:
-    report = Report()
-    docs: dict[str, Doc] = {}
-    for folder in ("10_markdown", "20_distillates", "30_assertions"):
-        for path in sorted((root / folder).rglob("*.md")):
-            if doc := parse_doc(path, root, report):
-                docs[doc.rel] = doc
-    return docs
-
-
 def _source_pairs(
     doc: Doc,
-    docs: dict[str, Doc],
     blocks: dict[str, dict[str, str]],
     problems: list[str],
 ) -> list[Pair]:
     source_type = doc.fm.get("source-type")
     pairs: list[Pair] = []
-    for line, follow in _statement_lines(doc.body):
+    for line, follow in statement_lines(doc.body):
         m = BLOCK_ID.search(line)
         if not m:
             problems.append(f"{doc.rel}: statement without ID, skipped")
             continue
         sid = m.group(1)
-        claim = _statement_text(line)
+        statement = _statement_text(line)
         anchor, location = "", ""
         if source_type == "document":
-            anchored = [(t, b) for t, b in _link_targets(line) if b]
+            anchored = [(t, b) for t, b in link_targets(line) if b]
             if not anchored:
                 problems.append(f"{doc.rel}#^{sid}: no block anchor, skipped")
                 continue
@@ -230,16 +239,11 @@ def _source_pairs(
                 continue
             anchor, location = f"{target}#^{block}", blocks[target][block]
         elif source_type == "publication":
-            quotes = [
-                f.strip().lstrip(">").strip()
-                for f in follow
-                if f.strip().startswith(">")
-            ]
-            if not quotes:
+            location = quotation_text(follow)
+            if not location:
                 problems.append(f"{doc.rel}#^{sid}: no quotation, skipped")
                 continue
             anchor = str(doc.fm.get("reference", ""))
-            location = " ".join(quotes)
         elif source_type == "data":
             declared = [c for f in follow if (c := COMPUTATION.search(f))]
             if not declared:
@@ -259,51 +263,50 @@ def _source_pairs(
                 document=doc.rel,
                 anchor=anchor,
                 location=location,
-                claim=claim,
+                statement=statement,
             )
         )
     return pairs
 
 
-def _assertion_sentence(doc: Doc) -> str | None:
-    for line in doc.body.splitlines():
-        if line.startswith("# "):
-            return line[2:].strip()
-    return None
-
-
 def _assertion_pairs(
     doc: Doc, statements: dict[str, str], problems: list[str]
 ) -> list[Pair]:
-    claim = _assertion_sentence(doc)
-    if not claim:
+    title = H1.search(doc.body)
+    sentence = title.group(1).strip() if title else ""
+    if not sentence:
         problems.append(f"{doc.rel}: no assertion sentence (H1), skipped")
         return []
     pairs: list[Pair] = []
-    for raw in doc.fm.get("grounding") or []:
-        for target, block in _link_targets(str(raw)):
-            key = f"{target}#^{block}" if block else target
-            if key not in statements:
-                problems.append(f"{doc.rel}: grounding {key} does not resolve, skipped")
-                continue
-            pairs.append(
-                Pair(
-                    id=f"{doc.rel}<-{key}",
-                    kind="assertion",
-                    document=doc.rel,
-                    anchor=key,
-                    location=statements[key],
-                    claim=claim,
-                )
+    for target, block in field_links(doc.fm, "grounding"):
+        key = f"{target}#^{block}" if block else target
+        if key not in statements:
+            problems.append(f"{doc.rel}: grounding {key} does not resolve, skipped")
+            continue
+        pairs.append(
+            Pair(
+                id=f"{doc.rel}<-{key}",
+                kind="assertion",
+                document=doc.rel,
+                anchor=key,
+                location=statements[key],
+                statement=sentence,
             )
+        )
     return pairs
 
 
 def cut_pairs(root: Path, problems: list[str] | None = None) -> list[Pair]:
-    """All reviewable pairs of the vault, in document order."""
+    """All reviewable pairs of the vault, in document order.
+
+    A document that fails to parse cannot be cut, so its parse finding goes
+    into `problems` instead of vanishing with it.
+    """
     problems = problems if problems is not None else []
-    root = Path(root)
-    docs = _load_docs(root)
+    docs, report = load_docs(
+        root, (REPRESENTATION_LAYER, DISTILLATE_LAYER, ASSERTION_LAYER)
+    )
+    problems += [f"{rel}: {code} {message}" for code, rel, message in report.errors]
     blocks = {
         rel: _block_locations(doc)
         for rel, doc in docs.items()
@@ -315,9 +318,9 @@ def cut_pairs(root: Path, problems: list[str] | None = None) -> list[Pair]:
         doc = docs[rel]
         if doc.fm.get("type") != "distillate":
             continue
-        for pair in _source_pairs(doc, docs, blocks, problems):
+        for pair in _source_pairs(doc, blocks, problems):
             pairs.append(pair)
-            statements[pair.id] = pair.claim
+            statements[pair.id] = pair.statement
     for rel in sorted(docs):
         doc = docs[rel]
         if doc.fm.get("type") == "assertion":
@@ -327,9 +330,12 @@ def cut_pairs(root: Path, problems: list[str] | None = None) -> list[Pair]:
 
 def set_checked_date(text: str, check: str, date: str) -> str:
     """Write one entry into the `checked` map of a frontmatter, leaving the rest alone."""
-    end = text.find("\n---", 4) if text.startswith("---\n") else -1
-    if end < 0:
+    split = split_frontmatter(text)
+    if split is None:
         raise ValueError("no frontmatter")
+    # The body follows the closing delimiter, so the frontmatter ends where
+    # the delimiter in front of the body begins.
+    end = len(text) - len(split[1]) - len("\n---")
     head, tail = text[:end], text[end:]
     entry = re.compile(rf"^([ \t]+){re.escape(check)}:[ \t]*\S.*$", re.MULTILINE)
     if m := entry.search(head):
@@ -341,13 +347,6 @@ def set_checked_date(text: str, check: str, date: str) -> str:
     raise ValueError(f"no checked field to write {check} into")
 
 
-def _write_atomic(path: Path, text: str, newline: str) -> None:
-    """Replace the file in one step, keeping the line endings it had on disk."""
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(text, encoding="utf-8", newline=newline)
-    tmp.replace(path)
-
-
 def book_results(
     root: Path,
     pairs: list[Pair],
@@ -355,12 +354,16 @@ def book_results(
     date: str,
     apply: bool = False,
 ) -> Outcome:
-    """Set checked.machine-review per document, only where every pair passed."""
-    root = Path(root)
+    """Set checked.machine-review per document, only where every pair passed.
+
+    Under `apply` the validator runs first, because validation gates every other
+    check; a document with a validation error is reported and left unbooked.
+    """
     outcome = Outcome()
     by_document: dict[str, list[Pair]] = {}
     for pair in pairs:
         by_document.setdefault(pair.document, []).append(pair)
+    invalid = {rel for _, rel, _ in validate(root).errors} if apply else set()
 
     for document, group in by_document.items():
         missing = [p.id for p in group if p.id not in verdicts]
@@ -378,10 +381,12 @@ def book_results(
         else:
             reason = "all pairs fully supports"
         booked = not missing and not deviating
+        if booked and document in invalid:
+            booked, reason = False, "validation errors, run tools/validate.py"
+            outcome.problems.append(f"{document}: not booked: {reason}")
         if booked and apply:
             path = root / f"{document}.md"
             try:
-                newline = "\r\n" if b"\r\n" in path.read_bytes() else "\n"
                 text = set_checked_date(
                     path.read_text(encoding="utf-8"), "machine-review", date
                 )
@@ -389,7 +394,7 @@ def book_results(
                 outcome.problems.append(f"{document}: not booked: {exc}")
                 booked, reason = False, str(exc)
             else:
-                _write_atomic(path, text, newline)
+                write_text_atomic(path, text)
         outcome.documents.append(DocumentResult(document, len(group), booked, reason))
     return outcome
 
@@ -397,9 +402,7 @@ def book_results(
 def read_verdicts(path: Path, problems: list[str]) -> dict[str, str]:
     """Read a JSONL of judgements; a record carries `verdict` or a raw `response`."""
     verdicts: dict[str, str] = {}
-    for number, line in enumerate(
-        Path(path).read_text(encoding="utf-8").splitlines(), 1
-    ):
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
         try:
@@ -468,7 +471,7 @@ def _write_jsonl(path: Path | None, records: list[dict[str, str]]) -> None:
     if path is None:
         print("\n".join(lines))
         return
-    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(f"OK {len(records)} record(s) written to {path}")
 
 
@@ -493,11 +496,8 @@ def _report(outcome: Outcome, pairs: list[Pair]) -> int:
     return 1 if outcome.deviations or outcome.unjudged or outcome.problems else 0
 
 
-def main() -> None:
-    if sys.platform == "win32":
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-
+def main() -> int:
+    utf8_console()
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("root", type=Path, help="vault root directory")
     common.add_argument(
@@ -561,7 +561,7 @@ def main() -> None:
         verdicts = read_verdicts(args.verdicts, problems)
         outcome = book_results(root, pairs, verdicts, args.date, apply=args.apply)
         outcome.problems = problems + outcome.problems
-        sys.exit(_report(outcome, pairs))
+        return _report(outcome, pairs)
     elif args.command == "run":
         records = run_claude(pairs, args.model, problems)
         if args.out:
@@ -569,12 +569,12 @@ def main() -> None:
         verdicts = {r["id"]: r["verdict"] for r in records if "verdict" in r}
         outcome = book_results(root, pairs, verdicts, args.date, apply=args.apply)
         outcome.problems = problems + outcome.problems
-        sys.exit(_report(outcome, pairs))
+        return _report(outcome, pairs)
 
     for problem in problems:
         print(f"WARN {problem}", file=sys.stderr)
-    sys.exit(1 if problems else 0)
+    return 1 if problems else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -6,25 +6,26 @@ mechanism itself is not exercised here: no test calls a model, and the batch
 path is driven with hand-written verdict records.
 """
 
+import re
 import shutil
-import sys
 from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).parents[1]
-sys.path.insert(0, str(REPO / "tools"))
-
-from review import (  # noqa: E402
+from review import (
+    ASSERTION_PROMPT,
+    SOURCE_PROMPT,
     VERDICTS,
     book_results,
-    build_prompt,
     cut_pairs,
     parse_verdict,
     run_claude,
     set_checked_date,
 )
+from validate import validate
 
+REPO = Path(__file__).parents[1]
+OPERATIONS = REPO / "knowledge" / "operations.md"
 MINIMAL = REPO / "tests" / "fixtures" / "minimal"
 
 DOC_DISTILLATE = "20_distillates/documents/report-garden-water-2026"
@@ -67,7 +68,7 @@ def test_document_pair_is_block_plus_heading_path(pairs) -> None:
         "Water meters were installed on all forty plots in January 2025."
         in pair.location
     )
-    assert pair.claim == "Water meters were installed on all plots in January 2025."
+    assert pair.statement == "Water meters were installed on all plots in January 2025."
 
 
 def test_publication_pair_is_the_verbatim_quotation(pairs) -> None:
@@ -77,30 +78,30 @@ def test_publication_pair_is_the_verbatim_quotation(pairs) -> None:
         in pair.location
     )
     assert "example2024metering, p. 4" in pair.location
-    assert pair.claim.startswith("In the surveyed gardens, metering alone")
+    assert pair.statement.startswith("In the surveyed gardens, metering alone")
 
 
 def test_data_pair_is_the_computation_and_its_result(pairs) -> None:
     pair = _by_id(pairs, f"{DATA_DISTILLATE}#^s1")
     assert "python tools/analysis/reduction.py" in pair.location
     assert "31.4" in pair.location
-    assert pair.claim == "Water use in 2025 was 31.4 percent below 2024."
+    assert pair.statement == "Water use in 2025 was 31.4 percent below 2024."
 
 
 def test_assertion_pair_holds_statement_and_assertion_sentence(pairs) -> None:
     pair = _by_id(pairs, f"{ASSERTION}<-{DATA_DISTILLATE}#^s1")
     assert pair.location == "Water use in 2025 was 31.4 percent below 2024."
-    assert pair.claim == (
+    assert pair.statement == (
         "Plot metering coincided with a water use reduction of roughly a third"
     )
     assert pair.document == ASSERTION
 
 
 def test_anti_anchoring_keeps_the_producing_reasoning_out(pairs) -> None:
-    """Nothing but location and claim enters the pair, so no link, anchor or Support text."""
+    """Nothing but location and statement enters the pair, so no link, anchor or Support text."""
     for pair in pairs:
-        assert "[[" not in pair.location and "[[" not in pair.claim
-        assert "^s" not in pair.claim
+        assert "[[" not in pair.location and "[[" not in pair.statement
+        assert "^s" not in pair.statement
         assert "## Support" not in pair.prompt
         assert "what this anchor contributes" not in pair.prompt
     contribution = "the readings reproduce the drop as 31.4 percent"
@@ -120,9 +121,34 @@ def test_prompts_follow_the_skeletons_of_operations_md(pairs) -> None:
     assert "PASSAGE:" not in assertion
 
 
-def test_build_prompt_is_a_pure_function_of_the_pair(pairs) -> None:
-    for pair in pairs:
-        assert build_prompt(pair) == pair.prompt
+def _skeleton(marker: str) -> str:
+    """The quoted prompt skeleton that follows `marker` in operations.md."""
+    lines = OPERATIONS.read_text(encoding="utf-8").split(marker, 1)[1].splitlines()
+    quoted: list[str] = []
+    for line in lines:
+        if line.strip().startswith(">"):
+            quoted.append(line.strip()[1:])
+        elif quoted:
+            break
+    return " ".join(quoted)
+
+
+def _comparable(text: str) -> str:
+    """Placeholders reduced to their braces and whitespace to single spaces."""
+    return " ".join(re.sub(r"\{[^}]*\}", "{}", text).split())
+
+
+@pytest.mark.parametrize(
+    ("template", "marker"),
+    [
+        (SOURCE_PROMPT, "Reference prompt skeleton:"),
+        (ASSERTION_PROMPT, "### Assertion review prompt skeleton"),
+    ],
+    ids=["source", "assertion"],
+)
+def test_prompt_text_is_word_for_word_the_skeleton(template: str, marker: str) -> None:
+    filled = template.replace("{vocabulary}", " | ".join(VERDICTS))
+    assert _comparable(filled) == _comparable(_skeleton(marker))
 
 
 @pytest.mark.parametrize(
@@ -277,7 +303,7 @@ def test_run_claude_passes_the_prompt_on_stdin(monkeypatch, pairs) -> None:
         document="d",
         anchor="a",
         location="L" * 40000,
-        claim="C",
+        statement="C",
     )
     problems: list[str] = []
     records = run_claude([long_pair], "sonnet", problems)
@@ -291,10 +317,44 @@ def test_run_claude_passes_the_prompt_on_stdin(monkeypatch, pairs) -> None:
 
 
 def test_booked_vault_still_validates(tmp_path) -> None:
-    from validate import validate
-
     vault = tmp_path / "vault"
     shutil.copytree(MINIMAL, vault)
     pairs = cut_pairs(vault)
     book_results(vault, pairs, _all_fully_supports(pairs), "2026-08-09", apply=True)
     assert validate(vault).errors == []
+
+
+def test_booking_skips_a_document_that_fails_validation(tmp_path) -> None:
+    """Validation gates review, so a verdict never books over a validation error."""
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    path = vault / f"{ASSERTION}.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "status: grounded", "status: approved"
+        ),
+        encoding="utf-8",
+    )
+    pairs = cut_pairs(vault)
+
+    outcome = book_results(
+        vault, pairs, _all_fully_supports(pairs), "2026-08-09", apply=True
+    )
+
+    assert ASSERTION not in {r.document for r in outcome.documents if r.booked}
+    assert DOC_DISTILLATE in {r.document for r in outcome.documents if r.booked}
+    assert any(p.startswith(f"{ASSERTION}: not booked") for p in outcome.problems)
+    assert "machine-review" not in path.read_text(encoding="utf-8")
+
+
+def test_a_document_that_does_not_parse_is_reported(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    (vault / "20_distillates" / "documents" / "broken.md").write_text(
+        "---\n- not a mapping\n---\n", encoding="utf-8"
+    )
+    problems: list[str] = []
+    cut_pairs(vault, problems)
+    assert problems == [
+        "20_distillates/documents/broken: E-FRONTMATTER frontmatter is not a mapping"
+    ]

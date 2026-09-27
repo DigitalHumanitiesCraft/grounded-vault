@@ -18,3 +18,6 @@ Fixture topic map. The orphan assertion is deliberately missing here.
 - [[30_assertions/ladder-jump]] — status ladder fixture.
 - [[30_assertions/duplicate-grounding-a]] — duplicate grounding fixture.
 - [[30_assertions/duplicate-grounding-b]] — its counterpart on the same anchors.
+- [[30_assertions/grounding-without-statement]] — grounding without statement ID fixture.
+- [[30_assertions/contested-alone]] — contested without counterpart fixture.
+- [[30_assertions/contested-missing]] — contested with a missing counterpart fixture.

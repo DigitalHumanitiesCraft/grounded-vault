@@ -193,7 +193,7 @@ def test_types_keys_and_status_are_mapped(tmp_path):
 
     distillate = frontmatter(root / "20_distillates" / "intern" / "paper.md")
     assert distillate["type"] == "distillate"
-    assert distillate["status"] == "validated"
+    assert distillate["status"] == "grounded"
     assert distillate["representation"] == "[[10_markdown/paper]]"
     assert "quelle" not in distillate
 
@@ -208,14 +208,12 @@ def test_types_keys_and_status_are_mapped(tmp_path):
     assert frontmatter(root / "glossary" / "llm.md")["type"] == "glossary"
 
 
-def test_external_distillates_reenter_at_grounded(tmp_path):
-    # Their old `verifiziert` claims a quote check that never ran; only the
-    # live quote review may lift them again.
+def test_legacy_statuses_reenter_at_grounded(tmp_path):
+    # A legacy status carries no dated check record, so no rung above the
+    # entry status may survive the migration.
     root = run(tmp_path)
-    external = frontmatter(root / "20_distillates" / "extern" / "other.md")
-    assert external["status"] == "grounded"
-    internal = frontmatter(root / "20_distillates" / "intern" / "paper.md")
-    assert internal["status"] == "validated"
+    for rel in ("extern/other.md", "intern/paper.md"):
+        assert frontmatter(root / "20_distillates" / rel)["status"] == "grounded"
 
 
 def test_grounding_records_become_anchored_links(tmp_path):

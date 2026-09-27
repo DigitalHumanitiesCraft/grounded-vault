@@ -112,10 +112,6 @@ class Mapping:
     status_map: dict[str, str] = field(default_factory=dict)
     status_default: str | None = None
     status_types: tuple[str, ...] = ()
-    # Path prefixes (posix, post-rename) whose documents are forced to
-    # `grounded` regardless of status_map, because their old status claims a
-    # check that never ran.
-    status_grounded_prefixes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -205,9 +201,7 @@ def _scoped(table: dict[str, dict], doctype: str | None) -> dict:
     return merged
 
 
-def migrate_frontmatter(
-    fm: dict, mapping: Mapping, summary: Summary, rel: str = ""
-) -> dict:
+def migrate_frontmatter(fm: dict, mapping: Mapping, summary: Summary) -> dict:
     """Type, keys, values and status of one document, in that order."""
     old_type = fm.get("type")
     if old_type is not None:
@@ -230,9 +224,6 @@ def migrate_frontmatter(
 
     if str(doctype) in mapping.status_types and "status" in fm:
         old_status = str(fm["status"])
-        if any(rel.startswith(prefix) for prefix in mapping.status_grounded_prefixes):
-            fm["status"] = "grounded"
-            return fm
         already_migrated = old_status in set(mapping.status_map.values()) | {
             mapping.status_default
         }
@@ -308,7 +299,7 @@ def rewrite_footnotes(body: str, mapping: Mapping) -> tuple[str, int]:
     return "".join(lines), count
 
 
-def migrate_file(path: Path, mapping: Mapping, summary: Summary, rel: str = "") -> None:
+def migrate_file(path: Path, mapping: Mapping, summary: Summary) -> None:
     original = path.read_text(encoding="utf-8")
     text, paths = rewrite_paths(original, mapping)
     summary.paths_rewritten += paths
@@ -337,7 +328,7 @@ def migrate_file(path: Path, mapping: Mapping, summary: Summary, rel: str = "") 
             raise SystemExit(f"{path}: frontmatter is not valid YAML: {exc}") from exc
         if not isinstance(fm, dict):
             raise SystemExit(f"{path}: frontmatter is not a mapping")
-        migrated = migrate_frontmatter(dict(fm), mapping, summary, rel)
+        migrated = migrate_frontmatter(dict(fm), mapping, summary)
         if migrated != fm:
             summary.frontmatter_changed += 1
         dumped = yaml.safe_dump(
@@ -528,7 +519,7 @@ def migrate(root: Path, mapping: Mapping, vcs: str, only: str = "all") -> Summar
         rename_folders(root, mapping, vcs, summary)
     if only in ("all", "content"):
         for path in content_files(root, mapping):
-            migrate_file(path, mapping, summary, path.relative_to(root).as_posix())
+            migrate_file(path, mapping, summary)
         # Only meaningful once the content pass has run; after the folder phase
         # alone every content file still points at the old names.
         summary.stale = stale_references(root, mapping)
@@ -580,13 +571,12 @@ KISUG = Mapping(
         "chapter": {"stützt-sich-auf": "assertions"},
         "moc": {"thema": "topic"},
     },
-    status_map={"verifiziert": "validated", "gestützt": "validated"},
+    # A legacy status records no dated check, and the audit trail admits a rung
+    # only with its checks, so every legacy status re-enters at grounded and
+    # climbs through validation and machine review.
+    status_map={"verifiziert": "grounded", "gestützt": "grounded"},
     status_default="grounded",
     status_types=("distillate", "assertion", "chapter"),
-    # The external distillates carry `verifiziert` although the quote check
-    # against the originals never ran; they re-enter at grounded and climb only
-    # through the live quote review.
-    status_grounded_prefixes=("20_distillates/extern/",),
 )
 
 # The Promptotyping paper vault (DigitalHumanitiesCraft/Promptotyping, vault/)

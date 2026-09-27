@@ -11,11 +11,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
       - run: pip install pyyaml pytest ruff
-      - name: Lint the tools
-        run: ruff check tools tests && ruff format --check tools tests
+      - name: Lint the repository
+        run: ruff check . && ruff format --check .
       - name: Validate the vault
         run: python tools/validate.py .
-      - name: Test the validator
+      - name: Validate the paper instance
+        run: python tools/validate.py paper
+      - name: Test the tools
         run: python -m pytest tests -q

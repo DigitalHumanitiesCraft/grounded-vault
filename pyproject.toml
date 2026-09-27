@@ -7,7 +7,11 @@ dependencies = ["pyyaml"]
 # not an installable package
 
 [dependency-groups]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
+
+[tool.pytest.ini_options]
+pythonpath = ["tools"]
+testpaths = ["tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "PTH", "RUF"]
