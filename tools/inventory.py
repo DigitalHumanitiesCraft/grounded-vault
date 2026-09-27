@@ -203,12 +203,12 @@ def rows(root: Path, problems: list[str] | None = None) -> list[Row]:
             )
 
     for reference, title in references.items():
-        for distillate, _ in distillates.get(reference, [(None, {})]):
+        for distillate, fm in distillates.get(reference, [(None, {})]):
             collected.append(
                 Row(
                     source=title,
                     type="publication",
-                    channel="import",
+                    channel=str(fm.get("channel") or EMPTY),
                     representation=EMPTY,
                     distillate=_link(distillate) if distillate else EMPTY,
                     status="distilled" if distillate else "new",

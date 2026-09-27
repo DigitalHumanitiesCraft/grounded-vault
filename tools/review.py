@@ -75,7 +75,11 @@ PASSING_VERDICT = "fully supports"
 SOURCE_PROMPT = """You are an adversarial reviewer. Below are a source passage and a statement
 that claims to be supported by it. Your task is to refute the statement.
 Judge only whether this passage supports this statement. Answer with exactly
-one verdict: {vocabulary}. Then give one sentence of justification.
+one verdict: {vocabulary}. Then give one sentence of justification. If the passage
+speaks about its own source, or shows its matter in one dated state, the
+statement is fully supported only if it keeps the speaker or the state with
+its date, and it overreaches otherwise. In either case add one line naming
+the displacement.
 
 PASSAGE: {passage}
 STATEMENT: {statement}"""
@@ -86,7 +90,10 @@ assertion. Judge only whether this statement supports this assertion; whether
 the assertion is true is out of scope. Answer with exactly one verdict:
 {vocabulary}. Then give one sentence of justification, and where the verdict is
 not *fully supports*, name the part of the assertion that the statement does not
-carry.
+carry. If the statement reports what its source says about itself, or shows the
+matter in one dated state, the assertion is fully supported only if it keeps the
+speaker or the state with its date, and it overreaches otherwise. In either case
+add one line naming the displacement.
 
 STATEMENT: {statement}
 ASSERTION: {assertion}"""

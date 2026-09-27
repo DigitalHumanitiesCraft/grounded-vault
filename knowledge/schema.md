@@ -18,7 +18,7 @@ related: [index, specification, operations, state]
 
 # Schema
 
-This document defines the rules of the vault. It sets out the layer model, the controlled vocabularies, the anchor mechanics per source type, the audit trail, and for every content document type the exact frontmatter and section skeleton. Every content file, whether produced by agent or human, derives from the rules set here. The procedures that produce and check these documents live in [[knowledge/operations]]; this document defines only what a well-formed artifact is.
+This document defines the rules of the vault. It sets out the layer model, the controlled vocabularies, the anchor mechanics per source type, the audit trail, and for every content document type the exact frontmatter and section skeleton. Every content file, whether produced by agent or human, derives from the rules set here. The procedures that produce and check these documents live in [[knowledge/operations]].
 
 ## Layer model
 
@@ -30,13 +30,11 @@ This document defines the rules of the vault. It sets out the layer model, the c
 | Assertions | `30_assertions/` | atomic statements not bound to one source, topic maps | grounding anchors into distillate statements |
 | Output | `40_output/` | one file per chapter | footnote anchors into assertions, posits marked |
 
-The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand. The files are the one record of what the vault holds, so there is no second bookkeeping that could drift away from them. For a document representation the inventory also carries its coverage, the blocks some distillate statement anchors against the blocks the file holds. The chain checks downwards, whether every statement has a passage, and nothing in it asks whether the passages were used, so a vault that says little never becomes unsound. Coverage is the one figure that faces the other way, and validation raises `W-COVERAGE` where it falls below the share an instance sets.
+The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand, so that no second bookkeeping can drift away from the files. For a document representation it also carries the coverage defined in [[knowledge/index]] § Terminology, and validation raises `W-COVERAGE` where coverage falls below the share an instance sets.
 
 The terms for the layers and their parts are defined once in [[knowledge/index]] § Terminology. This document fixes the form of what they name.
 
-Two rules constrain the chain. Anchors are minted only at the layer they belong to; a Markdown representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. And each layer references only the layer directly beneath it; the output binds to assertions, assertions bind to distillate statements, distillates bind to the blocks of the Markdown representation.
-
-The chain fastens onto one property of its subject matter. Whether a passage covers a statement is settled by a fast oracle, a resolver that answers in milliseconds whether the anchor exists and what stands at it. Qualities without such an oracle stay unrewarded wherever checking has to scale, which is why the maintainability of code goes unscored in machine learning and shows its cost only in weeks and months. Verification here is therefore fastened to the one relation that is cheap to test, and everything the relation cannot settle is handed to the instances defined in [[knowledge/operations]].
+Two rules constrain the chain. Anchors are minted only at the layer they belong to. A Markdown representation mints block IDs, a distillate mints statement IDs, and no higher layer creates anchors into material below its direct predecessor. Each layer also anchors only into the layer directly beneath it, so the output binds to assertions, assertions bind to distillate statements, and distillates bind to the blocks of the Markdown representation. Links in the Related sections serve navigation and fall outside this rule.
 
 ## Controlled vocabularies
 
@@ -57,7 +55,7 @@ checked:
   machine-review: 2026-07-11
 ```
 
-The discipline is machine-enforced: `validated` requires `checked.validation` and `checked.machine-review`; `verified` additionally requires `checked.verification`. Every entry of the map carries an ISO date, because a record without one cannot be held against the content it judges. `grounded` is the entry status of every freshly produced document and requires no entry. A document's status is the minimum of the states of its anchors, judged against the anchors an assertion names in `grounding` and a chapter in its `assertions` mirror, so one unreviewed anchor keeps the whole document at `grounded`. `contested` and `superseded` lie beside the ladder and earn no rank, so a document resting on one of them stays at `grounded` as well. For publication distillates the intake-time quotation check is recorded as `checked.quote`, because the source text may be unavailable to later validation runs. No instance ever sets a status above its own authority; the contracts are defined in [[knowledge/operations]].
+The discipline is machine-enforced. For a distillate or an assertion, `validated` requires `checked.validation` and `checked.machine-review`. A chapter reaches `validated` with `checked.validation` alone, because machine review pairs the assertions it cites and not its sentences, and the minimum rule below keeps it at `grounded` until each of those assertions stands at `validated`. `verified` additionally requires `checked.verification` for every type. Every entry of the map carries an ISO date, because a record without one cannot be held against the content it judges. `grounded` is the entry status of every freshly produced document and requires no entry. A document's status is the minimum of the states of its anchors, judged against the anchors an assertion names in `grounding` and a chapter in its `assertions` mirror, so one unreviewed anchor keeps the whole document at `grounded`. `contested` and `superseded` lie beside the ladder and earn no rank, so a document resting on one of them stays at `grounded` as well. No instance ever sets a status above its own authority, and the contracts that fix each authority are defined in [[knowledge/operations]].
 
 ## Source metadata
 
@@ -164,6 +162,7 @@ topics: ["[[<Topic>]]"]
 status: grounded             # grounded | validated | verified | superseded
 checked: {}
 checked-against: ""          # publication type: the text version checked.quote ran on
+channel: import              # publication type, optional: import | deep-research
 superseded-by: ""            # optional, wikilink to the successor distillate
 created: 2026-01-01
 updated: 2026-01-01
@@ -216,11 +215,11 @@ Every core statement carries exactly one grounding anchor into its source and en
     - computation: `python tools/analysis/<script>.py` → `<stated result>`
   ```
 
-  The script reads the data file of the Markdown representation, takes no arguments, and prints the stated result and nothing else to standard output. Validation re-runs it from the vault root and compares that output character for character with the stated result, so a formatting difference is a defect.
+  The script reads the data file of the Markdown representation, takes no arguments, and prints the stated result and nothing else to standard output. Validation re-runs it from the vault root and compares that output, with surrounding whitespace trimmed, character for character with the stated result, so any other formatting difference is a defect.
 
 The **Appraisal** section is optional and holds the judgment of the source, covering the standing of its venue and its review, the strengths and limits of its method, its relevance to the output of this vault, and the position the vault takes towards it, as far as each applies to the source at hand. Saying what a source is worth is a different speech act from saying what it says, and the section separates the two so that a reader can tell evidence from opinion at a glance. The appraisal is the vault's own judgment and therefore a posit, so it carries no grounding obligation and no anchor of its own. It also mints no IDs, because every ID in a distillate is citable from the assertion layer; validation raises `E-STATEMENT` on an ID minted anywhere but in the core statements, which is what keeps an appraisal from ever becoming grounding. Where an appraisal shapes the output, it enters as a posit footnote there.
 
-The **Open questions** section holds questions and no findings. A finding that could carry an assertion belongs in the core statements with an anchor and an ID of its own, and it is lifted there rather than cited from where it sits. The section mints no IDs for the same reason the appraisal mints none, and that is what makes it the one place in the chain where unanchored material may rest, including whatever a perspective pass produced before the sources were chosen.
+The **Open questions** section holds questions and no findings. A finding that could carry an assertion belongs in the core statements with an anchor and an ID of its own, and it is lifted there rather than cited from where it sits. The section mints no IDs for the same reason the appraisal mints none, and that is what makes it the one place in the chain where unanchored material may rest.
 
 ### 4. Assertion
 
@@ -250,23 +249,25 @@ updated: 2026-01-01
 
 ## Support
 
-- [[20_distillates/documents/<slug>#^s1]] — <what this anchor contributes>
-- [[20_distillates/publications/<slug>#^s2]] — <what this anchor contributes>
+- [[20_distillates/documents/<slug>#^s1]], <what this anchor contributes>
+- [[20_distillates/publications/<slug>#^s2]], <what this anchor contributes>
 
 ## Related
 
 - [[30_assertions/…]]
 ```
 
-A conclusion without source support never becomes an assertion; it enters the output as a posit. Assertions that cannot be reconciled are both set to `contested` and linked to each other in `contested-with`.
+A conclusion without source support never becomes an assertion. It enters the output as a posit in the sense of [[knowledge/index]] § Terminology, and where a source turns up later, a new assertion is written and the posit falls away. Assertions that cannot be reconciled are both set to `contested` and linked to each other in `contested-with`.
 
-Posit and assertion differ in kind and not in ripeness, and reading the posit as an unripe assertion is the common mistake. An assertion rests on sources and carries a status on the ladder, which records how far it has been checked. A posit rests on the author, and it carries no status because it makes no claim about a source that a check could test. A posit therefore never matures into an assertion. Where a source turns up later, a new assertion is written and the posit falls away. What it leaves behind is its open evidence question, which is a research task rather than a defect, and the `posits` count of a chapter measures how much of that text stands on the author alone.
+A passage can support a statement whose subject is not the subject the assertion is about, and the support relation still holds. Validation cannot see this, and machine review separates it only because its contract in [[knowledge/operations]] § Check names the two cases below.
 
-A passage can support a statement whose subject is not the subject the assertion is about, and the coverage relation still holds. No check catches this on its own, because validation and machine review test exactly that relation. Two cases of such a displaced subject occur often enough to be named.
+#### Self-report
 
-**Self-report.** Where a source speaks about itself, about its own priority, reach or achievement, its passage covers the claim and never the matter the claim is about. The distillate holds such a statement as what the source asserts. An assertion built from it either carries the speaker along, in the form that the source claims something, or it rests on a second and independent source.
+Where a source speaks about itself, about its own priority, reach or achievement, its passage covers the claim and never the matter the claim is about. The distillate holds such a statement as what the source asserts. An assertion built from it either carries the speaker along, in the form that the source claims something, or it rests on a second and independent source.
 
-**State report.** Where a source shows the matter in one state at one time, its passage covers that state and never the matter across time. A restored object witnesses the restoration, a dated inventory witnesses the day it was taken, a plan witnesses what was intended when it was written. The distillate holds such a statement together with the state and its date. An assertion built from it either names the state and its date, or it rests on a source that establishes the property for the span the assertion claims.
+#### State report
+
+Where a source shows the matter in one state at one time, its passage covers that state and never the matter across time. A restored object witnesses the restoration, a dated inventory witnesses the day it was taken, a plan witnesses what was intended when it was written. The distillate holds such a statement together with the state and its date. An assertion built from it either names the state and its date, or it rests on a source that establishes the property for the span the assertion claims.
 
 ### 5. Topic map (MOC)
 
@@ -286,7 +287,7 @@ updated: 2026-01-01
 
 <Lead: one sentence on what this topic covers.>
 
-- [[30_assertions/<slug>]] — <half-sentence of orientation>
+- [[30_assertions/<slug>]], <half-sentence of orientation>
 
 ## Open questions
 
@@ -349,7 +350,7 @@ Where a chapter reports a matter the sources disagree on, it grounds in both sid
 
 ## Meta documents
 
-The six project knowledge documents in `knowledge/` carry the Promptotyping header (as at the top of this file) instead of a content `type`. Both they and the distillates are knowledge documents in the sense of [[knowledge/index]]; what separates them is the grounding obligation. A distillate is bound to one source and its core statements must be anchored, so it falls under the content schema. A project knowledge document describes the vault itself and rests on no source it could be anchored in, so it is exempt from the content schema. A project knowledge document is split only when its sections develop divergent update rhythms or divergent readers.
+The six project knowledge documents in `knowledge/` carry the Promptotyping header, as at the top of this file, instead of a content `type`, and they are exempt from the content schema, as [[knowledge/index]] § Terminology sets out.
 
 ## Naming
 

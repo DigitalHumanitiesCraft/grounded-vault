@@ -18,6 +18,8 @@ Grounded Vault is a repository architecture in which every substantive statement
 
 AI agents produce most of this structure. The architecture therefore never asserts that its content is true. What a finished vault delivers is a fully prepared audit object. Every assertion is anchored to its source passages, every anchor has passed deterministic validation and an adversarial machine check, and human expert review can proceed passage by passage instead of starting from zero. The value of the architecture is that it makes agent output auditable at low cost and makes the state of auditing explicit at every point.
 
+The chain fastens onto one property of its subject matter. Whether a passage supports a statement is settled by a fast oracle, a resolver that answers in milliseconds whether the anchor exists and what stands at it. Qualities without such an oracle stay unrewarded wherever checking has to scale, which is why the maintainability of code goes unscored in machine learning and shows its cost only in weeks and months. Verification here is therefore fastened to the one relation that is cheap to test, and everything the relation cannot settle is handed to the instances defined in section 6.
+
 The vault is dual-readable by design. A human reads it as a linked Markdown collection in Obsidian, following wikilinks from the output down to the supporting passages. An AI agent operates on the same files through an agent harness, steered by an imperative action layer that routes into the declarative rule documents.
 
 ## 3. Terminology
@@ -58,7 +60,7 @@ The bibliographic records of citable-only publications and the glossary lie acro
 
 Two rules constrain the chain. Anchors are created only at the layer they belong to, so a distillate references existing block IDs and has no authority to mint new ones. And each layer references only the layer directly beneath it; the output binds to assertions, and every statement therefore passes through the synthesis and checking machinery before it can reach a source.
 
-A conclusion that emerges during synthesis without source support does not enter an assertion. It enters the output as an explicitly marked posit, with its rationale and its open evidence question. The vault thereby shows exactly where it leaves its sources.
+A conclusion that emerges during synthesis without source support does not enter an assertion. It enters the output as an explicitly marked posit, with its rationale and its open evidence question. The vault thereby shows exactly where it leaves its sources. Posit and assertion differ in kind and not in ripeness. An assertion rests on sources and carries a status that records how far it has been checked, while a posit rests on the author and carries no status, because it makes no claim about a source that a check could test. A posit therefore never matures into an assertion. What it leaves behind is its open evidence question, a research task rather than a defect, and the posit count of a chapter measures how much of the text stands on the author alone.
 
 Contradictions between sources are preserved. Assertions that cannot be reconciled are marked as contested and linked to each other in both directions. A contradictory source situation is itself information for the output.
 
@@ -98,7 +100,7 @@ Sources are versioned by replacement. A Markdown representation is converted onc
 
 ### Acquisition channels
 
-How a source enters the vault is a dimension orthogonal to its type. The type fixes the anchor mechanics; the channel describes the intake. The same publication type can be filled by handover from a project partner, by manual collection, by import from an existing reference library, or by agent-driven deep research. Channels are recorded as a provenance note on the source and change nothing else.
+How a source enters the vault is a dimension orthogonal to its type. The type fixes the anchor mechanics; the channel describes the intake. The same publication type can be filled by handover from a project partner, by manual collection, by import from an existing reference library, or by agent-driven deep research. The channel is recorded in the `channel` field of the Markdown representation, or of the distillate for a publication, and changes nothing else.
 
 The elaborated reference channel is deep research for citable-only publications. A reusable prompt, parameterized with a topic from the project's controlled topic set, searches and prioritizes candidate publications, evaluates them at full text and counter-checks each finding adversarially. It delivers the located publications with their relevant passages quoted verbatim and leaves synthesis to the vault. Priority rules favor peer-reviewed and official sources, and an explicit exclusion list names unreliable ones. Every located source is captured in a reference manager, Zotero in the reference implementation, and exported as a CSL JSON record into the vault. Credentials and library identifiers stay outside the repository. Each source then receives an ordinary distillate with verbatim quotations as anchors.
 
@@ -116,7 +118,7 @@ Three instances check the vault, distinguished by who or what judges and with wh
 
 The architecture fixes a check contract per instance, and the mechanism that fulfils it is a project choice. The contract names what the instance judges, the ceiling of its authority (the highest status it may set), the conditions it must observe (for machine review, anti-anchoring and the fixed verdict vocabulary, with only *fully supports* passing), and the obligation to record outcome and date on the checked document. Which validator implementation runs, which reviewer model judges and how pairs are extracted for it are instantiation decisions. The template ships the validator `tools/validate.py`, which covers the schema-level checks together with the anchor checks per source type, and for machine review the contract with its reference prompt skeletons and the pairing tool `tools/review.py`.
 
-The audit trail records the progression. A grounding relation moves through the statuses `grounded` (structurally anchored, produced by the agent), `validated` (deterministic checks passed, machine review returned *fully supports* for every pair) and `verified` (expert review passed), with `contested` available where sources conflict. The overall state of a vault is readable as the distribution of its statements across these statuses. A freshly generated vault sits almost entirely at `grounded` and `validated`, and the human work consists of lifting statements to `verified`. No instance ever sets a status above its own authority.
+The audit trail records the progression. A grounding relation moves through the statuses `grounded` (structurally anchored, produced by the agent), `validated` (deterministic checks passed and machine review returned *fully supports* for every pair, or for a chapter, deterministic checks passed and every cited assertion validated) and `verified` (expert review passed), with `contested` available where sources conflict. The overall state of a vault is readable as the distribution of its statements across these statuses. A freshly generated vault sits almost entirely at `grounded` and `validated`, and the human work consists of lifting statements to `verified`. No instance ever sets a status above its own authority.
 
 ## 7. Governance layer and Promptotyping
 
@@ -126,7 +128,9 @@ A split rule accompanies the core: a document is divided only when its sections 
 
 The content folders carry what is produced. Governance and content never mix; decision provenance lives in the journal, content documents carry only current state.
 
-This governance layer is Promptotyping. Promptotyping organizes the knowledge about a project so that an agent need not re-derive it each session; requirements, data, decisions and domain knowledge are written down and cross-referenced in a fixed document set. Grounded Vault inherits that layer unchanged and adds the answer to the follow-up question: how to organize the knowledge a project produces when every statement is under evidence obligation. Grounded Vault is therefore a Promptotyping profile, the profile for evidence-grounded knowledge work.
+This governance layer is Promptotyping. Promptotyping organizes the knowledge about a project so that an agent need not re-derive it each session; requirements, data, decisions and domain knowledge are written down and cross-referenced in a fixed document set. Grounded Vault inherits that layer and adds the answer to the follow-up question: how to organize the knowledge a project produces when every statement is under evidence obligation. Grounded Vault is therefore a Promptotyping profile, the profile for evidence-grounded knowledge work.
+
+The profile departs from the Promptotyping document convention in three points. The navigation document is `index.md` in lower case, following the naming rule that every file of the vault is an ASCII-lowercase slug. The vault keeps no separate handoff inbox, because open items stand in `state.md` under open work and decisions in the journal. Without an inbox the convention's integration entry types have nothing to record, so journal entries record decisions, rejected alternatives and calibration results of the checks instead.
 
 ## 8. Dual readability
 

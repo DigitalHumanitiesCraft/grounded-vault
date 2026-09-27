@@ -86,6 +86,11 @@ BROKEN_FINDINGS = [
     ("E-FRONTMATTER", "20_distillates/documents/not-a-mapping", "not a mapping"),
     (
         "E-FRONTMATTER",
+        "20_distillates/publications/illegal-channel",
+        "illegal channel for a publication",
+    ),
+    (
+        "E-FRONTMATTER",
         "30_assertions/misplaced-glossary",
         "does not belong in this folder",
     ),
@@ -620,6 +625,25 @@ def test_a_chapter_above_its_assertions_is_caught(tmp_path: Path) -> None:
     # The rule is decidable per document, so it holds in the chapter mode too.
     scoped = validate(root, chapter=CHAPTER)
     assert _rels(scoped.errors, "E-LADDER") == {"40_output/01-findings"}
+
+
+def test_a_chapter_is_validated_by_validation_over_validated_assertions(
+    tmp_path: Path,
+) -> None:
+    # Machine review pairs the cited assertions, not the chapter's sentences,
+    # so the chapter's rung needs its validation date and the ladder minimum.
+    root = _raise_chain_to(tmp_path, "validated")
+    chapter = root / "40_output" / "01-findings.md"
+    chapter.write_text(
+        chapter.read_text(encoding="utf-8").replace(
+            "status: grounded\nchecked: {}",
+            "status: validated\nchecked:\n  validation: 2026-07-11",
+        ),
+        encoding="utf-8",
+    )
+    report = validate(root)
+    assert "40_output/01-findings" not in _rels(report.errors, "E-STATUS")
+    assert "40_output/01-findings" not in _rels(report.errors, "E-LADDER")
 
 
 def test_a_check_entry_without_a_date_is_a_finding(tmp_path: Path) -> None:

@@ -41,15 +41,15 @@ related: [specification, journal]
 | Niklas Luhmann's Card Index: The Fabrication of Serendipity | document | collection | [[10_markdown/documents/schmidt-2018-luhmann-card-index]] | [[20_distillates/documents/schmidt-2018-luhmann-card-index]] | 16/24 | distilled |
 | Promptotyping. Translating Research Data into Research Artefacts through Context Engineering and Agentic Engineering — chapters 1 and 2 | document | collection | [[10_markdown/documents/promptotyping-specification-2026-07-31]] | [[20_distillates/documents/promptotyping-specification-2026-07-31]] | 29/79 | distilled |
 | PROV-DM: The PROV Data Model | document | collection | [[10_markdown/documents/prov-dm-20130430]] | [[20_distillates/documents/prov-dm-20130430]] | 24/42 | distilled |
-| Effective context engineering for AI agents | publication | import | — | [[20_distillates/publications/anthropic-2025-context-engineering]] | — | distilled |
-| How Obsidian stores data | publication | import | — | [[20_distillates/publications/obsidian-help-data-storage]] | — | distilled |
-| Internal links | publication | import | — | [[20_distillates/publications/obsidian-help-internal-links]] | — | distilled |
-| Introduction aux études historiques | publication | import | — | [[20_distillates/publications/langlois-seignobos-1898-introduction]] | — | distilled |
-| Lehrbuch der historischen Methode und der Geschichtsphilosophie. Mit Nachweis der wichtigsten Quellen und Hilfsmittel zum Studium der Geschichte | publication | import | — | [[20_distillates/publications/bernheim-1908-lehrbuch-historische-methode]] | — | distilled |
-| Measuring Attribution in Natural Language Generation Models | publication | import | — | [[20_distillates/publications/rashkin-2023-measuring-attribution]] | — | distilled |
-| MetadataCache | publication | import | — | [[20_distillates/publications/obsidian-docs-metadatacache]] | — | distilled |
-| Obsidian Flavored Markdown | publication | import | — | [[20_distillates/publications/obsidian-help-obsidian-flavored-markdown]] | — | distilled |
-| Replacing Judges with Juries: Evaluating LLM Generations with a Panel of Diverse Models | publication | import | — | [[20_distillates/publications/llm-jury-panel-evaluation-2024]] | — | distilled |
+| Effective context engineering for AI agents | publication | — | — | [[20_distillates/publications/anthropic-2025-context-engineering]] | — | distilled |
+| How Obsidian stores data | publication | — | — | [[20_distillates/publications/obsidian-help-data-storage]] | — | distilled |
+| Internal links | publication | — | — | [[20_distillates/publications/obsidian-help-internal-links]] | — | distilled |
+| Introduction aux études historiques | publication | — | — | [[20_distillates/publications/langlois-seignobos-1898-introduction]] | — | distilled |
+| Lehrbuch der historischen Methode und der Geschichtsphilosophie. Mit Nachweis der wichtigsten Quellen und Hilfsmittel zum Studium der Geschichte | publication | — | — | [[20_distillates/publications/bernheim-1908-lehrbuch-historische-methode]] | — | distilled |
+| Measuring Attribution in Natural Language Generation Models | publication | — | — | [[20_distillates/publications/rashkin-2023-measuring-attribution]] | — | distilled |
+| MetadataCache | publication | — | — | [[20_distillates/publications/obsidian-docs-metadatacache]] | — | distilled |
+| Obsidian Flavored Markdown | publication | — | — | [[20_distillates/publications/obsidian-help-obsidian-flavored-markdown]] | — | distilled |
+| Replacing Judges with Juries: Evaluating LLM Generations with a Panel of Diverse Models | publication | — | — | [[20_distillates/publications/llm-jury-panel-evaluation-2024]] | — | distilled |
 <!-- inventory:end -->
 
 ## Chapter register

@@ -113,6 +113,9 @@ COMPUTATION_TIMEOUT = 120
 
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
+# A publication has no representation, so its distillate records how the CSL
+# record arrived, and only the channels that deliver records apply.
+PUBLICATION_CHANNELS = frozenset({"import", "deep-research"})
 STATUS_VOCAB = {
     "distillate": frozenset({"grounded", "validated", "verified", "superseded"}),
     "assertion": frozenset({"grounded", "validated", "verified", "contested"}),
@@ -124,6 +127,13 @@ STATUS_RANK = {"grounded": 0, "validated": 1, "verified": 2}
 REQUIRED_CHECKS = {
     "validated": ("validation", "machine-review"),
     "verified": ("validation", "machine-review", "verification"),
+}
+# Machine review pairs the assertions a chapter cites, never its sentences, so a
+# chapter's rungs carry no machine-review record of their own and the ladder
+# minimum over its assertions stands in for it.
+CHAPTER_REQUIRED_CHECKS = {
+    "validated": ("validation",),
+    "verified": ("validation", "verification"),
 }
 # The frontmatter field naming the anchors whose status a document cannot exceed.
 # A representation carries no status, so a distillate has nothing to exceed.
@@ -374,6 +384,12 @@ def _check_frontmatter(doc: Doc, report: Report) -> None:
     if doctype == "representation":
         _check_representation_fields(doc, source_type, report)
     if doctype == "distillate" and source_type == "publication":
+        if "channel" in doc.fm and doc.fm["channel"] not in PUBLICATION_CHANNELS:
+            report.error(
+                "E-FRONTMATTER",
+                doc.rel,
+                f"illegal channel for a publication: {doc.fm['channel']!r}",
+            )
         if not doc.fm.get("reference"):
             report.error(
                 "E-FRONTMATTER", doc.rel, "publication distillate needs a reference id"
@@ -426,7 +442,10 @@ def _check_status_discipline(doc: Doc, report: Report) -> None:
     if not isinstance(checked, dict):
         report.error("E-STATUS", doc.rel, "checked must be a map of check name to date")
         return
-    for check in REQUIRED_CHECKS.get(status, ()):
+    required = (
+        CHAPTER_REQUIRED_CHECKS if doc.fm.get("type") == "chapter" else REQUIRED_CHECKS
+    )
+    for check in required.get(status, ()):
         if check not in checked:
             report.error(
                 "E-STATUS", doc.rel, f"status {status} without checked.{check}"

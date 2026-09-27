@@ -40,6 +40,7 @@ validator does not read it, so nothing here is a check.
 | no-representation | document | — | — | [[20_distillates/documents/no-representation]] | — | distilled |
 | Placeholder fixture note | document | handover | [[10_markdown/documents/placeholder-note]] | — | — | ingested |
 | representation-wrong-layer | document | — | — | [[20_distillates/documents/representation-wrong-layer]] | — | distilled |
+| illegal-channel | publication | — | — | [[20_distillates/publications/illegal-channel]] | — | distilled |
 | malformed-quotation | publication | — | — | [[20_distillates/publications/malformed-quotation]] | — | distilled |
 | no-quote-check | publication | — | — | [[20_distillates/publications/no-quote-check]] | — | distilled |
 | no-reference | publication | — | — | [[20_distillates/publications/no-reference]] | — | distilled |

@@ -20,12 +20,12 @@ Chronological decision history of the vault, append-only, newest entry last. Con
 ## Entry format
 
 ```markdown
-## {{DATE}} — <one-line subject>
+## {{DATE}}, <one-line subject>
 
 <What was decided or found, why, and what it replaces. Link the affected
 documents. Two to ten sentences.>
 ```
 
-## {{DATE}} — Vault instantiated
+## {{DATE}}, vault instantiated
 
 Instantiated from the Grounded Vault template ({{REPOSITORY}}). Parameters recorded in [[knowledge/specification]].

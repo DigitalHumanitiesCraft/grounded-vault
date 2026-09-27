@@ -23,7 +23,7 @@ The first production cycle runs vertically. One source is carried through every 
 
 ## Acquire
 
-How a source enters the vault is orthogonal to its type; the channel is recorded in the `channel` field of the Markdown representation and changes nothing about checking.
+How a source enters the vault is orthogonal to its type. The acquisition channel is recorded in the `channel` field of the Markdown representation, and for a publication, which has none, in the `channel` field of its distillate.
 
 - **handover** and **collection**: place the original in `00_sources/`.
 - **import**: export records from the reference library as CSL JSON into `references/`, one file per batch of records.
@@ -95,13 +95,14 @@ The distillate enters at `status: grounded`. Run `python tools/inventory.py . --
 
 Assertions are where the vault synthesizes, one file per assertion, and the work proceeds by topic in these steps.
 
-1. **Read in**: enter through the topic map of the topic and read every distillate registered there, so that synthesis covers the sources the topic actually holds rather than the ones at hand.
+1. **Read in**: enter through the topic map of the topic and read every distillate whose `topics` names the topic, so that synthesis covers the sources the topic actually holds rather than the ones at hand.
 2. **Group**: gather the distillate statements that concern the same matter, across sources and across source types. A group is the unit an assertion is written from.
 3. **Formulate**: write one atomic assertion per group, carried jointly by the sources of that group. Atomic means one statement that cannot be split without losing its point.
 4. **Ground**: list in `grounding` every statement ID that supports the assertion, one per supporting source, and say in the Support section what each anchor contributes.
-5. **Contradictions**: where a group holds statements that cannot be reconciled, write two assertions instead of one, set both to `contested`, and link them to each other in `contested-with` on both sides.
-6. **Posit candidates**: a conclusion that no distillate statement carries is noted for the output as a posit candidate and never becomes an assertion. The appraisal sections of the distillates are read at this step as posit candidates, never as support, because they hold the vault's judgment of a source rather than its content.
-7. **Register**: enter every assertion in its topic map with a half-sentence of orientation, and record questions the sources leave open under the map's open questions.
+5. **Displaced subject**: check each group for a displaced subject as [[knowledge/schema]] § Assertion describes it. A self-report carries the assertion only with the speaker named, a state report only with the state and its date named, and either may instead rest on a second and independent source.
+6. **Contradictions**: where a group holds statements that cannot be reconciled, write two assertions instead of one, set both to `contested`, and link them to each other in `contested-with` on both sides.
+7. **Posit candidates**: a conclusion that no distillate statement carries is noted for the output as a posit candidate and never becomes an assertion. The appraisal sections of the distillates are read at this step as posit candidates, never as support, because they hold the vault's judgment of a source rather than its content.
+8. **Register**: enter every assertion in its topic map with a half-sentence of orientation, and record questions the sources leave open under the map's open questions.
 
 Machine review then runs over every pair of assertion and supporting statement, under the contract below. A verdict below *fully supports* means the assertion is reformulated to the width its sources actually carry, or the grounding is corrected by dropping the anchor that does not carry it and naming one that does. Review repeats on the changed pair.
 
@@ -113,7 +114,11 @@ Machine review then runs over every pair of assertion and supporting statement, 
 > the assertion is true is out of scope. Answer with exactly one verdict: fully supports
 > | partially supports | overreaches | contradicts | not in the text. Then give
 > one sentence of justification, and where the verdict is not *fully supports*,
-> name the part of the assertion that the statement does not carry.
+> name the part of the assertion that the statement does not carry. If the
+> statement reports what its source says about itself, or shows the matter in
+> one dated state, the assertion is fully supported only if it keeps the speaker
+> or the state with its date, and it overreaches otherwise. In either case add
+> one line naming the displacement.
 >
 > STATEMENT: {distillate statement, without its own grounding anchor}
 > ASSERTION: {assertion as one sentence}
@@ -135,7 +140,7 @@ Three instances check the vault. The architecture fixes their contracts; the mec
 ### Contract: validation
 
 - Judges: formal conformance of every file against [[knowledge/schema]].
-- Authority: gates everything; no other check runs on a file that fails validation. Sets no status by itself except enforcing the discipline.
+- Authority: gates everything, so no other check runs on a file that fails validation. It sets no status by itself except enforcing the discipline, and for a chapter, which machine review does not pair, it records the one check the `validated` rung requires.
 - Conditions: deterministic, same input, same verdict. Runs on every change.
 - Record: `checked.validation: <date>` on every file that passes. `tools/validate.py` reports and writes no file, so the agent sets the date after a clean run.
 - Reference mechanism: `python tools/validate.py .`, with the finding codes listed in the table below. Data anchors are re-run by default, and the output of each computation is compared with its stated result after surrounding whitespace is trimmed. `--no-computations` switches the re-run off for a fast run. A computation script is executed only from `tools/analysis/`, because the validator executes whatever the vault names. `--min-coverage` sets the share of blocks below which a source counts as unexhausted. The default is half, and an instance that decides otherwise records its value in [[knowledge/specification]] and passes it in its harness rules.
@@ -176,7 +181,7 @@ The finding codes of the reference mechanism are these.
 ### Contract: machine review
 
 - Judges: whether a source location actually supports the statement built on it, per pair, with the fixed verdict vocabulary: **fully supports** | **partially supports** | **overreaches** | **contradicts** | **not in the text**. Only *fully supports* passes.
-- Authority: together with validation lifts a document to `validated`, never higher.
+- Authority: together with validation lifts a distillate or an assertion to `validated`, never higher.
 - Conditions: anti-anchoring is mandatory. The reviewer sees only the source location and the statement; the producing agent's reasoning stays hidden. A reviewer from a different model family than the producer decorrelates error modes and is recommended.
 - Record: `checked.machine-review: <date>`; verdicts below *fully supports* trigger rework and are noted in the journal when they reveal a systematic pattern.
 - Reference mechanism: `python tools/review.py` with the subcommands `stats`, `emit`, `judge` and `run`. `stats` counts the pairs, `emit` writes one prompt per pair as a JSONL batch, and `judge` reads the verdicts back and, with `--apply`, books `checked.machine-review` on every document whose pairs all came back *fully supports*. `run` judges each pair through the local `claude -p` command line, which in the Claude Code harness calls a model of the producer's own family, so a reviewer from another family goes through `emit` and `judge`.
@@ -186,13 +191,17 @@ The finding codes of the reference mechanism are these.
   > that claims to be supported by it. Your task is to refute the statement.
   > Judge only whether this passage supports this statement. Answer with exactly
   > one verdict: fully supports | partially supports | overreaches | contradicts
-  > | not in the text. Then give one sentence of justification.
+  > | not in the text. Then give one sentence of justification. If the passage
+  > speaks about its own source, or shows its matter in one dated state, the
+  > statement is fully supported only if it keeps the speaker or the state with
+  > its date, and it overreaches otherwise. In either case add one line naming
+  > the displacement.
   >
   > PASSAGE: {source location, with its heading path}
   > STATEMENT: {statement}
 
 - Pair cutting: a pair consists of the anchored location (for documents the block plus its heading path, for publications the quotation, for data the computation and its result) and the bare statement. Nothing else enters the pair.
-- Displaced subject: where the passage supports the statement while its subject is not the matter the assertion is about, the reviewer adds one line naming the displacement. In **self-report** the source speaks about itself, about its own priority, reach or achievement; the verdict stays *fully supports* when the statement reports the claim as the source's own, and it is *overreaches* when the statement asserts the matter the claim is about. In **state report** the source shows the matter in one state at one time, such as a restored object, a dated inventory or a plan; the verdict stays *fully supports* when the statement names that state with its date, and it is *overreaches* when the statement asserts the property of the matter as such. These are the cases the coverage relation cannot separate on its own.
+- Displaced subject: where the passage supports the statement while its subject is not the matter the assertion is about, the reviewer adds one line naming the displacement. In **self-report** the source speaks about itself, about its own priority, reach or achievement; the verdict stays *fully supports* when the statement reports the claim as the source's own, and it is *overreaches* when the statement asserts the matter the claim is about. In **state report** the source shows the matter in one state at one time, such as a restored object, a dated inventory or a plan; the verdict stays *fully supports* when the statement names that state with its date, and it is *overreaches* when the statement asserts the property of the matter as such. These are the cases the support relation cannot separate on its own.
 
 ### Contract: verification
 
@@ -200,7 +209,3 @@ The finding codes of the reference mechanism are these.
 - Authority: alone lifts to `verified`. Machine checks prepare, never replace it.
 - Conditions: proceeds passage by passage on the prepared pairs; may sample where the machine review pass rate justifies it, with the sampling rule noted in the journal.
 - Record: `checked.verification: <date>` set by or on behalf of the verifying role.
-
-### Status discipline
-
-`grounded` → (validation and machine review passed) → `validated` → (expert passed) → `verified`. `contested` is set by assertion building or review when sources conflict, and resolved only by verification. A document's status is the minimum of its anchors' states.
