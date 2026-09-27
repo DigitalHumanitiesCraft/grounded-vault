@@ -15,7 +15,7 @@ related: [specification, state]
 
 # Journal
 
-Chronological decision history of the vault, append-only, newest entry last. Content documents carry only current state; the reasoning that led there lives here. An entry records a decision, a rejected alternative with the reason, or a calibration result of a check mechanism.
+Chronological decision history of the vault, append-only, newest entry last. Content documents carry only current state, and the reasoning that led there lives here. An entry records a decision, a rejected alternative with the reason, or a calibration result of a check mechanism.
 
 ## Entry format
 

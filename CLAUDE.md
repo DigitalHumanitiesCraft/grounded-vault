@@ -28,7 +28,7 @@ Read `knowledge/index.md` (terminology) first, then `knowledge/state.md` (where 
 - A Markdown representation is never edited after ingest. A revised source enters as a new file with a date-suffixed slug (`operations.md` § Ingest, `schema.md` § Document types).
 - A status is set only after its check ran, with the date recorded in `checked`. Never set `verified`, which only the human verification role sets (`schema.md` § Audit trail, `operations.md` § Check).
 - Never file an own conclusion as an assertion. It enters the output as a posit (`operations.md` § Build assertions, § Write chapters).
-- Run `python tools/validate.py .` before reporting any production task as done, and act on every warning as well as every error (`operations.md` § Check, Contract: validation).
+- Run `python tools/validate.py .` before reporting any production task as done, and act on every warning as well as every error (`operations.md` § Validation contract).
 - Volatile state goes to `knowledge/state.md`, decisions to `knowledge/journal.md`, which is append-only (`knowledge/index.md` § The six project knowledge documents).
 - Content is written in {{LANGUAGE}}. This action layer and `knowledge/` stay English (`knowledge/specification.md` § Parameters).
 

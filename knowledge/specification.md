@@ -15,12 +15,12 @@ related: [index, schema, operations]
 
 # Specification
 
-Purpose, parameters and settled decisions of this vault instance. The invariant architecture (layer model, anchor mechanics, check contracts, status progression) lives in [[knowledge/schema]] and [[knowledge/operations]]; this document holds what this project decided.
+Purpose, parameters and settled decisions are what this vault instance decided. The invariant architecture (layer model, anchor mechanics, check contracts, status progression) lives in [[knowledge/schema]] and [[knowledge/operations]].
 
 ## Purpose
 
-<!-- One paragraph, whose first sentence names the overall topic of the vault: what
-     output this vault produces, on what, for whom, under which evidence obligation. -->
+<!-- One paragraph, whose first sentence names the overall topic of the vault, meaning
+     what output this vault produces, on what, for whom and under which evidence obligation. -->
 
 {{PURPOSE}}
 
@@ -39,12 +39,12 @@ Purpose, parameters and settled decisions of this vault instance. The invariant 
 
 ## Style sheet
 
-<!-- Rules for the output prose: register, citation display, terminology choices. -->
+<!-- Rules for the output prose, covering register, citation display and terminology choices. -->
 
 {{STYLE_SHEET}}
 
 ## Settled decisions
 
-<!-- One line per decision with date; the reasoning behind each lives in the journal. -->
+<!-- One line per decision with date. The reasoning behind each lives in the journal. -->
 
 - {{DATE}}: Vault instantiated from the Grounded Vault template.
