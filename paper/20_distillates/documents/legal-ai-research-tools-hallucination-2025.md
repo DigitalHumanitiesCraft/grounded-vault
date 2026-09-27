@@ -3,12 +3,11 @@ type: distillate
 source-type: document
 representation: "[[10_markdown/documents/legal-ai-research-tools-hallucination-2025]]"
 topics: ["[[Verification]]", "[[Provenance]]", "[[Architecture]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-27
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-27
 ---
 
 # Distillate: Hallucination-Free? Assessing the Reliability of Leading AI Legal Research Tools
@@ -28,6 +27,7 @@ The source measures three commercial retrieval-augmented legal research systems 
 - Many failures in the three systems stem from poor retrieval, the system failing to find the most relevant sources available to address the user's query. [[10_markdown/documents/legal-ai-research-tools-hallucination-2025#^mg91]] ^s9
 - An inapplicable authority error occurs when a system cites or discusses a document that is not legally applicable to the query, because it belongs to the wrong jurisdiction, statute or court, or has been overruled. [[10_markdown/documents/legal-ai-research-tools-hallucination-2025#^mg96]] ^s10
 - Although sycophancy, the tendency to agree with a mistaken user, can cause hallucinations, Lexis+ AI, Westlaw AI-Assisted Research and GPT-4 navigated the false premise queries well and often corrected the false premise without hallucinating. [[10_markdown/documents/legal-ai-research-tools-hallucination-2025#^mg97]] ^s11
+- The source states that its evaluation only captures a point in time and that over the course of the study the responses of the systems, particularly Lexis+ AI, evolved. [[10_markdown/documents/legal-ai-research-tools-hallucination-2025#^mg99]] ^s12
 
 ## Terms
 
@@ -36,12 +36,12 @@ The source measures three commercial retrieval-augmented legal research systems 
 
 ## Open questions
 
-- The evaluation covers three commercial products at one point in time, and the systems changed during the study, so the reported rates hold for the versions tested.
+- Do the reported rates hold for later versions of the three systems?
 - The source does not report how much of the residual hallucination rate is attributable to retrieval and how much to generation, only which contributing causes appear among the hallucinated responses.
 
 ## Appraisal
 
-A preregistered evaluation of closed commercial systems, hand-scored by domain experts, which is the only method available where no API and no ground-truth corpus can be had. Its most transferable contribution to this vault is conceptual rather than numeric: the separation of correctness from groundedness, and with it the error class of the real, resolvable citation that does not support the claim built on it. That class is precisely what a validator checking anchor resolution cannot see, and it is the reason this vault treats grounding as a structural property and evidence as a human verdict.
+A preregistered evaluation of closed commercial systems, hand-scored by domain experts, which is the only method available where no API and no ground-truth corpus can be had. Its most transferable contribution to this vault is conceptual rather than numeric, namely the separation of correctness from groundedness and with it the error class of the real, resolvable citation that does not support the claim built on it. That class is precisely what a validator checking anchor resolution cannot see, and it is the reason this vault treats grounding as a structural property and evidence as a human verdict.
 
 ## Related
 

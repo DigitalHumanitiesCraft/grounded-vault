@@ -2,7 +2,7 @@
 type: chapter
 status: grounded
 checked:
-  validation: 2026-09-22
+  validation: 2026-09-27
 assertions:
   - "[[30_assertions/generated-citations-often-fail-to-support-their-sentences]]"
   - "[[30_assertions/source-binding-lowers-unsupported-citation-without-eliminating-it]]"
@@ -32,16 +32,19 @@ assertions:
   - "[[30_assertions/no-recorded-verdict-was-contradicts-or-not-in-the-text]]"
   - "[[30_assertions/agentic-context-engineering-as-design-task]]"
   - "[[30_assertions/agentic-promptotyping-knowledge-base-artifact]]"
-posits: 6
+  - "[[30_assertions/schema-at-c726eb5-writes-frontmatter-as-obsidian-requires]]"
+  - "[[30_assertions/terminology-at-79cd1d3-separates-anchor-from-evidence]]"
+  - "[[30_assertions/machine-review-at-c726eb5-judges-a-bare-statement-against-its-anchored-location]]"
+posits: 10
 created: 2026-08-21
-updated: 2026-09-22
+updated: 2026-09-27
 ---
 
 # Grounded Vault and the Support Gap
 
 ## Abstract
 
-Generated prose can cite accessible documents while leaving many sentences unsupported by the cited passages.[^1] In its template state at commit `c726eb5` of 2026-08-10, Grounded Vault addresses this support gap through a five-layer repository architecture in which output sentences resolve through assertions and source-specific anchors to recorded material.[^6] At commit `c726eb5`, deterministic validation checks the form and resolution of the chain, adversarial machine review judges each support relation, and human verification alone establishes evidence.[^20] A first review pass over the research instance reported 501 support pairs across 46 documents and located most checking work at the distillate layer.[^24] The architecture makes the state of support inspectable while leaving factual truth and substantive text quality to further judgment.[^4]
+Generated prose can cite accessible documents while leaving many sentences unsupported by the cited passages.[^1] In its template state at commit `c726eb5` of 2026-08-10, Grounded Vault addresses this support gap through a five-layer repository architecture in which output sentences resolve through assertions and source-specific anchors to recorded material.[^6] At commit `c726eb5`, machine review judges per pair whether a source location supports the statement built on it.[^38] At that commit, validation and machine review together lift a document at most to `validated`, and human verification alone lifts it to `verified`.[^20] A first review pass over the source instance `chpollin/grounded-vault-paper` on 2026-08-10 reported 501 support pairs across 46 documents and located most checking work at the distillate layer.[^24] The architecture makes the state of support inspectable while leaving factual truth and substantive text quality to further judgment.[^35]
 
 ## The support gap
 
@@ -59,9 +62,9 @@ The output contract at `c726eb5` places a footnote to an assertion on every load
 
 ## The file substrate
 
-The reference implementation uses Markdown files in an Obsidian vault, which remains an ordinary folder on the local file system.[^11] Obsidian keeps derived metadata in a rebuildable cache, so the authored notes remain accessible to other editors and file tools.[^11] A block reference is a literal identifier written into the note and addressed through the link syntax.[^12]
+The schema at `c726eb5` writes wikilink values quoted and block IDs unquoted in the frontmatter of its documents, as Obsidian requires for YAML.[^36] In the help pages of the vendor as accessed on 2026-08-10, Obsidian stores notes as plain text files in a vault that is an ordinary folder on the local file system, and other editors and file tools can edit those files.[^11] The same help pages describe the metadata Obsidian keeps about the files as a cache that can fall out of sync with them and can then be rebuilt.[^11] In that documentation, a block reference is a literal identifier written into the note and addressed through the link syntax.[^12]
 
-This anchor form introduces a portability boundary because block references belong to Obsidian Flavored Markdown and do not function as standard Markdown links outside the application.[^13] Preservation guidance accepts plain text as an open format while ranking structured text formats higher for published textual works because plain text can lose structure, context, and embedded metadata.[^14] The repository therefore preserves inspectable authored files while its block-level navigation depends on a documented application convention.[^30]
+This anchor form marks a portability boundary, because the vendor's help as accessed on 2026-08-10 states that block references are specific to Obsidian, form no part of standard Markdown and do not work as links outside the application.[^13] Preservation guidance accepts plain text as an open format while ranking structured text formats higher for published textual works because plain text can lose structure, context, and embedded metadata.[^14] The repository therefore preserves inspectable authored files while its block-level navigation depends on a documented application convention.[^30]
 
 ## Intellectual precedents
 
@@ -71,31 +74,31 @@ The World Wide Web Consortium provenance model describes entities, activities, a
 
 ## Grounding and evidence
 
-Grounding records that a statement points to a source location. Attribution research gives that support relation its own evaluation axis and keeps factual correctness outside the attribution verdict.[^4] At commit `c726eb5`, Grounded Vault reserves `verified` for human judgment and permits validation plus machine review to raise a document only to `validated`.[^20]
+At commit `79cd1d3` of 2026-09-26, the terminology of Grounded Vault defines an anchor as a machine-resolvable reference from a statement to the location it rests on one layer down and reserves the term evidence for a grounding relation that has passed human verification.[^37] Attribution research gives the support relation between a statement and its source its own evaluation axis and keeps factual correctness outside the attribution verdict.[^4] At commit `c726eb5`, Grounded Vault reserves `verified` for human judgment and permits validation plus machine review to raise a document only to `validated`.[^20]
 
 Under the schema at `c726eb5`, the status of every document is bounded by the lowest status among the anchors on which it rests.[^20] In that schema, dated entries in the `checked` map record which checking operations actually ran.[^20] In the same schema, contested and superseded anchors sit outside the ascending status ladder and keep dependent documents at the entry status.[^20]
 
 ## Agentic production and review
 
-In the review draft of its method paper of 2026-07-31, Promptotyping organises project work around a maintained and versioned knowledge base whose documents can enter a task-specific working context.[^28] Context engineering treats the selection and maintenance of that context as an engineering task, with experimental evidence that the position and volume of relevant information affect model performance.[^27] Grounded Vault adds a production schema for knowledge that must remain traceable through later synthesis.[^31]
+In the review draft of its method paper of 2026-07-31, Promptotyping organises project work around a maintained and versioned knowledge base whose documents can enter a task-specific working context.[^28] In its engineering post as accessed on 2026-08-10, the model vendor Anthropic treats the selection and maintenance of that context as an engineering task under the name context engineering, and position experiments show that the position and volume of relevant information affect model performance.[^27] Grounded Vault adds a production schema for knowledge that must remain traceable through later synthesis.[^31]
 
-Machine-generated summaries of research texts broaden the scope of original findings more often than the source abstracts, including under prompts that ask for accuracy.[^21] Pairwise review at commit `c726eb5` therefore compares a bare statement with its named source location and withholds the producing agent's reasoning.[^20] Language model evaluators have shown preference for their own generations, and this preference correlates with their capacity to recognise those generations.[^22] Evaluator panels drawn from disjoint model families reduced intra-model bias in the reported experiments.[^23]
+Machine-generated summaries of research texts broaden the scope of original findings more often than the source abstracts, including under prompts that ask for accuracy.[^21] Machine review at commit `c726eb5` judges a bare statement against its anchored source location, and anti-anchoring keeps the producing agent's reasoning hidden from the reviewer.[^38] The manuscript reads this cut of the review pair as a guard against the scope drift that generated summaries show.[^39] Language model evaluators have shown preference for their own generations, and this preference correlates with their capacity to recognise those generations.[^22] Evaluator panels drawn from disjoint model families reduced intra-model bias in the reported experiments.[^23]
 
 ## Findings from the first review pass
 
-The first recorded machine review pass covered 501 pairs across 46 documents, with 405 pairs at the distillate layer, 87 at the assertion layer, and 9 at the chapter layer.[^24] This distribution places about four fifths of the pairwise checking work at the first statement layer above the source representations.[^24]
+The first recorded machine review pass of the source instance, on 2026-08-10, covered 501 pairs across 46 documents, with 405 pairs at the distillate layer, 87 at the assertion layer, and 9 at the chapter layer.[^24] This distribution places about four fifths of the pairwise checking work at the first statement layer above the source representations.[^24]
 
 The review record contains 101 verdicts below full support.[^25] Modality drift accounts for 32 recorded defects, followed by 19 scope mismatches, 18 reaches into a neighbouring block, and 17 unanchored details.[^25] The computation yields category counts and no failure rate because the number of reviewed pairs does not come from that dataset.[^25] None of the recorded verdicts used the two harshest labels, `contradicts` and `not in the text`, and the record cannot establish whether unrecorded verdicts used them.[^26]
 
-The concentration of findings at the distillate layer indicates where this instance spent its review effort.[^24] Generalisation beyond the instance requires comparable runs on other source sets and with independently recorded review logs.[^32]
+The concentration of reviewed pairs at the distillate layer shows where the source instance `chpollin/grounded-vault-paper` spent its first review pass.[^24] Generalisation beyond that instance requires comparable runs on other source sets and with independently recorded review logs.[^32]
 
 ## Limits of the method
 
 Under the schema at `c726eb5`, a resolvable anchor guarantees traceability to a recorded location.[^7] The support relation still requires review, and attribution alone supplies no verdict about factual correctness.[^4] Internal consistency of provenance also leaves trust decisions to a later judgment.[^18]
 
-The architecture has not been compared with an equivalent unanchored writing process under controlled conditions.[^33] Its current evidence supports claims about traceability, conformance, and the distribution of recorded review findings.[^24] A claim that the method improves substantive output quality requires a separate comparison.[^33]
+The architecture has not been compared with an equivalent unanchored writing process under controlled conditions.[^33] Its current evidence supports claims about traceability, conformance, and the distribution of recorded review findings.[^40] A claim that the method improves substantive output quality requires a separate comparison.[^33]
 
-Under the schema at `c726eb5`, full anchor depth also depends on retaining the source material when the Markdown representation and its block identifiers are created.[^9] Retrospective reconstruction can document a later source state but cannot prove that it matches the material used in the earlier transformation.[^34] This dependency is why that schema decides the source situation and storage rights at intake.[^8]
+Under the schema at `c726eb5`, full anchor depth also depends on retaining the source material when the Markdown representation and its block identifiers are created.[^9] Retrospective reconstruction can document a later source state but cannot prove that it matches the material used in the earlier transformation.[^34] Under that schema, whether the content of a source may be stored decides its source type and therefore its anchor form.[^8] The manuscript reads this intake decision as the point at which the dependency on retained source material has to be settled.[^41]
 
 [^1]: Grounded in [[30_assertions/generated-citations-often-fail-to-support-their-sentences]].
 [^2]: Grounded in [[30_assertions/source-binding-lowers-unsupported-citation-without-eliminating-it]].
@@ -131,3 +134,10 @@ Under the schema at `c726eb5`, full anchor depth also depends on retaining the s
 [^32]: Posit: The recorded distribution belongs to one instance and cannot establish a general defect distribution. Open evidence question: How does the distribution change across domains, source types, and reviewer families?
 [^33]: Posit: No controlled comparison in this research foundation establishes a substantive quality gain over equivalent unanchored writing. Open evidence question: What blinded comparison can measure that effect while holding source access and model capability constant?
 [^34]: Posit: A later source copy cannot prove identity with an unarchived earlier source state. Open evidence question: What external archival record could establish that identity after the fact?
+[^35]: Posit: The chain records which support relations were checked and by which instance, while attribution research keeps factual correctness outside the support verdict, so truth and substantive quality stay outside what the chain establishes. Open evidence question: Which evaluation design could show whether an inspectable state of support changes the factual accuracy or substantive quality of the resulting text?
+[^36]: Grounded in [[30_assertions/schema-at-c726eb5-writes-frontmatter-as-obsidian-requires]].
+[^37]: Grounded in [[30_assertions/terminology-at-79cd1d3-separates-anchor-from-evidence]].
+[^38]: Grounded in [[30_assertions/machine-review-at-c726eb5-judges-a-bare-statement-against-its-anchored-location]].
+[^39]: Posit: The operations document states the pair cutting and anti-anchoring without naming scope drift in generated summaries as their reason, so the link between the two is the manuscript's reading. Open evidence question: Does review of bare pairs detect scope broadening more reliably than review that also sees the producing agent's reasoning?
+[^40]: Posit: The research foundation holds the template's rules at pinned commits and the review record of one source instance, which bear on traceability, conformance and the distribution of recorded findings and not on the quality of the output. Open evidence question: Which further records would extend the evidence to the practicability of the architecture across instances?
+[^41]: Posit: The schema derives the source type from storability without naming the retention of source material as a reason, so tying the intake decision to anchor depth is the manuscript's reading. Open evidence question: Does a later state of the schema or the operations tie the retention of originals to the intake decision?

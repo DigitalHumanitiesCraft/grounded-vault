@@ -3,12 +3,11 @@ type: distillate
 source-type: document
 representation: "[[10_markdown/documents/gao-2023-llms-generate-text-with-citations]]"
 topics: ["[[Verification]]", "[[Architecture]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-27
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-27
 ---
 
 # Distillate: Enabling Large Language Models to Generate Text with Citations
@@ -51,6 +50,8 @@ The source builds ALCE, a benchmark that scores a generated answer with citation
 
 - The source names, among others, enhancing retrieval, developing long-context models and advancing the ability to synthesize multiple sources as promising research directions its experiments point to. [[10_markdown/documents/gao-2023-llms-generate-text-with-citations#^b41]] ^s17
 
+- The source notes that its citation precision algorithm overlooks the case in which one citation partially supports the statement. [[10_markdown/documents/gao-2023-llms-generate-text-with-citations#^b31]] ^s18
+
 ## Terms
 
 - **Citation recall**: the per-statement binary judgment of whether the concatenation of a statement's citations entails the statement, averaged over all statements of a response [[10_markdown/documents/gao-2023-llms-generate-text-with-citations#^b28]]
@@ -59,13 +60,13 @@ The source builds ALCE, a benchmark that scores a generated answer with citation
 
 ## Open questions
 
-- The source measures entailment with an NLI model and reports in its limitations that the model cannot detect partial support, so the relation between machine-judged and human-judged citation quality remains approximate.
+- How closely does machine-judged citation quality track human judgment where a citation supports its statement only partially?
 - The source segments output at sentence boundaries and does not settle how to score a sentence carrying several independently verifiable claims.
 - The source evaluates prompting only and leaves open whether a model trained to cite behaves differently on these axes.
 
 ## Appraisal
 
-The source matters to this vault less for its benchmark scores than for the separation it enforces in its metric design: an answer can be correct and badly cited, or well cited and wrong, and the evaluation refuses to collapse the two. That is the same cut this vault draws between a statement and its anchor, arrived at independently and from the direction of automatic evaluation. The shortcut analysis is the strongest part of the argument, because it shows that citation quality alone is gameable by copying, which is the failure mode a purely structural grounding check also has. The correlation with human judgment is reported as substantial for recall and merely moderate for precision, which supports keeping a human instance in the loop rather than treating an automatic entailment verdict as final.
+The source matters to this vault less for its benchmark scores than for the separation it enforces in its metric design, under which an answer can be correct and badly cited, or well cited and wrong, and the evaluation refuses to collapse the two. That is the same cut this vault draws between a statement and its anchor, arrived at independently and from the direction of automatic evaluation. The shortcut analysis is the strongest part of the argument, because it shows that citation quality alone is gameable by copying, which is the failure mode a purely structural grounding check also has. The correlation with human judgment is reported as substantial for recall and merely moderate for precision, which supports keeping a human instance in the loop rather than treating an automatic entailment verdict as final.
 
 ## Related
 

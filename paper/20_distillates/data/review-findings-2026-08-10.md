@@ -3,15 +3,16 @@ type: distillate
 source-type: data
 representation: "[[10_markdown/data/review-findings-2026-08-10]]"
 topics: ["[[Instances]]", "[[Verification]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-27
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-27
 ---
 
 # Distillate: Machine review verdicts
+
+The machine review verdicts recorded on 2026-08-10 by the Grounded Vault paper instance chpollin/grounded-vault-paper, the source instance from which this vault imported its research foundation. The core statements were written there, so "this vault" in them names that source instance.
 
 ## Core statements
 
@@ -29,8 +30,8 @@ updated: 2026-08-10
 
 ## Open questions
 
-- Whether the same distribution of categories arises with a reviewer of a different model family is untested in this instance, since all reviewers came from the family of the producing agents.
-- Whether the absence of contradicts reflects the material or the review setup cannot be decided from this dataset alone.
+- Does the same distribution of categories arise with a reviewer of a different model family than the producing agents?
+- Does the absence of contradicts reflect the material or the review setup?
 
 ## Appraisal
 

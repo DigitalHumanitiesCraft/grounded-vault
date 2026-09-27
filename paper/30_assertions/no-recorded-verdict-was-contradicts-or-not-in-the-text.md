@@ -1,26 +1,25 @@
 ---
 type: assertion
 topics: ["[[Instances]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-27
 grounding:
   - "[[20_distillates/data/review-findings-2026-08-10#^s2]]"
 contested-with: []
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-27
 ---
 
-# Among the verdicts recorded in this instance none was contradicts or not in the text
+# Among the verdicts recorded in the source instance chpollin/grounded-vault-paper none was contradicts or not in the text
 
 ## Statement
 
-Among the verdicts that the machine review of this instance recorded on 2026-08-10 none carried the value contradicts and none carried the value not in the text, so the two heaviest values of the five-value review contract appear nowhere in the record. The statement holds for the recorded verdicts and says nothing about verdicts that were given without being written down. About the cause of the finding the count says nothing.
+Among the verdicts that the machine review of the Grounded Vault paper instance chpollin/grounded-vault-paper recorded on 2026-08-10 none carried the value contradicts and none carried the value not in the text, so the two heaviest values of the five-value review contract appear nowhere in the record. The statement holds for the recorded verdicts and says nothing about verdicts that were given without being written down. About the cause of the finding the count says nothing.
 
 ## Support
 
-- [[20_distillates/data/review-findings-2026-08-10#^s2]] — establishes that no recorded verdict was contradicts or not in the text.
+- [[20_distillates/data/review-findings-2026-08-10#^s2]], establishes that no recorded verdict was contradicts or not in the text.
 
 ## Related
 

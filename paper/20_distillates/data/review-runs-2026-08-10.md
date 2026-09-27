@@ -3,15 +3,16 @@ type: distillate
 source-type: data
 representation: "[[10_markdown/data/review-runs-2026-08-10]]"
 topics: ["[[Instances]]", "[[Verification]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-27
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-27
 ---
 
 # Distillate: Machine review runs, first pass
+
+The first-pass review runs recorded on 2026-08-10 by the Grounded Vault paper instance chpollin/grounded-vault-paper, the source instance from which this vault imported its research foundation. The core statements were written there, so "this vault" in them names that source instance.
 
 ## Core statements
 
@@ -26,8 +27,8 @@ updated: 2026-08-10
 
 ## Open questions
 
-- How many pairs a second and third pass covered is not recorded, because later passes examined a selection of reworked pairs rather than whole documents.
-- Whether the reported pair counts match the number of pairs actually cut cannot be checked, since the reviewing agents produced no machine-readable log.
+- How many pairs did the second and third review pass cover?
+- Do the reported pair counts match the number of pairs the reviewing agents actually cut?
 
 ## Appraisal
 

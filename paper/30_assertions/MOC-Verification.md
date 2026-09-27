@@ -2,7 +2,7 @@
 type: moc
 topic: "Verification"
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-27
 ---
 
 # MOC: Verification
@@ -17,6 +17,7 @@ The judgment side of the method, the evidence question. It covers how and by who
 - [[30_assertions/cross-family-evaluator-panels-reduce-intra-model-bias]], panels of disjoint families judge with less intra model bias.
 - [[30_assertions/historical-method-separates-origin-check-from-credibility]], the two stage critique of the historical method and its order.
 - [[30_assertions/llm-summaries-broaden-the-scope-of-findings]], scope drift in machine summaries and the accuracy prompt that worsens it.
+- [[30_assertions/terminology-at-79cd1d3-separates-anchor-from-evidence]], at commit 79cd1d3, the anchor as a structural reference and evidence as what human verification establishes.
 
 ## Open questions
 

@@ -3,12 +3,11 @@ type: distillate
 source-type: document
 representation: "[[10_markdown/documents/llm-evaluators-self-preference-2024]]"
 topics: ["[[Verification]]", "[[Agentic Workflow]]"]
-status: validated
+status: grounded
 checked:
-  validation: 2026-08-10
-  machine-review: 2026-08-10
+  validation: 2026-09-27
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-09-27
 ---
 
 # Distillate: LLM Evaluators Recognize and Favor Their Own Generations
@@ -31,6 +30,8 @@ The source measures whether a model scores its own outputs higher than others' a
 - All three evaluator models display ordering bias, reversing their pairwise preferences when the order of the options is reversed at rates of 25% for GPT-4, 58% for GPT-3.5 and 89% for Llama, averaged across tasks and datasets. [[10_markdown/documents/llm-evaluators-self-preference-2024#^pk30]] ^s12
 - In the pairwise setting all models show their greatest self-preference against the human-written summary. [[10_markdown/documents/llm-evaluators-self-preference-2024#^pk28]] ^s13
 - Weaker models struggle to distinguish themselves from stronger ones, with Llama 2 wholly unable to distinguish itself from GPT-3.5 and GPT-4. [[10_markdown/documents/llm-evaluators-self-preference-2024#^pk25]] ^s14
+- The source states that the correlation it measures does not by itself prove its causal hypothesis and that validating the hypothesis would require mechanistic tools that do not yet exist for LLMs. [[10_markdown/documents/llm-evaluators-self-preference-2024#^pk33]] ^s15
+- The source states that it invalidates the inverse causal relationship, in which self-preference would cause self-recognition. [[10_markdown/documents/llm-evaluators-self-preference-2024#^pk34]] ^s16
 
 ## Terms
 
@@ -39,12 +40,12 @@ The source measures whether a model scores its own outputs higher than others' a
 
 ## Open questions
 
-- The source establishes correlation and rules out one inverse explanation, and states that validating the causal hypothesis would require mechanistic tools that do not yet exist for these models.
+- Does self-recognition cause self-preference, beyond the measured correlation and the excluded inverse direction?
 - The measurements cover summarization on two news datasets and three model families, so the transfer to an evaluator judging whether a passage supports a statement is open.
 
 ## Appraisal
 
-A careful correlational study with the confounder controls a causal claim needs, and honest about the causal claim it cannot make. For this vault it carries the machine review contract rather than a content finding: if preference tracks recognition, then a reviewer drawn from the model family that produced the statement is systematically the wrong instance to refute it, which is why the review role here is filled from a different family than the producing agent.
+A careful correlational study with the confounder controls a causal claim needs, and honest about the causal claim it cannot make. For this vault it carries the machine review contract rather than a content finding. If preference tracks recognition, a reviewer drawn from the model family that produced the statement is systematically the wrong instance to refute it, which is why the review contract recommends a reviewer from a different family than the producing agent.
 
 ## Related
 

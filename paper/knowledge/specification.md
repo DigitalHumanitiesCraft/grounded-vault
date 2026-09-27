@@ -9,7 +9,7 @@ method:
 status: active
 language: en
 created: 2026-08-21
-updated: 2026-08-21
+updated: 2026-09-27
 related: [state, journal]
 ---
 
@@ -32,7 +32,7 @@ The manuscript is an internal research artefact. It is not prepared for submissi
 | Working language | English |
 | Verification role | authoring role in digital humanities research |
 | Validation mechanism | root `tools/validate.py`, called with `paper` as vault root |
-| Machine review mechanism | root `tools/review.py` under the shared review contract |
+| Machine review mechanism | root `tools/review.py` under the shared review contract. The reviewer's model family is still to be decided. The subcommand `run` calls a model of the producer's own family, and a reviewer from another family goes through `emit` and `judge`. |
 
 ## Style sheet
 
@@ -49,3 +49,10 @@ The research foundation comes from the read-only repository `chpollin/grounded-v
 - 2026-08-21. The Promptotyping paper remains the separate publication line intended for submission.
 - 2026-08-21. Imported anchors and statement IDs keep their source bytes and identifiers.
 - 2026-08-21. Invariant governance and executable tools stay at the repository root. The nested instance stores only its parameters, state, provenance, and production layers.
+- 2026-09-05. Publication distillates name in `checked-against` the text version their quotation check ran on. The values come from the `note` and `accessed` fields of the reference records written at intake on 2026-08-10, and the `updated` date of the distillates stays unchanged.
+- 2026-09-22. The subject of an assertion resting on a pinned or self-describing source is bound in the assertion sentence itself. The H1 and the first sentence of the statement name the state with its commit or date, or the speaker, because the template provides no subject field.
+- 2026-09-27. Web documentation and vendor posts count as state reports as of their access date 2026-08-10, and a vendor post on its own practice counts as a self-report, so assertions resting on them name the access date and, for a self-report, the speaker.
+- 2026-09-27. Assertions, topic maps and manuscript sentences on the review data of 2026-08-10 name the source instance `chpollin/grounded-vault-paper`, because after the import a reference to this instance reads as a self-description. The imported statement text of the data distillates stays unchanged, and a lead sentence states whom it refers to.
+- 2026-09-27. A glossary entry that gives a definition of the template names the commit of the represented state and anchors into the block of the terminology representation that holds the definition. The vault's own reading of a term is marked as such.
+- 2026-09-27. Open questions of a distillate hold questions only. A finding found there is lifted into the core statements where a block of the representation carries it, and otherwise rewritten as a question.
+- 2026-09-27. The coverage warnings of this instance are answered for now by a scoping decision in the journal. The minimum coverage share stays at the template default of one half, and the extension candidates named there form the next distillation round.

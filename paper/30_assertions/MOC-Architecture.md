@@ -2,19 +2,19 @@
 type: moc
 topic: "Architecture"
 created: 2026-08-10
-updated: 2026-09-22
+updated: 2026-09-27
 ---
 
 # MOC: Architecture
 
-The built substrate of the method. It covers the layer chain, the source typology with its anchor mechanics, and the document schema, together with the question what the carrier format actually guarantees. Supporting strands hold the note taking tradition the layers inherit, the archival criteria for the plain text substrate, and the documented mechanics and limits of the Obsidian conventions the vault rides on.
+The built substrate of the method. It covers the layer chain, the source typology with its anchor mechanics, and the document schema, together with the question what the carrier format actually guarantees. Supporting strands hold the note taking tradition the layers inherit, the archival criteria for the plain text substrate, and the mechanics and limits of the Obsidian conventions the vault rides on, as the vendor documented them on 2026-08-10.
 
-- [[30_assertions/card-index-organizes-knowledge-as-addressable-linked-notes]], fixed positions and a maintained reference structure carry the yield of Luhmann's card index.
+- [[30_assertions/card-index-organizes-knowledge-as-addressable-linked-notes]], fixed positions and a maintained reference structure carry the yield of the card index described in the archival study (Schmidt 2018).
 - [[30_assertions/plain-text-meets-archival-format-criteria]], the archival guidances name openness and independence as criteria and rank structured formats above plain text for published works.
-- [[30_assertions/obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state]], notes live in plain Markdown files beside a rebuildable metadata cache.
-- [[30_assertions/block-references-address-blocks-as-literal-text-markers]], the block identifier is written into the file itself with a restricted character set.
-- [[30_assertions/obsidian-link-registers-map-files-to-files]], the declared types of the link registers provide no level below the file.
-- [[30_assertions/block-references-are-specific-to-obsidian]], the vendor states that block references sit outside standard Markdown and work only in Obsidian.
+- [[30_assertions/obsidian-stores-notes-as-plain-text-with-rebuildable-derived-state]], in the vendor's help as accessed on 2026-08-10, notes live in plain Markdown files beside a rebuildable metadata cache.
+- [[30_assertions/block-references-address-blocks-as-literal-text-markers]], in the vendor's help as accessed on 2026-08-10, the block identifier is written into the file itself with a restricted character set.
+- [[30_assertions/obsidian-link-registers-map-files-to-files]], in the API reference as accessed on 2026-08-10, the declared types of the link registers provide no level below the file.
+- [[30_assertions/block-references-are-specific-to-obsidian]], the vendor states in its help as accessed on 2026-08-10 that block references sit outside standard Markdown and work only in Obsidian.
 
 - [[30_assertions/layer-model-assigns-each-layer-its-anchor-form]], at commit c726eb5, the five layers and the anchor form each of them carries.
 - [[30_assertions/anchors-are-minted-at-their-own-layer-and-bind-one-layer-down]], at commit c726eb5, the two rules that keep the chain from skipping a layer.
@@ -22,6 +22,7 @@ The built substrate of the method. It covers the layer chain, the source typolog
 - [[30_assertions/source-type-follows-storability-and-fixes-the-anchor-form]], at commit c726eb5, storability decides the type, and the type decides the anchor.
 - [[30_assertions/output-binds-load-bearing-sentences-by-footnote-and-marks-posits]], at commit c726eb5, the anchor contract of the finished text.
 - [[30_assertions/markdown-representation-is-immutable-after-ingest]], at commit c726eb5, why a converted representation is frozen and how a revised source enters.
+- [[30_assertions/schema-at-c726eb5-writes-frontmatter-as-obsidian-requires]], at commit c726eb5, the frontmatter follows what Obsidian requires for YAML.
 
 ## Open questions
 
