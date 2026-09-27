@@ -49,8 +49,8 @@ from validate import (
     Doc,
     Report,
     _link_targets,
-    _parse_doc,
     _statement_lines,
+    parse_doc,
 )
 
 VERDICTS = (
@@ -196,7 +196,7 @@ def _load_docs(root: Path) -> dict[str, Doc]:
     docs: dict[str, Doc] = {}
     for folder in ("10_markdown", "20_distillates", "30_assertions"):
         for path in sorted((root / folder).rglob("*.md")):
-            if doc := _parse_doc(path, root, report):
+            if doc := parse_doc(path, root, report):
                 docs[doc.rel] = doc
     return docs
 

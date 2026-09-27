@@ -6,6 +6,7 @@ topics: ["[[Water]]"]
 status: grounded
 checked:
   quote: 2026-07-11
+checked-against: "example2024metering, publisher PDF as exported 2026-07-11"
 created: 2026-07-11
 updated: 2026-07-11
 ---

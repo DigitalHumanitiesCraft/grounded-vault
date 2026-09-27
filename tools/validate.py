@@ -7,19 +7,22 @@ computation declarations, MOC reachability, bidirectional contested links,
 chapter mirror and footnote keywords, status discipline including the ladder
 against the anchors a document rests on, assertions that rest on the same
 anchors as another, footnote aliases that rename the assertion they cite, a
-production chain that holds no document at all, and checks older than the
-content they judge. The rules are defined in knowledge/schema.md; this script
-only enforces them.
+production chain that holds no document at all, checks older than the content
+they judge, sources whose blocks the distillates mostly leave unanchored, and
+quotation checks that do not name the text version they ran on. The rules are
+defined in knowledge/schema.md; this script only enforces them.
 
 Warnings report that a check found nothing to check, or found something that
 needs a human decision rather than a verdict. They are always printed and
 counted.
 
 Usage:
-    python tools/validate.py <vault-root> [--no-computations]
+    python tools/validate.py <vault-root> [--no-computations] [--min-coverage 0.5]
     python tools/validate.py <vault-root> --chapter 40_output/<slug>
 
 Data anchors are re-run and compared by default; --no-computations skips that.
+--min-coverage sets the share of a document's blocks that distillates must
+anchor before W-COVERAGE stays silent; 0 switches the check off.
 
 --chapter narrows the run to one chapter of the output and, transitively, the
 assertions, distillates and representations it hangs on, so that the state of the
@@ -38,6 +41,7 @@ import json
 import re
 import subprocess
 import sys
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -81,7 +85,12 @@ LAYER_BELOW = {
     "assertion": DISTILLATE_LAYER,
     "distillate": REPRESENTATION_LAYER,
 }
-VAULT_WIDE_CHECKS = ("W-EMPTY", "W-NO-OUTPUT")
+VAULT_WIDE_CHECKS = ("W-EMPTY", "W-NO-OUTPUT", "W-COVERAGE")
+# Below this share of anchored blocks a source counts as unexhausted. Half is
+# the point where more of a source is unread than read; an instance moves it.
+DEFAULT_MIN_COVERAGE = 0.5
+# Data anchors re-run scripts from the vault, so only this folder may hold them.
+ANALYSIS_FOLDER = "tools/analysis/"
 
 SOURCE_TYPES = frozenset({"document", "publication", "data"})
 CHANNELS = frozenset({"handover", "collection", "import", "deep-research"})
@@ -143,6 +152,9 @@ BLOCK_ID = re.compile(r"\^([A-Za-z0-9-]+)\s*$")
 FOOTNOTE_DEF = re.compile(r"^\[\^([A-Za-z0-9]+)\]:\s*(.*)$")
 FOOTNOTE_REF = re.compile(r"\[\^([A-Za-z0-9]+)\]")
 COMPUTATION = re.compile(r"computation:\s*`([^`]+)`\s*(?:→|->)\s*`([^`]+)`")
+# The quotation block of a publication statement, joined over its lines: the
+# verbatim text in quotation marks, then the identifier with its locator.
+QUOTATION = re.compile(r'^["“].+["”]\s*\(.+\)$', re.DOTALL)
 PLACEHOLDER = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
 
 
@@ -170,22 +182,34 @@ class Report:
         return {code for code, _, _ in self.errors}
 
 
-def _parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
-    rel = path.relative_to(root).with_suffix("").as_posix()
-    text = path.read_text(encoding="utf-8")
+def split_frontmatter(text: str) -> tuple[str, str] | None:
+    """The raw YAML block and the body of a Markdown file, None when it has no frontmatter.
+
+    The one place the frontmatter delimiter is read; inventory and migrate
+    import it, so that what counts as frontmatter cannot drift between tools.
+    """
     if not text.startswith("---\n"):
-        report.error("E-FRONTMATTER", rel, "missing frontmatter")
         return None
     end = text.find("\n---", 4)
     if end < 0:
-        report.error("E-FRONTMATTER", rel, "unterminated frontmatter")
         return None
+    return text[4:end], text[end + 4 :]
+
+
+def parse_doc(path: Path, root: Path, report: Report) -> Doc | None:
+    rel = path.relative_to(root).with_suffix("").as_posix()
+    text = path.read_text(encoding="utf-8")
+    split = split_frontmatter(text)
+    if split is None:
+        what = "unterminated" if text.startswith("---\n") else "missing"
+        report.error("E-FRONTMATTER", rel, f"{what} frontmatter")
+        return None
+    raw, body = split
     try:
-        fm = yaml.safe_load(text[4:end]) or {}
+        fm = yaml.safe_load(raw) or {}
     except yaml.YAMLError as exc:
         report.error("E-FRONTMATTER", rel, f"frontmatter is not valid YAML: {exc}")
         return None
-    body = text[end + 4 :]
     blocks = [m.group(1) for line in body.splitlines() if (m := BLOCK_ID.search(line))]
     return Doc(path=path, rel=rel, fm=fm, body=body, blocks=blocks)
 
@@ -396,8 +420,9 @@ def _check_duplicate_ids(doc: Doc, report: Report) -> None:
         label = "statement ID"
     else:
         return
-    for dup in sorted({i for i in ids if ids.count(i) > 1}):
-        report.error("E-DUPLICATE", doc.rel, f"duplicate {label}: ^{dup}")
+    for dup, count in sorted(Counter(ids).items()):
+        if count > 1:
+            report.error("E-DUPLICATE", doc.rel, f"duplicate {label}: ^{dup}")
 
 
 def _check_placeholders(
@@ -464,7 +489,11 @@ def _ids_outside_core_statements(body: str) -> list[str]:
 
 
 def _check_distillate(
-    doc: Doc, docs: dict[str, Doc], reference_ids: set[str], root: Path, report: Report
+    doc: Doc,
+    reference_ids: set[str],
+    root: Path,
+    report: Report,
+    run_computations: bool,
 ) -> None:
     source_type = doc.fm.get("source-type")
     statements = _statement_lines(doc.body)
@@ -483,9 +512,16 @@ def _check_distillate(
                 doc.rel,
                 f"reference id not in references/: {doc.fm['reference']}",
             )
-        if "quote" not in (doc.fm.get("checked") or {}):
+        checked = doc.fm.get("checked") or {}
+        if "quote" not in checked:
             report.error(
                 "E-QUOTE", doc.rel, "quotation check not recorded (checked.quote)"
+            )
+        elif not doc.fm.get("checked-against"):
+            report.warn(
+                "W-VERSION",
+                doc.rel,
+                "checked.quote names no text version it ran on (checked-against)",
             )
     for line, follow in statements:
         if not BLOCK_ID.search(line):
@@ -508,13 +544,15 @@ def _check_distillate(
                     f"core statement without block anchor: {line.strip()[:60]}",
                 )
         elif source_type == "publication":
-            if not any(
-                f.lstrip().startswith(">") and '"' in f and "(" in f for f in follow
-            ):
+            quote = "\n".join(
+                f.strip()[1:].strip() for f in follow if f.lstrip().startswith(">")
+            )
+            if not QUOTATION.match(quote):
                 report.error(
                     "E-STATEMENT",
                     doc.rel,
-                    f"core statement without quotation: {line.strip()[:60]}",
+                    "core statement without a quotation in the form "
+                    f'"<verbatim>" (<identifier>): {line.strip()[:60]}',
                 )
         elif source_type == "data":
             declared = [m for f in follow if (m := COMPUTATION.search(f))]
@@ -525,16 +563,33 @@ def _check_distillate(
                     f"core statement without computation: {line.strip()[:60]}",
                 )
             for m in declared:
-                _check_computation(m.group(1), m.group(2), root, doc, report)
+                _check_computation(
+                    m.group(1), m.group(2), root, doc, report, run_computations
+                )
 
 
 def _check_computation(
-    command: str, stated: str, root: Path, doc: Doc, report: Report
+    command: str,
+    stated: str,
+    root: Path,
+    doc: Doc,
+    report: Report,
+    run_computations: bool,
 ) -> None:
     scripts = [part for part in command.split() if part.endswith(".py")]
     if not scripts:
         report.error(
             "E-COMPUTATION", doc.rel, f"no script named in computation: {command}"
+        )
+        return
+    # Trust boundary: the validator executes what the vault names, and CI runs
+    # it on every push, so a script anywhere but in the analysis folder is
+    # refused before existence is even checked.
+    if not scripts[0].replace("\\", "/").startswith(ANALYSIS_FOLDER):
+        report.error(
+            "E-COMPUTATION",
+            doc.rel,
+            f"computation script outside {ANALYSIS_FOLDER}: {scripts[0]}",
         )
         return
     script = root / scripts[0]
@@ -543,7 +598,7 @@ def _check_computation(
             "E-COMPUTATION", doc.rel, f"computation script missing: {scripts[0]}"
         )
         return
-    if _RUN_COMPUTATIONS:
+    if run_computations:
         result = subprocess.run(
             [sys.executable, str(script)],
             cwd=root,
@@ -568,7 +623,10 @@ def _check_computation(
 
 def _check_topics(doc: Doc, topic_names: set[str], report: Report) -> None:
     for raw in doc.fm.get("topics") or []:
-        topic = str(raw).strip("[] ")
+        # A topic is written as a wikilink; an alias on it would otherwise
+        # slip a name past the controlled set.
+        linked = _link_targets(str(raw))
+        topic = linked[0][0] if linked else str(raw).strip("[] ")
         if topic not in topic_names:
             report.error(
                 "E-TOPIC", doc.rel, f"topic outside the controlled topic set: {topic}"
@@ -727,9 +785,6 @@ def _check_moc_reachability(
             report.error("E-ORPHAN", doc.rel, "assertion reachable from no topic map")
 
 
-_RUN_COMPUTATIONS = False
-
-
 def _grounding_set(doc: Doc) -> frozenset[tuple[str, str | None]]:
     return frozenset(
         (target, block)
@@ -817,6 +872,46 @@ def _check_chain_populated(docs: dict[str, Doc], report: Report) -> None:
         )
 
 
+def anchored_blocks(docs: dict[str, Doc]) -> dict[str, set[str]]:
+    """Per representation the blocks that some distillate core statement anchors."""
+    anchored: dict[str, set[str]] = {}
+    for doc in docs.values():
+        if doc.fm.get("type") != "distillate":
+            continue
+        for line, _ in _statement_lines(doc.body):
+            for target, block in _link_targets(line):
+                if block is not None:
+                    anchored.setdefault(target, set()).add(block)
+    return anchored
+
+
+def _check_coverage(docs: dict[str, Doc], report: Report, minimum: float) -> None:
+    """A source whose blocks mostly carry no distillate anchor is not exhausted.
+
+    The chain checks downwards, whether every statement has a passage, and
+    nothing in it asks whether the passages were used. Every block was stamped
+    as anchor-relevant at ingest, so each unanchored one is a candidate the
+    distillate left behind. Only a representation that has a distillate at all
+    is judged; before that, the inventory already says `ingested`.
+    """
+    if minimum <= 0:
+        return
+    anchored = anchored_blocks(docs)
+    for doc in docs.values():
+        if doc.fm.get("type") != "representation" or not doc.blocks:
+            continue
+        if doc.fm.get("source-type") != "document" or doc.rel not in anchored:
+            continue
+        total, used = len(set(doc.blocks)), len(anchored[doc.rel] & set(doc.blocks))
+        if used / total < minimum:
+            report.warn(
+                "W-COVERAGE",
+                doc.rel,
+                f"{total - used} of {total} blocks anchored by no distillate "
+                f"statement (coverage {used / total:.2f} below {minimum})",
+            )
+
+
 def _check_output_present(docs: dict[str, Doc], report: Report) -> None:
     """A validator must not report green on a contract that had no subject."""
     if not any(doc.fm.get("type") == "chapter" for doc in docs.values()):
@@ -872,15 +967,16 @@ def _chapter_scope(chapter: Doc, docs: dict[str, Doc]) -> dict[str, Doc]:
 
 
 def validate(
-    root: Path, run_computations: bool = True, chapter: str | None = None
+    root: Path,
+    run_computations: bool = True,
+    chapter: str | None = None,
+    min_coverage: float = DEFAULT_MIN_COVERAGE,
 ) -> Report:
-    global _RUN_COMPUTATIONS
-    _RUN_COMPUTATIONS = run_computations
     report = Report()
     docs: dict[str, Doc] = {}
     for folder in CONTENT_FOLDERS:
         for path in sorted((root / folder).rglob("*.md")):
-            if doc := _parse_doc(path, root, report):
+            if doc := parse_doc(path, root, report):
                 docs[doc.rel] = doc
     reference_ids = _load_reference_ids(root)
     topic_names = {
@@ -916,7 +1012,7 @@ def validate(
         if doctype in ("distillate", "assertion"):
             _check_topics(doc, topic_names, report)
         if doctype == "distillate":
-            _check_distillate(doc, docs, reference_ids, root, report)
+            _check_distillate(doc, reference_ids, root, report, run_computations)
         elif doctype == "assertion":
             _check_assertion(doc, docs, report)
         elif doctype == "chapter":
@@ -930,6 +1026,7 @@ def validate(
         _check_placeholders(root, report)
         _check_chain_populated(docs, report)
         _check_output_present(docs, report)
+        _check_coverage(docs, report, min_coverage)
     else:
         _check_placeholders(root, report, [doc.path for doc in scope.values()])
     return report
@@ -947,14 +1044,16 @@ def main() -> None:
         help="skip re-running data anchors",
     )
     parser.add_argument(
-        "--run-computations",
-        action="store_true",
-        help="no-op, kept for documented invocations; computations run by default",
-    )
-    parser.add_argument(
         "--chapter",
         metavar="40_output/<slug>",
         help="judge one chapter and the chain it hangs on, path or slug",
+    )
+    parser.add_argument(
+        "--min-coverage",
+        type=float,
+        default=DEFAULT_MIN_COVERAGE,
+        metavar="SHARE",
+        help="share of a document's blocks distillates must anchor; 0 disables",
     )
     args = parser.parse_args()
 
@@ -962,6 +1061,7 @@ def main() -> None:
         args.root.resolve(),
         run_computations=not args.no_computations,
         chapter=args.chapter,
+        min_coverage=args.min_coverage,
     )
     for code, rel, message in report.errors:
         print(f"ERROR {code} {rel}: {message}", file=sys.stderr)

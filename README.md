@@ -29,17 +29,17 @@ Which of the three source types a source belongs to follows from whether its con
 
 ## Repository layout
 
-The five numbered folders form the production chain, each one holding the layer that the folder name announces.
+The five numbered folders form the production chain, each one holding the layer that the folder name announces. What each layer and its parts are is defined once in `knowledge/index.md` § Terminology.
 
-- `00_sources/` holds the originals exactly as they arrived, kept untouched so that every later form of their content can be checked against them. By default the originals stay local and uncommitted, because third-party rights usually forbid redistribution, and an instance commits exactly those originals whose rights it holds.
-- `10_markdown/` holds the uniform Markdown form of each source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards, with the full texts in `documents/` and the datasets plus their schema description in `data/`.
-- `20_distillates/` holds one distillate per source, meaning the set of single statements extracted from that source, each anchored to the passage of the Markdown representation it was taken from and carrying its own statement ID.
-- `30_assertions/` holds the atomic cross-source statements, each synthesized from the distillates of a topic and grounded in at least one distillate statement, together with one topic map (`MOC-*.md`) per topic of the controlled topic set.
-- `40_output/` holds the final output of the vault, one or more documents such as a report, proposal, thesis or paper, kept as one file per chapter, in which every load-bearing sentence carries a footnote to an assertion and every own conclusion is marked as a posit.
+- `00_sources/` holds the sources, the originals as they arrived. By default the originals stay local and uncommitted, because third-party rights usually forbid redistribution, and an instance commits exactly those originals whose rights it holds.
+- `10_markdown/` holds the Markdown representations, the full texts in `documents/` and the datasets plus their schema description in `data/`.
+- `20_distillates/` holds the distillates, one per source, in one subfolder per source type.
+- `30_assertions/` holds the assertions, one file each, together with one topic map (`MOC-*.md`) per topic of the controlled topic set.
+- `40_output/` holds the output, one or more documents such as a report, proposal, thesis or paper, kept as one file per chapter.
 
 The remaining folders lie across the chain rather than inside it.
 
-- `knowledge/` is the governance layer, six Promptotyping documents holding terminology, parameters, schema, procedures, volatile state and the decision history.
+- `knowledge/` is the governance layer, six project knowledge documents in the Promptotyping sense, holding terminology, parameters, schema, procedures, volatile state and the decision history.
 - `references/` holds the bibliographic records of citable-only sources as CSL JSON, one array per file, and is needed only while the source type `publication` is active.
 - `glossary/` holds one file per central technical term of the content, serving as definition, wikilink hub and tag keyword, and is filled as the need arises.
 - `tools/` holds the validator `validate.py`, the source inventory generator `inventory.py`, the project page generator `build_docs.py`, and in `tools/analysis/` the deterministic scripts that data anchors re-run, one script per task.
@@ -48,17 +48,11 @@ The remaining folders lie across the chain rather than inside it.
 - `.github/` holds the CI workflow `checks.yml`, which runs the validator and the test suite on every push and pull request.
 - `.claude/` holds the harness-specific skills that the action layer `CLAUDE.md` routes into, exchangeable together with that file.
 
-`docs/index.html` is generated from `README.md`, `docs/concept.md` and the knowledge documents by `python tools/build_docs.py --date <date>` and is never edited by hand.
+`docs/index.html` is generated from `README.md`, `docs/concept.md` and the project knowledge documents by `python tools/build_docs.py --date <date>` and is never edited by hand.
 
 ## Checking
 
-Three instances check the vault, with strictly separated authority. **Validation** is deterministic conformance checking against the vault's own schema (`tools/validate.py`); every anchor resolves, every computation re-runs, every frontmatter conforms. **Machine review** is adversarial checking by a language model under anti-anchoring, judging with a fixed verdict vocabulary whether a source location actually supports the statement built on it. **Verification** is human expert review, alone authorized to establish evidence. The division of labour is that the validator judges resolvability and form, the machine review judges whether the location supports the statement, and human verification establishes evidence.
-
-Chapters are written and accepted one at a time, so the validator also judges one at a time. `--chapter 40_output/<slug>` restricts the run to that chapter and the chain it hangs on, meaning the assertions it footnotes, the distillates grounding them and the Markdown representations beneath, and it reports in a closing line which vault-wide checks that scope leaves out.
-
-Quotations from citable-only publications are checked character for character at intake time, while the full text is at hand, and the check is recorded with its date in `checked.quote` on the distillate. Later validation runs cannot repeat it, because the full text of such a source does not lie in the vault; they check that the record exists.
-
-The architecture fixes a check contract per instance; the mechanism that fulfils it is a project choice. Statuses progress `grounded` → `validated` → `verified` (plus `contested` where sources conflict), and a status is only ever set by a check that actually ran, with outcome and date recorded on the document (audit trail). A document never stands higher than the anchors it rests on, so one unreviewed anchor holds the whole chain above it at `grounded`.
+Three instances check the vault, with strictly separated authority. Validation (`tools/validate.py`) judges resolvability and form, machine review by a language model judges whether a source location supports the statement built on it, and human verification alone establishes evidence. A status is only ever set by a check that actually ran, and a document never stands higher than the anchors it rests on. The terms are defined in `knowledge/index.md` § Terminology; the contracts, the finding codes, the chapter scope and the status discipline are set out in `knowledge/operations.md` § Check.
 
 ## Dual readability
 
@@ -68,7 +62,7 @@ Humans read the vault in Obsidian, following wikilinks from an output footnote d
 
 1. Create a repository from this template.
 2. Follow `SETUP.md` to set the project parameters (purpose, controlled topic set, active source types, output genre, language, verification role, check mechanisms, harness rules), or hand its first-session prompt to an agent.
-3. Run `python tools/validate.py .` on every change, and `python -m pytest tests` when you touch the validator. A run without errors is not the whole criterion; every warning is a finding, whether it says that a check found no subject or names a defect the schema does not make an error. Over the whole vault warnings never fail the run, and in chapter mode a warning inside the scope does.
+3. Run `python tools/validate.py .` on every change, and `python -m pytest tests` when you touch the validator. A run without errors is not the whole criterion, because every warning is a finding; `knowledge/operations.md` § Check says why and when a warning fails the run.
 
 ## Licence
 

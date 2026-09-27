@@ -5,13 +5,15 @@ it a second record of what the vault holds and let it drift away from the files.
 The files are the record; this script reads them and writes the table.
 
 One row per source, in the shape `knowledge/state.md` declares:
-Source | Type | Channel | Markdown representation | Distillate | Status.
+Source | Type | Channel | Markdown representation | Distillate | Coverage | Status.
 The processing status follows from what is present: an original without a
 Markdown representation is `new`, a representation without a distillate is
 `ingested`, and a distillate makes the source `distilled`. Type and channel come
 from the frontmatter of the representation; a publication has no representation,
 so its row is built from the CSL record in `references/` and carries the import
-channel.
+channel. Coverage counts, for a document representation, the blocks some
+distillate statement anchors against the blocks the file carries, so that a
+source the distillates left mostly unread is visible in the register.
 
 `00_sources/` is gitignored and may be absent on a clone. It is read when it is
 there, so an original that has not been ingested yet shows up as a `new` row, and
@@ -36,6 +38,8 @@ from pathlib import Path
 
 import yaml
 
+from validate import Report, anchored_blocks, parse_doc, split_frontmatter
+
 STATE = "knowledge/state.md"
 BEGIN = "<!-- inventory:begin -->"
 END = "<!-- inventory:end -->"
@@ -51,6 +55,7 @@ COLUMNS = (
     "Channel",
     "Markdown representation",
     "Distillate",
+    "Coverage",
     "Status",
 )
 EMPTY = "—"
@@ -66,6 +71,7 @@ class Row:
     representation: str
     distillate: str
     status: str
+    coverage: str = EMPTY
 
     def cells(self) -> tuple[str, ...]:
         return (
@@ -74,20 +80,18 @@ class Row:
             self.channel,
             self.representation,
             self.distillate,
+            self.coverage,
             self.status,
         )
 
 
 def _frontmatter(path: Path) -> dict:
     """The YAML block of a Markdown file, empty when it carries none."""
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        return {}
-    end = text.find("\n---", 4)
-    if end < 0:
+    split = split_frontmatter(path.read_text(encoding="utf-8"))
+    if split is None:
         return {}
     try:
-        loaded = yaml.safe_load(text[4:end])
+        loaded = yaml.safe_load(split[0])
     except yaml.YAMLError:
         return {}
     return loaded if isinstance(loaded, dict) else {}
@@ -188,10 +192,28 @@ def _originals(root: Path, representations: dict[str, dict]) -> list[str]:
     return found
 
 
+def _coverage(root: Path) -> dict[str, str]:
+    """Per document representation the anchored blocks over all its blocks."""
+    docs = {}
+    for folder in ("10_markdown", DISTILLATE_FOLDER):
+        for path in _markdown_files(root, folder):
+            if doc := parse_doc(path, root, Report()):
+                docs[doc.rel] = doc
+    anchored = anchored_blocks(docs)
+    return {
+        rel: f"{len(anchored.get(rel, set()) & set(doc.blocks))}/{len(set(doc.blocks))}"
+        for rel, doc in docs.items()
+        if doc.fm.get("type") == "representation"
+        and doc.fm.get("source-type") == "document"
+        and doc.blocks
+    }
+
+
 def rows(root: Path) -> list[Row]:
     representations = _representations(root)
     distillates = _distillates(root)
     references = _references(root)
+    coverage = _coverage(root)
     collected: list[Row] = []
 
     for rel, fm in representations.items():
@@ -206,6 +228,7 @@ def rows(root: Path) -> list[Row]:
                     channel=channel,
                     representation=_link(rel),
                     distillate=_link(distillate) if distillate else EMPTY,
+                    coverage=coverage.get(rel, EMPTY) if distillate else EMPTY,
                     status="distilled" if distillate else "ingested",
                 )
             )

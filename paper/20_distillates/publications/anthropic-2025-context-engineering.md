@@ -8,6 +8,7 @@ checked:
   quote: 2026-08-10
   validation: 2026-08-10
   machine-review: 2026-08-10
+checked-against: "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents as accessed 2026-08-10"
 created: 2026-08-10
 updated: 2026-08-10
 ---
