@@ -1,6 +1,6 @@
 <!-- Translated from the German original; that version remains in the git history. -->
 
-# Field report: the KISUG writing wave as a stress test of the template
+# Field report on the KISUG writing wave as a stress test of the template
 
 As of 2026-08-09. Feedback from the instance `kisug-wissensbasis` (private repository) to the template, after the first complete round of query operation, review-wave bookkeeping and new chapter prose with blind double checking. Case-study details stay anonymizably brief here; the instance journals carry the genesis.
 
@@ -21,10 +21,20 @@ As of 2026-08-09. Feedback from the instance `kisug-wissensbasis` (private repos
 Every gap is a concrete incident of that day, not a hypothetical risk.
 
 1. **Duplicate detection is missing.** The supervising session created an assertion that already existed with an identical grounding set (four identical anchors); only the blind review found it, and deletion was done by hand. Proposal: a validator or lint check that reports assertion pairs with an identical or nearly identical grounding set as a warning (something like `W-DUPLICATE-GROUNDING`). That is cheap to check and would have caught the case mechanically.
+
+   Closed on 2026-08-10 in commit df488a0 by the validator warning `W-DUPLICATE-GROUNDING`.
 2. **Register drift is invisible.** The status column of the instance's inventory register diverged from the real frontmatter status of the distillates in 36 rows, a silent remainder of earlier bookkeeping waves. Proposal: a check that compares the status entries of the `state` tables against the frontmatter of the linked files (something like `W-REGISTER-DRIFT`).
+
+   Closed on 2026-08-10 in commit df488a0 by generating the source inventory from the file state with `tools/inventory.py`, which leaves no hand-kept status column that could drift.
 3. **Alias drift in footnotes.** Nine footnote aliases of the new chapter shortened the assertion titles, in part by exactly the restricting clause; the human-led review found it. Proposal: a lint comparison of the alias text of `Grounded in` footnotes against the H1 title of the target file (a warning on divergence).
+
+   Closed on 2026-08-10 in commit df488a0 by the validator warning `W-ALIAS`.
 4. **The open questions section of the distillates is an anchor shadow.** Findings standing there are not citable, yet they often carry exactly the restrictions an assertion needs; in the instance a statement had to be scaled back for that reason although the content stands in the distillate. Proposal for discussion: either a convention of lifting checkable findings into the core statements by an additive anchor, or a separate anchorable findings section.
+
+   Closed on 2026-08-10 in commit 1034996 by the first option. The Open questions section of a distillate holds questions and no findings, and a finding that could carry an assertion is lifted into the core statements with an anchor and an ID of its own.
 5. **Tool paths in instance control documents drift.** The instance CLAUDE.md named a validator path that exists only in the template; it was noticed only by a checking agent. The existing stale-path check of `migrate.py` could be extended to the command lines documented in CLAUDE.md.
+
+   Closed on 2026-08-10 in commit df488a0. `migrate.py` now reports every backtick-quoted command line in the instance CLAUDE.md whose path the instance does not have.
 
 ## Assessment
 

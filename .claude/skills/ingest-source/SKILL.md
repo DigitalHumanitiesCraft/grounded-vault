@@ -5,11 +5,11 @@ description: Bring a source from 00_sources into 10_markdown as a Markdown repre
 
 # Ingest a source
 
-Follow `knowledge/operations.md` § Acquire and § Ingest; that section is authoritative for converter choice, the two-step conversion and the per-source-type handling. The hard rules in `CLAUDE.md` apply unchanged, in particular that anchors are minted only at their own layer and that a Markdown representation is never edited after ingest.
+Follow `knowledge/operations.md` § Acquire and § Ingest, which are authoritative for the channels, converter choice, the two-step conversion and the per-source-type handling. The hard rules in `CLAUDE.md` apply unchanged, in particular that anchors are minted only at their own layer and that a Markdown representation is never edited after ingest.
 
 1. Record the channel and place the original in `00_sources/`, or export the record into `references/` where the source is citable only.
-2. Convert to structure-preserving Markdown with the converter the decision list names, and record it in `converter`.
-3. Mint a block ID on every anchor-relevant paragraph, set the H1 from the original, fill the metadata block per `knowledge/schema.md`.
+2. Convert to structure-preserving Markdown with the converter the list in § Ingest names, and record it in `converter`.
+3. Mint a block ID on every anchor-relevant paragraph, set the H1 from the original, and fill the metadata block per `knowledge/schema.md` § Source metadata.
 4. Regenerate the source inventory with `python tools/inventory.py . --write`.
 
-Run `python tools/validate.py .` before reporting the ingest as done, and treat every warning as a finding.
+Run `python tools/validate.py .` before reporting the ingest as done, and act on its findings as `knowledge/operations.md` § Check says.

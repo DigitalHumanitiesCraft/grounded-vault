@@ -1,4 +1,4 @@
-# Originals may be confidential; they never enter version control.
+# Originals stay local by default and are force-added only where the project holds their rights (knowledge/operations.md § Acquire).
 00_sources/*
 !00_sources/README.md
 
