@@ -15,7 +15,14 @@ from pathlib import Path
 
 import pytest
 
-from validate import VAULT_WIDE_CHECKS, Report, parse_doc, split_frontmatter, validate
+from validate import (
+    VAULT_WIDE_CHECKS,
+    Report,
+    load_references,
+    parse_doc,
+    split_frontmatter,
+    validate,
+)
 
 REPO = Path(__file__).parents[1]
 
@@ -306,7 +313,12 @@ def test_an_empty_grounding_list_is_an_error() -> None:
 
 def test_duplicate_block_and_statement_ids_are_caught() -> None:
     report = validate(BROKEN)
-    assert _rels(report.errors, "E-DUPLICATE") == {
+    assert {
+        rel
+        for code, rel, message in report.errors
+        if code == "E-DUPLICATE"
+        and ("duplicate block ID" in message or "duplicate statement ID" in message)
+    } == {
         "10_markdown/documents/duplicate-blocks",
         "20_distillates/documents/duplicate-statements",
     }
@@ -436,6 +448,30 @@ def test_a_document_without_any_check_date_is_not_stale() -> None:
     """Absent check dates are status grounded, which is a state and not a defect."""
     report = validate(MINIMAL)
     assert _rels(report.warnings, "W-STALE") == set()
+
+
+@pytest.mark.parametrize("old_check", ["machine-review", "verification"])
+def test_fresh_validation_does_not_hide_an_older_review(
+    tmp_path: Path, old_check: str
+) -> None:
+    """Each check covers its own content state, even after validation is rerun."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    rel = "30_assertions/metering-reduces-water-use"
+    path = root / f"{rel}.md"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace(
+        "checked: {}", f"checked:\n  validation: 2026-07-12\n  {old_check}: 2026-07-11"
+    )
+    text = text.replace("updated: 2026-07-11", "updated: 2026-07-12")
+    path.write_text(text, encoding="utf-8")
+    findings = [
+        (code, target, message)
+        for code, target, message in validate(root).warnings
+        if code == "W-STALE" and target == rel
+    ]
+    assert len(findings) == 1
+    assert old_check in findings[0][2]
 
 
 CHECKED = "checked:\n  validation: 2026-07-11\n  machine-review: 2026-07-11"
@@ -994,3 +1030,121 @@ def test_a_single_reference_object_resolves(tmp_path: Path) -> None:
     records = json.loads(path.read_text(encoding="utf-8"))
     path.write_text(json.dumps(records[0]), encoding="utf-8")
     assert validate(root, run_computations=False).errors == []
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [
+        "20_distillates/documents/report-garden-water-2026",
+        "20_distillates/data/water-readings-2025",
+        "20_distillates/publications/example-2024-metering",
+    ],
+)
+def test_a_source_cannot_have_duplicate_distillates(tmp_path: Path, rel: str) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    original = root / f"{rel}.md"
+    duplicate = root / f"{rel}-duplicate.md"
+    duplicate.write_bytes(original.read_bytes())
+    report = validate(root, run_computations=False)
+    assert _rels(report.errors, "E-DUPLICATE") == {rel, f"{rel}-duplicate"}
+
+
+def test_distillates_of_explicitly_different_publication_versions_are_distinct(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    original = root / "20_distillates/publications/example-2024-metering.md"
+    duplicate = original.with_stem("example-2024-metering-earlier-version")
+    duplicate.write_text(
+        original.read_text(encoding="utf-8").replace(
+            "publisher PDF as exported 2026-07-11", "preprint as exported 2026-07-10"
+        ),
+        encoding="utf-8",
+    )
+    assert validate(root, run_computations=False).errors == []
+
+
+@pytest.mark.parametrize("separate_file", [False, True])
+def test_duplicate_reference_ids_never_resolve_by_last_record_wins(
+    tmp_path: Path, separate_file: bool
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "references/example-corpus.csl.json"
+    record = json.loads(path.read_text(encoding="utf-8"))[0]
+    if separate_file:
+        target = path.with_name("duplicate-reference.json")
+        target.write_text(json.dumps(record), encoding="utf-8")
+    else:
+        path.write_text(json.dumps([record, record, record]), encoding="utf-8")
+    report = validate(root, run_computations=False)
+    assert _rels(report.errors, "E-DUPLICATE")
+    assert "20_distillates/publications/example-2024-metering" in _rels(
+        report.errors, "E-ANCHOR"
+    )
+    problems = []
+    assert record["id"] not in load_references(root, problems)
+    assert all("duplicate CSL id" in problem for problem in problems)
+
+
+@pytest.mark.parametrize(
+    "contents",
+    [
+        "[{",
+        "null",
+        '"not a record"',
+        "[null]",
+        "[42]",
+        '[{"title": "Record without identity"}]',
+        '[{"id": ""}]',
+        '[{"id": "   "}]',
+        '[{"id": []}]',
+        '[{"id": true}]',
+        '[{"id": {"value": "invalid"}}]',
+    ],
+)
+def test_unused_malformed_reference_files_are_errors(
+    tmp_path: Path, contents: str
+) -> None:
+    """Boundary variants exercise invalid imports beside the real positive corpus."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "references/unused-malformed.json").write_text(contents, encoding="utf-8")
+    report = validate(root, run_computations=False)
+    assert "references/unused-malformed.json" in _rels(report.errors, "E-FRONTMATTER")
+    assert _rels(report.errors, "E-ANCHOR") == set()
+
+
+def test_non_utf8_reference_file_is_a_finding(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "references/unused-malformed.json").write_bytes(b"\xff")
+    assert "references/unused-malformed.json" in _rels(
+        validate(root, run_computations=False).errors, "E-FRONTMATTER"
+    )
+
+
+def test_reference_loader_keeps_compatible_inventory_problem_sink(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "references/unused-malformed.json").write_text("[null]", encoding="utf-8")
+    problems = []
+    records = load_references(root, problems)
+    assert "example2024metering" in records
+    assert len(problems) == 1
+    assert problems[0].startswith("references/unused-malformed.json:")
+
+
+def test_unrelated_reference_import_errors_stay_out_of_chapter_scope(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "references/unused-malformed.json").write_text("[null]", encoding="utf-8")
+    report = validate(root, run_computations=False, chapter=CHAPTER)
+    assert report.errors == []
+    assert report.warnings == []

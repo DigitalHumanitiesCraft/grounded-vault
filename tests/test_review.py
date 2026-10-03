@@ -6,8 +6,10 @@ mechanism itself is not exercised here: no test calls a model, and the batch
 path is driven with hand-written verdict records.
 """
 
+import json
 import re
 import shutil
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -16,9 +18,11 @@ from review import (
     ASSERTION_PROMPT,
     SOURCE_PROMPT,
     VERDICTS,
+    Judgement,
     book_results,
     cut_pairs,
     parse_verdict,
+    read_verdicts,
     run_claude,
     set_checked_date,
 )
@@ -91,9 +95,8 @@ def test_data_pair_is_the_computation_and_its_result(pairs) -> None:
 def test_assertion_pair_holds_statement_and_assertion_sentence(pairs) -> None:
     pair = _by_id(pairs, f"{ASSERTION}<-{DATA_DISTILLATE}#^s1")
     assert pair.location == "Water use in 2025 was 31.4 percent below 2024."
-    assert pair.statement == (
-        "Plot metering coincided with a water use reduction of roughly a third"
-    )
+    assert pair.statement.startswith("After meters were installed on all plots,")
+    assert "wet summer as a co-factor" in pair.statement
     assert pair.document == ASSERTION
 
 
@@ -155,7 +158,7 @@ def test_prompt_text_is_word_for_word_the_skeleton(template: str, marker: str) -
     ("response", "expected"),
     [
         ("fully supports", "fully supports"),
-        ("Fully supports. The passage states exactly this.", "fully supports"),
+        ("Fully supports.\nThe passage states exactly this.", "fully supports"),
         ("**overreaches**\nThe statement widens the finding.", "overreaches"),
         (
             "Verdict: not in the text\nNothing in the passage says so.",
@@ -163,7 +166,7 @@ def test_prompt_text_is_word_for_word_the_skeleton(template: str, marker: str) -
         ),
         ("  partially supports  ", "partially supports"),
         (
-            "The passage names a different year, so the verdict is contradicts.",
+            "Contradicts.\nThe passage names a different year.",
             "contradicts",
         ),
     ],
@@ -180,6 +183,11 @@ def test_parse_verdict_accepts_the_vocabulary(response: str, expected: str) -> N
         "yes",
         "mostly supports",
         "It fully supports the first half but overreaches on the second.",
+        "not fully supports",
+        "fully supports? No, the statement is wrong.",
+        "The passage does not fully supports the assertion.",
+        "fully supports but overreaches on the second claim",
+        "fully supports nothing",
     ],
 )
 def test_parse_verdict_rejects_everything_else(response: str) -> None:
@@ -210,8 +218,8 @@ def test_set_checked_date_refuses_a_document_without_the_field() -> None:
         set_checked_date("---\ntype: moc\n---\n\n# X\n", "machine-review", "2026-08-09")
 
 
-def _all_fully_supports(pairs) -> dict[str, str]:
-    return {p.id: "fully supports" for p in pairs}
+def _all_fully_supports(pairs) -> dict[str, Judgement]:
+    return {p.id: Judgement("fully supports", p.prompt_hash) for p in pairs}
 
 
 def test_booking_sets_the_date_only_on_a_clean_document(tmp_path) -> None:
@@ -219,7 +227,8 @@ def test_booking_sets_the_date_only_on_a_clean_document(tmp_path) -> None:
     shutil.copytree(MINIMAL, vault)
     pairs = cut_pairs(vault)
     verdicts = _all_fully_supports(pairs)
-    verdicts[f"{DOC_DISTILLATE}#^s3"] = "overreaches"
+    pair = _by_id(pairs, f"{DOC_DISTILLATE}#^s3")
+    verdicts[pair.id] = Judgement("overreaches", pair.prompt_hash)
 
     outcome = book_results(vault, pairs, verdicts, "2026-08-09", apply=True)
 
@@ -358,3 +367,211 @@ def test_a_document_that_does_not_parse_is_reported(tmp_path) -> None:
     assert problems == [
         "20_distillates/documents/broken: E-FRONTMATTER frontmatter is not a mapping"
     ]
+
+
+@pytest.mark.parametrize("field", ["statement", "location"])
+def test_changed_pair_cannot_reuse_an_old_verdict(tmp_path, field: str) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    pairs = cut_pairs(vault)
+    old_verdicts = _all_fully_supports(pairs)
+    pair = pairs[0]
+    changed = replace(pair, **{field: getattr(pair, field) + " Changed after review."})
+    path = vault / f"{pair.document}.md"
+    before = path.read_bytes()
+
+    outcome = book_results(
+        vault, [changed, *pairs[1:]], old_verdicts, "2026-10-03", apply=True
+    )
+
+    assert pair.document not in {r.document for r in outcome.documents if r.booked}
+    assert any("stale verdict" in problem for problem in outcome.problems)
+    assert path.read_bytes() == before
+
+
+def test_prompt_hash_binds_the_review_instructions(monkeypatch, pairs) -> None:
+    pair = pairs[0]
+    emitted = pair.to_dict()
+    assert re.fullmatch(r"[0-9a-f]{64}", emitted["prompt_hash"])
+    monkeypatch.setattr("review.SOURCE_PROMPT", SOURCE_PROMPT + "\nNew instruction.")
+    assert pair.prompt_hash != emitted["prompt_hash"]
+
+
+def test_file_changed_after_pair_cutting_is_not_booked(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    pairs = cut_pairs(vault)
+    verdicts = _all_fully_supports(pairs)
+    path = vault / f"{ASSERTION}.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "the garden's water use fell by 31.4 percent",
+            "the garden's water use doubled",
+        ),
+        encoding="utf-8",
+    )
+    before = path.read_bytes()
+    outcome = book_results(vault, pairs, verdicts, "2026-10-03", apply=True)
+    assert ASSERTION not in {r.document for r in outcome.documents if r.booked}
+    assert path.read_bytes() == before
+    assert any("stale verdict" in problem for problem in outcome.problems)
+
+
+def test_new_statement_after_pair_cutting_requires_another_review(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    pairs = cut_pairs(vault)
+    verdicts = _all_fully_supports(pairs)
+    path = vault / f"{DOC_DISTILLATE}.md"
+    text = path.read_text(encoding="utf-8")
+    statement = next(line for line in text.splitlines() if line.endswith("^s1"))
+    path.write_text(
+        text.replace("## Terms", statement.replace("^s1", "^s4") + "\n\n## Terms"),
+        encoding="utf-8",
+    )
+    before = path.read_bytes()
+    outcome = book_results(vault, pairs, verdicts, "2026-10-03", apply=True)
+    assert DOC_DISTILLATE not in {r.document for r in outcome.documents if r.booked}
+    assert path.read_bytes() == before
+    assert any("pair set changed" in problem for problem in outcome.problems)
+
+
+def test_legacy_unbound_verdict_does_not_pass(pairs) -> None:
+    outcome = book_results(
+        MINIMAL, pairs, {p.id: "fully supports" for p in pairs}, "2026-10-03"
+    )
+    assert not any(r.booked for r in outcome.documents)
+    assert outcome.problems
+
+
+def test_empty_review_cannot_report_success(capsys) -> None:
+    from review import _report
+
+    outcome = book_results(MINIMAL, [], {}, "2026-10-03")
+    assert _report(outcome, []) == 1
+    assert "no machine review took place" in capsys.readouterr().err
+
+
+def test_invalid_review_date_cannot_be_booked(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    pairs = cut_pairs(vault)
+    path = vault / f"{ASSERTION}.md"
+    before = path.read_bytes()
+    outcome = book_results(
+        vault, pairs, _all_fully_supports(pairs), "not-a-date", apply=True
+    )
+    assert outcome.problems == ["review date must use strict ISO YYYY-MM-DD format"]
+    assert path.read_bytes() == before
+
+
+def test_empty_emit_fails_before_writing_an_empty_batch(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    from review import main
+
+    output = tmp_path / "prompts.jsonl"
+    monkeypatch.setattr(
+        "sys.argv", ["review.py", "emit", str(tmp_path), "--out", str(output)]
+    )
+    assert main() == 1
+    assert not output.exists()
+    assert "no reviewable pairs" in capsys.readouterr().err
+
+
+def test_unknown_verdict_id_is_rejected(pairs) -> None:
+    verdicts = _all_fully_supports(pairs)
+    verdicts["old-removed-pair"] = next(iter(verdicts.values()))
+    outcome = book_results(MINIMAL, pairs, verdicts, "2026-10-03")
+    assert not outcome.documents
+    assert outcome.problems == ["unknown verdict id: old-removed-pair"]
+
+
+def test_read_verdicts_requires_the_emitted_hash(tmp_path, pairs) -> None:
+    pair = pairs[0]
+    path = tmp_path / "verdicts.jsonl"
+    path.write_text(
+        json.dumps({"id": pair.id, "verdict": "fully supports"}) + "\n",
+        encoding="utf-8",
+    )
+    problems = []
+    assert read_verdicts(path, problems) == {}
+    assert "prompt_hash" in problems[0]
+
+
+@pytest.mark.parametrize("verdict", ["fully supports", "overreaches"])
+def test_duplicate_verdict_records_never_keep_a_pass(tmp_path, pairs, verdict) -> None:
+    pair = pairs[0]
+    records = [
+        {"id": pair.id, "prompt_hash": pair.prompt_hash, "verdict": value}
+        for value in ("fully supports", verdict, "fully supports")
+    ]
+    path = tmp_path / "verdicts.jsonl"
+    path.write_text(
+        "\n".join(json.dumps(record) for record in records), encoding="utf-8"
+    )
+    problems = []
+    assert read_verdicts(path, problems) == {}
+    assert all("duplicate verdict id" in problem for problem in problems)
+
+
+def test_verdict_and_raw_response_must_agree(tmp_path, pairs) -> None:
+    pair = pairs[0]
+    record = {
+        "id": pair.id,
+        "prompt_hash": pair.prompt_hash,
+        "verdict": "fully supports",
+        "response": "overreaches\nThe claim exceeds the passage.",
+    }
+    path = tmp_path / "verdicts.jsonl"
+    path.write_text(json.dumps(record), encoding="utf-8")
+    problems = []
+    assert read_verdicts(path, problems) == {}
+    assert "conflict" in problems[0]
+
+
+def test_valid_verdict_round_trip_preserves_prompt_binding(tmp_path, pairs) -> None:
+    records = [
+        {"id": p.id, "prompt_hash": p.prompt_hash, "verdict": "fully supports"}
+        for p in pairs
+    ]
+    path = tmp_path / "verdicts.jsonl"
+    path.write_text(
+        "\n".join(json.dumps(record) for record in records), encoding="utf-8"
+    )
+    problems = []
+    verdicts = read_verdicts(path, problems)
+    assert problems == []
+    assert verdicts == _all_fully_supports(pairs)
+    outcome = book_results(MINIMAL, pairs, verdicts, "2026-10-03")
+    assert all(r.booked for r in outcome.documents)
+
+
+def test_assertion_statement_cannot_hide_behind_a_supported_heading(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    path = vault / f"{ASSERTION}.md"
+    text = path.read_text(encoding="utf-8")
+    start = text.index("## Statement\n") + len("## Statement\n")
+    end = text.index("## Support\n", start)
+    statement = "The findings establish an unrelated causal claim."
+    path.write_text(text[:start] + f"\n{statement}\n\n" + text[end:], encoding="utf-8")
+    pairs = [p for p in cut_pairs(vault) if p.document == ASSERTION]
+    assert pairs
+    assert all(p.statement == statement for p in pairs)
+
+
+def test_empty_statement_section_is_reported_instead_of_reviewing_the_title(
+    tmp_path,
+) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    path = vault / f"{ASSERTION}.md"
+    text = path.read_text(encoding="utf-8")
+    start = text.index("## Statement\n") + len("## Statement\n")
+    end = text.index("## Support\n", start)
+    path.write_text(text[:start] + "\n" + text[end:], encoding="utf-8")
+    problems = []
+    pairs = cut_pairs(vault, problems)
+    assert not any(p.document == ASSERTION for p in pairs)
+    assert f"{ASSERTION}: no assertion statement, skipped" in problems

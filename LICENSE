@@ -1,8 +1,10 @@
 Grounded Vault
 Copyright (c) 2026 Christopher Pollin, Digital Humanities Craft OG
 
-This work, comprising documentation, templates, and code, is licensed under the
+Authored documentation and teaching templates are licensed under the
 Creative Commons Attribution 4.0 International License (CC BY 4.0).
+Code in tools/, paper/tools/, tests/, and executable examples is licensed under MIT in
+LICENSE-MIT. Third-party source material retains its original terms.
 Human-readable summary at https://creativecommons.org/licenses/by/4.0/
 The full legal code follows.
 

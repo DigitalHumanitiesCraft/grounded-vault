@@ -1,0 +1,3 @@
+examples/prov-entity/** text eol=lf
+examples/prov-entity/00_sources/prov-entity.txt -text
+docs/index.html text eol=lf

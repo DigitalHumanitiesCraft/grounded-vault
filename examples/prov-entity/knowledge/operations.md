@@ -1,15 +1,15 @@
 ---
 title: Operations
 project:
-  name: "{{PROJECT_NAME}}"
-  repository: "{{REPOSITORY}}"
+  name: "PROV-DM entity worked example"
+  repository: "https://github.com/DigitalHumanitiesCraft/grounded-vault/tree/main/examples/prov-entity"
 method:
   name: Promptotyping
   url: https://dhcraft.org/Promptotyping/
 status: draft
 language: en
-created: "{{DATE}}"
-updated: "{{DATE}}"
+created: "2026-10-03"
+updated: "2026-10-03"
 related: [schema, state, journal]
 ---
 

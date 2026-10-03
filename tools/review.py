@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import json
 import re
 import shutil
@@ -98,7 +99,10 @@ add one line naming the displacement.
 STATEMENT: {statement}
 ASSERTION: {assertion}"""
 
-VERDICT_PREFIX = re.compile(r"^[^a-z]*(?:verdict\s*[:\-]\s*)?")
+VERDICT_LINE = re.compile(
+    r"^(?:verdict\s*:\s*)?(fully supports|partially supports|overreaches|contradicts|not in the text)[.!]?$",
+    re.IGNORECASE,
+)
 CHECKED_EMPTY = re.compile(r"^checked:[ \t]*\{\s*\}[ \t]*$", re.MULTILINE)
 CHECKED_BLOCK = re.compile(r"^checked:[ \t]*$", re.MULTILINE)
 
@@ -124,6 +128,10 @@ class Pair:
     def prompt(self) -> str:
         return build_prompt(self)
 
+    @property
+    def prompt_hash(self) -> str:
+        return hashlib.sha256(self.prompt.encode("utf-8")).hexdigest()
+
     def to_dict(self) -> dict[str, str]:
         return {
             "id": self.id,
@@ -133,7 +141,14 @@ class Pair:
             "location": self.location,
             "statement": self.statement,
             "prompt": self.prompt,
+            "prompt_hash": self.prompt_hash,
         }
+
+
+@dataclass(frozen=True)
+class Judgement:
+    verdict: str
+    prompt_hash: str
 
 
 @dataclass(frozen=True)
@@ -172,15 +187,12 @@ def build_prompt(pair: Pair) -> str:
 
 def parse_verdict(response: str) -> str:
     """The verdict vocabulary is closed; anything outside it is a parse error."""
-    head = " ".join(response.lower().splitlines()[:1]).strip()
-    head = VERDICT_PREFIX.sub("", " ".join(head.split()))
-    for verdict in VERDICTS:
-        if head.startswith(verdict):
-            return verdict
-    whole = " ".join(response.lower().split())
-    found = [v for v in VERDICTS if v in whole]
-    if len(found) == 1:
-        return found[0]
+    head = " ".join(response.strip().splitlines()[:1]).strip()
+    head = " ".join(head.split())
+    # Markdown emphasis may wrap the label or verdict, but does not change it.
+    head = head.replace("**", "").replace("__", "").strip("*`_")
+    if match := VERDICT_LINE.fullmatch(head):
+        return match.group(1).lower()
     raise ValueError(f"no single verdict in response: {response.strip()[:80]!r}")
 
 
@@ -281,8 +293,13 @@ def _assertion_pairs(
 ) -> list[Pair]:
     title = H1.search(doc.body)
     sentence = title.group(1).strip() if title else ""
+    section = re.search(
+        r"^## Statement\s*\n(.*?)(?=^## |\Z)", doc.body, re.MULTILINE | re.DOTALL
+    )
+    if section:
+        sentence = section.group(1).strip()
     if not sentence:
-        problems.append(f"{doc.rel}: no assertion sentence (H1), skipped")
+        problems.append(f"{doc.rel}: no assertion statement, skipped")
         return []
     pairs: list[Pair] = []
     for target, block in field_links(doc.fm, "grounding"):
@@ -357,7 +374,7 @@ def set_checked_date(text: str, check: str, date: str) -> str:
 def book_results(
     root: Path,
     pairs: list[Pair],
-    verdicts: dict[str, str],
+    verdicts: dict[str, Judgement],
     date: str,
     apply: bool = False,
 ) -> Outcome:
@@ -367,27 +384,73 @@ def book_results(
     check; a document with a validation error is reported and left unbooked.
     """
     outcome = Outcome()
+    try:
+        if datetime.date.fromisoformat(date).isoformat() != date:
+            raise ValueError
+    except (TypeError, ValueError):
+        outcome.problems.append("review date must use strict ISO YYYY-MM-DD format")
+        return outcome
     by_document: dict[str, list[Pair]] = {}
     for pair in pairs:
         by_document.setdefault(pair.document, []).append(pair)
+    if not pairs:
+        outcome.problems.append("no reviewable pairs; no machine review took place")
+        return outcome
+    unknown = set(verdicts) - {pair.id for pair in pairs}
+    if unknown:
+        outcome.problems += [
+            f"unknown verdict id: {pair_id}" for pair_id in sorted(unknown)
+        ]
+        return outcome
     invalid = {rel for _, rel, _ in validate(root).errors} if apply else set()
+    # A caller may hold pairs emitted before another process changed the files.
+    current_pairs = cut_pairs(root) if apply else []
+    current_hashes = {p.id: p.prompt_hash for p in current_pairs}
 
     for document, group in by_document.items():
+        incomplete = apply and {p.id for p in group} != {
+            p.id for p in current_pairs if p.document == document
+        }
+        if incomplete:
+            outcome.problems.append(
+                f"{document}: pair set changed; emit and review every current pair"
+            )
         missing = [p.id for p in group if p.id not in verdicts]
         outcome.unjudged += missing
-        deviating = [
-            Deviation(p.id, document, verdicts[p.id])
+        mismatched = [
+            p.id
             for p in group
-            if p.id in verdicts and verdicts[p.id] != PASSING_VERDICT
+            if p.id in verdicts
+            and (
+                not isinstance(verdicts[p.id], Judgement)
+                or verdicts[p.id].prompt_hash != p.prompt_hash
+                or verdicts[p.id].verdict not in VERDICTS
+                or (apply and current_hashes.get(p.id) != p.prompt_hash)
+            )
+        ]
+        outcome.problems += [
+            f"{pair_id}: unbound or stale verdict; emit and review the current pair"
+            for pair_id in mismatched
+        ]
+        deviating = [
+            Deviation(p.id, document, verdicts[p.id].verdict)
+            for p in group
+            if p.id in verdicts
+            and p.id not in mismatched
+            and verdicts[p.id].verdict != PASSING_VERDICT
         ]
         outcome.deviations += deviating
-        if missing:
+        if incomplete:
+            reason = "pair set changed after review"
+        elif missing:
             reason = f"{len(missing)} pair(s) unjudged"
+        elif mismatched:
+            reason = f"{len(mismatched)} unbound or stale verdict(s)"
         elif deviating:
             reason = f"{len(deviating)} verdict(s) below {PASSING_VERDICT}"
         else:
             reason = "all pairs fully supports"
-        booked = not missing and not deviating
+        booked = not incomplete and not missing and not mismatched and not deviating
         if booked and document in invalid:
             booked, reason = False, "validation errors, run tools/validate.py"
             outcome.problems.append(f"{document}: not booked: {reason}")
@@ -406,19 +469,44 @@ def book_results(
     return outcome
 
 
-def read_verdicts(path: Path, problems: list[str]) -> dict[str, str]:
-    """Read a JSONL of judgements; a record carries `verdict` or a raw `response`."""
-    verdicts: dict[str, str] = {}
+def read_verdicts(path: Path, problems: list[str]) -> dict[str, Judgement]:
+    """Read judgements bound to the exact emitted prompt by `prompt_hash`."""
+    verdicts: dict[str, Judgement] = {}
+    seen: set[str] = set()
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
         try:
             record = json.loads(line)
+            if not isinstance(record, dict):
+                raise ValueError("verdict record must be a JSON object")
             pair_id = record["id"]
-            verdicts[pair_id] = parse_verdict(
-                record.get("verdict") or record["response"]
-            )
-        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            if not isinstance(pair_id, str) or not pair_id:
+                raise ValueError("verdict id must be a nonempty string")
+            if pair_id in seen:
+                verdicts.pop(pair_id, None)
+                raise ValueError(f"duplicate verdict id: {pair_id}")
+            seen.add(pair_id)
+            prompt_hash = record["prompt_hash"]
+            if not isinstance(prompt_hash, str) or not re.fullmatch(
+                r"[0-9a-f]{64}", prompt_hash
+            ):
+                raise ValueError("prompt_hash must be the emitted SHA-256 digest")
+            verdict = parse_verdict(record.get("verdict") or record["response"])
+            if (
+                record.get("verdict")
+                and record.get("response")
+                and parse_verdict(record["response"]) != verdict
+            ):
+                raise ValueError("verdict and response conflict")
+            verdicts[pair_id] = Judgement(verdict, prompt_hash)
+        except (
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+            ValueError,
+            AttributeError,
+        ) as exc:
             problems.append(f"{path}:{number}: {exc}")
     return verdicts
 
@@ -456,7 +544,11 @@ def run_claude(
         if result.returncode != 0:
             problems.append(f"{pair.id}: claude failed: {result.stderr.strip()[:120]}")
             continue
-        record = {"id": pair.id, "response": result.stdout.strip()}
+        record = {
+            "id": pair.id,
+            "prompt_hash": pair.prompt_hash,
+            "response": result.stdout.strip(),
+        }
         if model:
             record["model"] = model
         try:
@@ -541,7 +633,10 @@ def main() -> int:
         help="read verdicts back and book the result",
     )
     judge.add_argument(
-        "--verdicts", type=Path, required=True, help="JSONL of judgements"
+        "--verdicts",
+        type=Path,
+        required=True,
+        help="JSONL of judgements with id, prompt_hash and verdict or response",
     )
     run = sub.add_parser(
         "run",
@@ -556,6 +651,17 @@ def main() -> int:
     problems: list[str] = []
     pairs = _select(cut_pairs(root, problems), args.scope, args.path)
 
+    if args.command != "stats" and not pairs:
+        return _report(
+            Outcome(
+                problems=[
+                    *problems,
+                    "no reviewable pairs; no machine review took place",
+                ]
+            ),
+            pairs,
+        )
+
     if args.command == "stats":
         kinds = {
             kind: sum(p.kind == kind for p in pairs) for kind in ("source", "assertion")
@@ -566,6 +672,8 @@ def main() -> int:
         _write_jsonl(args.out, [p.to_dict() for p in pairs])
     elif args.command == "judge":
         verdicts = read_verdicts(args.verdicts, problems)
+        if problems:
+            return _report(Outcome(problems=problems), pairs)
         outcome = book_results(root, pairs, verdicts, args.date, apply=args.apply)
         outcome.problems = problems + outcome.problems
         return _report(outcome, pairs)
@@ -573,7 +681,13 @@ def main() -> int:
         records = run_claude(pairs, args.model, problems)
         if args.out:
             _write_jsonl(args.out, records)
-        verdicts = {r["id"]: r["verdict"] for r in records if "verdict" in r}
+        verdicts = {
+            r["id"]: Judgement(r["verdict"], r["prompt_hash"])
+            for r in records
+            if "verdict" in r
+        }
+        if problems:
+            return _report(Outcome(problems=problems), pairs)
         outcome = book_results(root, pairs, verdicts, args.date, apply=args.apply)
         outcome.problems = problems + outcome.problems
         return _report(outcome, pairs)

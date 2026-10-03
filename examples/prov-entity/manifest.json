@@ -1,0 +1,19 @@
+{
+  "source_url": "https://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-entity",
+  "source_status": "W3C Recommendation",
+  "source_date": "2013-04-30",
+  "source_scope": "Selected entity-definition excerpt only",
+  "source_license": "https://www.w3.org/copyright/document-license-2023/",
+  "source_copyright": "Copyright © 2011-2013 W3C® (MIT, ERCIM, Keio, Beihang), All Rights Reserved.",
+  "authored_license": "CC-BY-4.0",
+  "files": [
+    {
+      "path": "00_sources/prov-entity.txt",
+      "sha256": "318fb654d43a11c77c98be191276343d27da087072eec5778a239c7c42a92b95"
+    },
+    {
+      "path": "10_markdown/documents/prov-entity.md",
+      "sha256": "f5f15e24c089bb54d1a1f9853e3aa85dec063f3e7b3f68017fa94477fada2bfb"
+    }
+  ]
+}

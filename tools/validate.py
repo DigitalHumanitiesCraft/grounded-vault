@@ -303,26 +303,67 @@ def load_docs(root: Path, folders: Iterable[str]) -> tuple[dict[str, Doc], Repor
     return docs, report
 
 
-def load_references(root: Path, problems: list[str] | None = None) -> dict[str, dict]:
+def load_references(
+    root: Path, problems: list[str] | None = None, report: Report | None = None
+) -> dict[str, dict]:
     """CSL records by id, over every JSON file in references/.
 
     The schema declares an array per file. A single record object is accepted
     as well, because a reference manager exporting one record may write it so.
-    A file that is not valid JSON is named in `problems` when the caller passes
-    a list; the validator does not, since every reference id it would have held
-    then fails to resolve as E-ANCHOR.
+    Malformed records and duplicate identities are reported even if no distillate
+    uses them. An ambiguous id resolves to no record, so no caller silently takes
+    the last record encountered. The optional text sink keeps inventory callers
+    compatible, while validation receives typed findings through `report`.
     """
     records: dict[str, dict] = {}
+    seen: dict[str, str] = {}
+
+    def finding(code: str, rel: str, message: str) -> None:
+        if problems is not None:
+            problems.append(f"{rel}: {message}")
+        if report is not None:
+            report.error(code, rel, message)
+
     for path in sorted((root / REFERENCES_FOLDER).glob("*.json")):
+        rel = path.relative_to(root).as_posix()
         try:
             loaded = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
-            if problems is not None:
-                problems.append(f"{path.relative_to(root).as_posix()}: {exc}")
+        except (json.JSONDecodeError, UnicodeError, OSError) as exc:
+            finding("E-FRONTMATTER", rel, f"cannot read CSL JSON: {exc}")
             continue
-        for record in loaded if isinstance(loaded, list) else [loaded]:
-            if isinstance(record, dict) and record.get("id"):
-                records[str(record["id"])] = record
+        if not isinstance(loaded, (list, dict)):
+            finding("E-FRONTMATTER", rel, "CSL JSON must be an array or record object")
+            continue
+        for index, record in enumerate(
+            loaded if isinstance(loaded, list) else [loaded], 1
+        ):
+            location = f"{rel} record {index}"
+            if not isinstance(record, dict):
+                finding("E-FRONTMATTER", rel, f"record {index} is not a CSL object")
+                continue
+            identifier = record.get("id")
+            if (
+                not isinstance(identifier, (str, int))
+                or isinstance(identifier, bool)
+                or not str(identifier).strip()
+            ):
+                finding(
+                    "E-FRONTMATTER",
+                    rel,
+                    f"record {index} needs a nonempty string or integer id",
+                )
+                continue
+            key = str(identifier)
+            if key in seen:
+                records.pop(key, None)
+                finding(
+                    "E-DUPLICATE",
+                    rel,
+                    f"duplicate CSL id {key!r}, first in {seen[key]}",
+                )
+                continue
+            seen[key] = location
+            records[key] = record
     return records
 
 
@@ -483,17 +524,17 @@ def _check_staleness(doc: Doc, report: Report) -> None:
     checked = doc.fm.get("checked")
     if not isinstance(checked, dict):
         return
-    dates = [d for value in checked.values() if (d := _iso_date(value))]
     updated = _iso_date(doc.fm.get("updated"))
-    if not dates or updated is None:
+    if updated is None:
         return
-    latest = max(dates)
-    if updated > latest:
-        report.warn(
-            "W-STALE",
-            doc.rel,
-            f"updated {updated.isoformat()} is newer than the latest check {latest.isoformat()}",
-        )
+    for check, value in checked.items():
+        check_date = _iso_date(value)
+        if check_date is not None and updated > check_date:
+            report.warn(
+                "W-STALE",
+                doc.rel,
+                f"updated {updated.isoformat()} is newer than {check} check {check_date.isoformat()}",
+            )
 
 
 def _check_ladder(doc: Doc, docs: dict[str, Doc], report: Report) -> None:
@@ -1036,6 +1077,41 @@ def _check_duplicate_grounding(docs: dict[str, Doc], report: Report) -> None:
             report.warn("W-DUPLICATE-GROUNDING", narrow, f"{relation} {wide}")
 
 
+def _check_duplicate_sources(docs: dict[str, Doc], report: Report) -> None:
+    """One distillate per representation or explicitly named publication version."""
+    groups: dict[tuple[str, ...], list[str]] = {}
+    for rel, doc in sorted(docs.items()):
+        if doc.fm.get("type") != "distillate":
+            continue
+        if doc.fm.get("source-type") == "publication":
+            reference = doc.fm.get("reference")
+            if not reference:
+                continue  # E-FRONTMATTER reports the missing identity.
+            key = (
+                "publication",
+                str(reference),
+                str(doc.fm.get("checked-against") or ""),
+            )
+        elif doc.fm.get("source-type") in ("document", "data"):
+            representations = field_links(doc.fm, "representation")
+            if not representations:
+                continue
+            key = ("representation", representations[0][0])
+        else:
+            continue  # E-FRONTMATTER reports an unknown source type.
+        groups.setdefault(key, []).append(rel)
+    for identity, group in groups.items():
+        if len(group) < 2:
+            continue
+        for rel in group:
+            others = ", ".join(other for other in group if other != rel)
+            report.error(
+                "E-DUPLICATE",
+                rel,
+                f"source identity {identity[1:]!r} already has another distillate: {others}",
+            )
+
+
 def _check_chapter_aliases(
     doc: Doc, defs: dict[str, str], docs: dict[str, Doc], report: Report
 ) -> None:
@@ -1188,7 +1264,7 @@ def validate(
     # compare resolved paths against it.
     root = Path(root).resolve()
     docs, report = load_docs(root, CONTENT_FOLDERS)
-    reference_ids = set(load_references(root))
+    reference_ids = set(load_references(root, report=report))
     topic_names = {
         str(d.fm.get("topic")) for d in docs.values() if d.fm.get("type") == "moc"
     }
@@ -1231,6 +1307,7 @@ def validate(
             if block is not None or target.startswith(CONTENT_FOLDERS):
                 _resolve_anchor(target, block, docs, root, doc, report)
     _check_moc_reachability(docs, report, scope)
+    _check_duplicate_sources(scope, report)
     _check_duplicate_grounding(scope, report)
     if chapter is None:
         _check_placeholders(root, report)

@@ -43,6 +43,10 @@ Purpose, parameters and settled decisions are what this vault instance decided. 
 
 {{STYLE_SHEET}}
 
+## Template licensing
+
+The maintained template follows the author's standing publication instruction. Code in `tools/`, `tests/` and executable example files is provided under the MIT license in `LICENSE-MIT`. Authored documentation and teaching material remain under CC BY 4.0 in `LICENSE`. Source excerpts and other third-party research material retain the terms recorded with each source. Earlier CC BY grants remain available for previously published versions.
+
 ## Settled decisions
 
 <!-- One line per decision with date. The reasoning behind each lives in the journal. -->

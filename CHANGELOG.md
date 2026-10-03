@@ -4,6 +4,24 @@ What changed in the template, for anyone running an instance built from it.
 
 An entry is written when a change makes an existing instance do something or lets it do something new. Everything else stays in the git history, which is the complete record. Each entry names the date, what changed, and whether a running instance has to act. Versions are dates, because instances follow the template by commit rather than by release.
 
+## 2026-10-03
+
+### Reviews are bound to their exact input
+
+Exported pairs carry `prompt_hash`. Imported judgements must echo that SHA-256 digest together with the pair ID. Old unbound verdict files must be reviewed again before booking. Duplicate, unknown, conflicting or stale verdicts fail, and an empty selection no longer reports success. Assertion review includes the full `## Statement` prose, so instances must re-review any assertions whose text previously exceeded their titles.
+
+### Each check has its own freshness
+
+`W-STALE` compares the content date to every recorded check date individually. A new validation no longer conceals an old machine review or human verification. Revisit the particular stale check rather than copying the validation date into it. The dates do not detect all same-day edits, and the prompt hash provides content binding when new judgements are booked.
+
+### A public example and locked environment
+
+`examples/prov-entity/` contains a selected public W3C source excerpt and the complete chain to a short output paragraph. Its manifest pins the retained source and representation. The command-level regression suite exercises review export and import in a temporary copy and labels simulated verdicts explicitly. `uv.lock` fixes the dependency resolution, and `uv sync --locked` with `uv run` is the documented and continuous-checking path. A Codex action-layer entrypoint routes into the maintained `CLAUDE.md` rules. Local agent instructions and generated check artefacts are ignored.
+
+### Code and text have separate licenses
+
+Code in `tools/`, `tests/` and executable examples is provided under MIT. Authored text remains CC BY 4.0. Third-party sources retain their own recorded terms, and earlier CC BY grants remain available for previously published versions.
+
 ## 2026-09-27
 
 ### The validator enforces schema rules it let pass

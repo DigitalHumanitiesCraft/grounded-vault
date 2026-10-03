@@ -1,0 +1,8 @@
+PROV-DM: The PROV Data Model
+W3C Recommendation, 30 April 2013
+Selected excerpt, section 5.1.1 Entity
+Source: https://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-entity
+Copyright © 2011-2013 W3C® (MIT, ERCIM, Keio, Beihang), All Rights Reserved.
+Document license: https://www.w3.org/copyright/document-license-2023/
+
+An entity is a physical, digital, conceptual, or other kind of thing with some fixed aspects; entities may be real or imaginary.

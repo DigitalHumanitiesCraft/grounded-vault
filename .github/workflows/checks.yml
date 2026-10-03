@@ -12,12 +12,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install pyyaml pytest ruff
+      - run: pip install uv==0.12.18
+      - run: uv sync --locked
       - name: Lint the repository
-        run: ruff check . && ruff format --check .
+        run: uv run ruff check . && uv run ruff format --check .
       - name: Validate the vault
-        run: python tools/validate.py .
+        run: uv run python tools/validate.py .
       - name: Validate the paper instance
-        run: python tools/validate.py paper
+        run: uv run python tools/validate.py paper
+      - name: Validate the worked example
+        run: uv run python tools/validate.py examples/prov-entity --chapter 40_output/01-entity-definition
       - name: Test the tools
-        run: python -m pytest tests -q
+        run: uv run python -m pytest tests -q

@@ -9,3 +9,6 @@
 __pycache__/
 .pytest_cache/
 .venv/
+.ruff_cache/
+*.local.md
+generated/

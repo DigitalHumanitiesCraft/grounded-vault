@@ -31,4 +31,4 @@ The root test suite continues to test the shared validator and its fixtures.
 
 ## Licence
 
-The authored layers are licensed under Creative Commons Attribution 4.0 International. Markdown representations of third-party works retain the licence recorded in their metadata. The root repository licence does not override those source-specific terms.
+Authored text is licensed under Creative Commons Attribution 4.0 International. Code in `tools/` is licensed under MIT as recorded in the root [`LICENSE-MIT`](../LICENSE-MIT). Markdown representations of third-party works retain the licence recorded in their metadata. The root repository licence does not override those source-specific terms.

@@ -1,25 +1,25 @@
 ---
 title: Index
 project:
-  name: "{{PROJECT_NAME}}"
-  repository: "{{REPOSITORY}}"
+  name: "PROV-DM entity worked example"
+  repository: "https://github.com/DigitalHumanitiesCraft/grounded-vault/tree/main/examples/prov-entity"
 method:
   name: Promptotyping
   url: https://dhcraft.org/Promptotyping/
 status: draft
 language: en
-created: "{{DATE}}"
-updated: "{{DATE}}"
+created: "2026-10-03"
+updated: "2026-10-03"
 related: [specification, schema, operations, state, journal]
 ---
 
 # Index
 
-Human readers start at [[HOME]], and agents start at `CLAUDE.md`, which routes onto these documents.
+Human readers start at [[HOME]], and agents start at the repository root `CLAUDE.md`, which routes onto these documents.
+
+The executable example commands are in [README](../README.md). The retained source excerpt and its representation are bound by [the manifest](../manifest.json).
 
 ## Reading paths
-
-- To follow a complete public source-to-output chain, read [the worked example](../examples/prov-entity/README.md). Its original excerpt, immutable representation and review pairs remain inspectable.
 
 - To understand the project, read [[knowledge/specification]] for purpose and parameters, then [[knowledge/state]] for where work stands.
 - To produce or check content, read [[knowledge/schema]] for what a well-formed artifact is and [[knowledge/operations]] for the chain that produces it.
@@ -159,4 +159,3 @@ The sequence `grounded` → `validated` → `verified`, with `contested` for ass
 #### Audit trail
 
 The principle that status fields record outcomes of checks that actually ran, each with its date on the checked document.
-
