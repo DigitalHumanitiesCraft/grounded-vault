@@ -19,7 +19,7 @@ Everything volatile is kept here, so the rule documents stay stable. Update rows
 
 ## Source inventory
 
-One row per source. The processing status runs `new` → `ingested` → `distilled`. This section is generated from the real file state by `uv run python tools/inventory.py . --write` and is never edited by hand. Everything between the two markers is overwritten on each run.
+One row per source. The processing status runs `new` → `ingested` → `distilled`. This section is generated from the real file state by `uv run python tools/inventory.py <vault root> --write` and is never edited by hand. Everything between the two markers is overwritten on each run.
 
 <!-- inventory:begin -->
 | Source | Type | Channel | Markdown representation | Distillate | Coverage | Status |

@@ -30,7 +30,7 @@ Read `knowledge/index.md` (terminology) first, then `knowledge/state.md` (where 
 
 ## Harness block (exchangeable)
 
-This block is specific to Claude Code and may be replaced for another harness. For Claude Code the three skills `ingest-source`, `distill-source` and `build-assertions` live under `.claude/skills/` and route to the corresponding sections of `knowledge/operations.md`, which stays the single place the rules are written down. The `run` subcommand of `tools/review.py` judges through the local `claude -p` command line, which in this harness calls a model of the producer's own family, so a reviewer from another family goes through `emit` and `judge`.
+This block is specific to Claude Code and may be replaced for another harness. For Claude Code the three skills `ingest-source`, `distill-source` and `build-assertions` live under `.claude/skills/` at the repository root and route to the corresponding sections of `knowledge/operations.md`, which stays the single place the rules are written down. The `run` subcommand of `tools/review.py` judges through the local `claude -p` command line, which in this harness calls a model of the producer's own family, so a reviewer from another family goes through `emit` and `judge`.
 
 - Commit at milestones with concise English imperative messages, and stage explicit paths.
 - Run every command from the repository root with `examples/prov-entity` as the vault root, as `README.md` of this example lists them.

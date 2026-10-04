@@ -76,9 +76,7 @@ The audit trail records the progression. A document moves through the statuses `
 
 ## 7. Governance layer and Promptotyping
 
-The vault separates meta-knowledge from content. A `knowledge/` folder carries the documents that govern production. The template starts with a compact core of six, separated by what an agent loads together and by how fast content ages. `index.md` holds navigation, reading paths and the project's terminology. `specification.md` holds purpose, the parameters including the controlled topic set, the output's style sheet and the settled decisions. `schema.md` defines the rules of the vault, covering layers, folders, controlled vocabularies, document types with their frontmatter and anchor mechanics per source type. `operations.md` defines the procedures, one section per chain, covering acquisition (including the deep research channel), ingest, distillation, assertion building, chapter writing, query answering and checking. `state.md` gathers everything volatile in one place, the source inventory with processing status and the chapter register with writing status, so that the rule documents stay stable. `journal.md` holds the chronological decision history, append-only.
-
-A split rule accompanies the core. A document is divided only when its sections develop divergent update rhythms or divergent readers. Grown instances may therefore carry more documents than the template ships.
+The vault separates meta-knowledge from content. A `knowledge/` folder carries the documents that govern production, six in the template, separated by what an agent loads together and by how fast content ages, and the index document among them lists what each holds. A split rule accompanies the core. A document is divided only when its sections develop divergent update rhythms or divergent readers, so grown instances may carry more documents than the template ships.
 
 The content folders carry what is produced. Governance and content never mix. Decision provenance lives in the journal, and content documents carry only current state.
 

@@ -20,7 +20,7 @@ The reviewer saw statements with their wikilinks cut out, alias text included. A
 
 ### Nested instances copy the invariant documents, and the concept paper stops restating rules
 
-The worked example and the internal manuscript carry their own copies of `knowledge/index.md`, `schema.md` and `operations.md`, held equal to the root by `tests/test_instances.py`. The example gains an action layer `CLAUDE.md`. `docs/concept.md` keeps motivation, rationale and lineage and points to `knowledge/` for every rule. `tools/migrate.py` and its test are removed. Template decisions and their reasons are recorded in `docs/decisions.md`.
+The worked example and the internal manuscript carry their own copies of `knowledge/index.md`, `schema.md` and `operations.md`, held equal to the root by `tests/test_instances.py`. The example gains an action layer `CLAUDE.md`. `docs/concept.md` keeps motivation, rationale and lineage and points to `knowledge/` for every rule. `tools/migrate.py` and its test are removed. Template decisions and their reasons are recorded in `docs/decisions.md`. `tools/sync_instances.py` refreshes the copies when the test reports drift. The invariant documents write `<vault root>` where a command names the vault, which is `.` for a stand-alone instance.
 
 ### Terminology and procedures filled in
 

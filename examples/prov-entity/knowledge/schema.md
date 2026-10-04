@@ -30,7 +30,7 @@ The rules of the vault cover the layer model, the controlled vocabularies, the a
 | Assertions | `30_assertions/` | atomic statements not bound to one source, topic maps | grounding anchors into distillate statements |
 | Output | `40_output/` | one file per chapter | footnote anchors into assertions, posits marked |
 
-The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `uv run python tools/inventory.py . --write` rather than maintained by hand, so that no second bookkeeping can drift away from the files. For a document representation it also carries the coverage defined in [[knowledge/index]] § Terminology, and validation raises `W-COVERAGE` where coverage falls below the share an instance sets.
+The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `uv run python tools/inventory.py <vault root> --write` rather than maintained by hand, so that no second bookkeeping can drift away from the files. For a document representation it also carries the coverage defined in [[knowledge/index]] § Terminology, and validation raises `W-COVERAGE` where coverage falls below the share an instance sets.
 
 The terms for the layers and their parts are defined once in [[knowledge/index]] § Terminology. The schema fixes the form of what they name.
 
@@ -102,7 +102,7 @@ The `reference` field of a publication distillate names one such `id`, and valid
 
 ## Source manifest
 
-The rule that a Markdown representation is never edited after ingest becomes checkable through an optional file `manifest.json` at the vault root. It records, for every retained original in `00_sources/` and every Markdown representation, the vault-relative path with forward slashes and the SHA-256 digest of the file.
+The rule that a Markdown representation is never edited after ingest becomes checkable through an optional file `manifest.json` at the vault root. It records, for every retained original in `00_sources/` and every Markdown representation, the vault-relative path with forward slashes and the SHA-256 digest of the file. The digest of a text file is taken over its content with CRLF line ends folded to LF, so that a checkout on Windows and one on Linux agree, and validation also accepts the digest of the raw bytes, which is what `sha256sum` prints and what a binary original has.
 
 ```json
 {

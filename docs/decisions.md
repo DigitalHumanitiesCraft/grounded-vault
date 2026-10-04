@@ -33,3 +33,15 @@ The status `contested` had a definition and a validator rule but no procedure th
 ## 2026-10-04, the source manifest, the notice and the review records become schema
 
 The worked example introduced `manifest.json`, `NOTICE` and `checks/` without the schema knowing them. The manifest makes the hard rule that a Markdown representation is never edited after ingest checkable, which no tool did before, and a hard rule without a check contradicts the principle that status follows from checks that ran. The returned review batches had a contract that allowed them to retain reviewer and date but no place to live. All three are now optional parts of the schema, the manifest with its own finding codes.
+
+## 2026-10-04, four terminology entries carry rules (revisable)
+
+Filling the gaps in the terminology meant deciding four things no document had settled. An anchor-relevant paragraph is one that carries a statement a distillate could reproduce, so headings, captions, table cells, navigation text and boilerplate receive no block ID, because stamping them lowers coverage without adding anything checkable. A load-bearing sentence is one whose claim the chapter would lose if it were struck, which leaves connecting and summarizing sentences free of footnotes. A posit candidate is noted under the open questions of its topic map, the one register the chain already keeps for what the sources leave open. Where verification samples, only the sampled relations are evidence, and `verified` on the document records that the sampling rule in the journal was applied. Each of these could be drawn differently, and an instance that finds one of them wrong should say so in its journal so that the template can follow.
+
+## 2026-10-04, the manifest digest tolerates line-end conversion
+
+The digest of a text file is defined over its content with CRLF folded to LF, and validation also accepts the digest of the raw bytes. Git on Windows converts the line ends of every text file at checkout, so a digest over raw bytes would fail on one platform or the other while the content is unchanged. The cost is that an edit consisting solely of line-end changes passes the check. It changes no block and no anchor, so the rule the manifest protects is not touched by it.
+
+## 2026-10-04, copies are refreshed by a tool
+
+`tools/sync_instances.py` rewrites the knowledge copies of the nested instances from the root and keeps the values the instance filled. The test alone would have left the fix as a manual copy, which is the kind of step that gets done inconsistently. The tool and the test together are the whole discipline the copy model needs.
