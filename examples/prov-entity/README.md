@@ -15,7 +15,7 @@ uv sync --locked
 uv run python tools/inventory.py examples/prov-entity --write
 uv run python tools/validate.py examples/prov-entity
 uv run python tools/validate.py examples/prov-entity --chapter 40_output/01-entity-definition
-uv run pytest tests/test_example.py
+uv run python -m pytest tests/test_example.py
 ```
 
 Validation checks structure and resolvable anchors. A clean chapter result establishes formal conformance. Human verification remains with the designated reader.

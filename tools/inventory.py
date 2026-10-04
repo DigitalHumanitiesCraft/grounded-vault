@@ -10,8 +10,10 @@ The processing status follows from what is present: an original without a
 Markdown representation is `new`, a representation without a distillate is
 `ingested`, and a distillate makes the source `distilled`. Type and channel come
 from the frontmatter of the representation; a publication has no representation,
-so its row is built from the CSL record in `references/` and carries the import
-channel. Coverage counts, for a document representation, the blocks some
+so its row is built from the CSL record in `references/` and takes its channel
+from the distillate's `channel` field, shown as `—` when there is no distillate
+or the field is missing.
+Coverage counts, for a document representation, the blocks some
 distillate statement anchors against the blocks the file carries, so that a
 source the distillates left mostly unread is visible in the register.
 
@@ -46,9 +48,11 @@ from validate import (
     SOURCE_LAYER,
     Doc,
     anchored_blocks,
-    field_links,
+    first_link,
     load_docs,
     load_references,
+    representation_of,
+    source_identity,
     utf8_console,
     write_text_atomic,
 )
@@ -91,11 +95,6 @@ class Row:
         )
 
 
-def _first_link(fm: dict, name: str) -> str | None:
-    links = field_links(fm, name)
-    return links[0][0] if links else None
-
-
 def _title(fm: dict, fallback: str) -> str:
     metadata = fm.get("metadata")
     if isinstance(metadata, dict) and str(metadata.get("title") or "").strip():
@@ -123,11 +122,16 @@ def _distillates(docs: dict[str, Doc]) -> dict[str, list[tuple[str, dict]]]:
     for rel, doc in docs.items():
         if not rel.startswith(DISTILLATE_LAYER):
             continue
-        key = (
-            _first_link(doc.fm, "representation")
-            or str(doc.fm.get("reference") or "").strip()
-        )
-        found.setdefault(key or rel, []).append((rel, doc.fm))
+        # A publication hangs on the reference id of its source identity, the
+        # one E-DUPLICATE keys on, and its row stays one per record whatever
+        # version was checked. Any other distillate hangs on its representation
+        # link, the determination of "has a distillate" W-COVERAGE makes.
+        identity = source_identity(doc)
+        if identity is not None and identity[0] == "publication":
+            key = identity[1]
+        else:
+            key = representation_of(doc) or rel
+        found.setdefault(key, []).append((rel, doc.fm))
     return found
 
 
@@ -143,7 +147,7 @@ def _originals(root: Path, representations: dict[str, dict]) -> list[str]:
         target
         for fm in representations.values()
         for name in ("source", "data")
-        if (target := _first_link(fm, name))
+        if (target := first_link(fm, name))
     }
     found = []
     for path in sorted(directory.rglob("*")):
@@ -171,7 +175,7 @@ def rows(root: Path, problems: list[str] | None = None) -> list[Row]:
     """The inventory rows of the vault; parse and reference problems go into `problems`."""
     docs, report = load_docs(root, (REPRESENTATION_LAYER, DISTILLATE_LAYER))
     if problems is not None:
-        problems += [f"{rel}: {code} {message}" for code, rel, message in report.errors]
+        problems += report.problem_lines()
     representations = {
         rel: doc.fm
         for rel, doc in docs.items()

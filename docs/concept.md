@@ -18,7 +18,7 @@ Grounded Vault is a repository architecture in which every substantive statement
 
 AI agents produce most of this structure. The architecture therefore never asserts that its content is true. What a finished vault delivers is a fully prepared audit object. Every assertion is anchored to its source passages, every anchor has passed deterministic validation and an adversarial machine check, and human expert review can proceed passage by passage instead of starting from zero. The value of the architecture is that it makes agent output auditable at low cost and makes the state of auditing explicit at every point.
 
-The chain fastens onto one property of its subject matter. Whether a passage supports a statement is settled by a fast oracle, a resolver that answers in milliseconds whether the anchor exists and what stands at it. Qualities without such an oracle stay unrewarded wherever checking has to scale, which is why the maintainability of code goes unscored in machine learning and shows its cost only in weeks and months. Verification here is therefore fastened to the one relation that is cheap to test, and everything the relation cannot settle is handed to the instances defined in section 6.
+The chain fastens onto one property of its subject matter. Whether a statement has a source location at all, and what stands there, is settled by a fast oracle, a resolver that answers in milliseconds whether the anchor exists. Qualities without such an oracle stay unrewarded wherever checking has to scale, which is why the maintainability of code goes unscored in machine learning and shows its cost only in weeks and months. Checking here is therefore fastened to the one relation that is cheap to test, resolvability, and whether the resolved location supports the statement is handed to the judging instances defined in section 6.
 
 The vault is dual-readable by design. A human reads it as a linked Markdown collection in Obsidian, following wikilinks from the output down to the supporting passages. An AI agent operates on the same files through an agent harness, steered by an imperative action layer that routes into the declarative rule documents.
 
@@ -44,7 +44,7 @@ An atomic, source-supported statement relevant to the output, held in one file, 
 
 ### Grounding
 
-The anchor relation between an assertion and its source locations. An assertion is grounded when it references the passages, quotations or computations that support it. Grounding is a structural property that an agent can produce. It says nothing about whether the statement is true.
+The anchor relation between a statement and what it rests on one layer down, source locations for a distillate statement and distillate statements for an assertion. A statement is grounded when its anchors resolve. Grounding is a structural property that an agent can produce. It says nothing about whether the statement is true.
 
 ### Evidence
 
@@ -56,7 +56,7 @@ The unbroken anchor path from a sentence in the output through the supporting as
 
 ### Audit trail
 
-The principle that status fields record the outcomes of checks that actually ran. A status is never set because it seems appropriate. Every check writes its outcome and date to the document it checked, so reading a document reveals which checking instances have passed and when.
+The principle that status fields record the outcomes of checks that actually ran. A status is never set because it seems appropriate. Every check leaves its outcome and date on the document it checked, so reading a document reveals which checking instances have passed and when.
 
 ### Validation, machine review, verification
 
@@ -76,7 +76,7 @@ The vault is organized in ascending layers. Each layer is checkable on its own, 
 
 The bibliographic records of citable-only publications and the glossary lie across the chain rather than in one of its layers.
 
-Two rules constrain the chain. Anchors are created only at the layer they belong to, so a distillate references existing block IDs and has no authority to mint new ones. And each layer references only the layer directly beneath it, so the output binds to assertions, and every statement therefore passes through the synthesis and checking machinery before it can reach a source.
+Two rules constrain the chain. IDs are minted only at the layer they belong to, so a distillate references existing block IDs, mints only its own statement IDs and has no authority to mint a block. And each layer references only the layer directly beneath it, so the output binds to assertions, and every statement therefore passes through the synthesis and checking machinery before it can reach a source.
 
 A conclusion that emerges during synthesis without source support does not enter an assertion. It enters the output as an explicitly marked posit, with its rationale and its open evidence question. The vault thereby shows exactly where it leaves its sources. Posit and assertion differ in kind and not in ripeness. An assertion rests on sources and carries a status that records how far it has been checked, while a posit rests on the author and carries no status, because it makes no claim about a source that a check could test. A posit therefore never matures into an assertion. What it leaves behind is its open evidence question, a research task rather than a defect, and the posit count of a chapter measures how much of the text stands on the author alone.
 
@@ -105,12 +105,12 @@ Publications are sources that are only cited, because their full text may not or
 Data sources are datasets such as CSV, spreadsheets or XML, whose anchor is a deterministic computation over the file.
 
 - The Markdown representation is the data file plus a description of its schema.
-- The anchor is a reproducible computation, meaning the data file, a versioned script or documented query, and its deterministic result. A statement like an aggregate or a statistical finding exists nowhere as a passage, so its anchor is the computation that yields it.
+- The anchor is a reproducible computation, meaning the data file, a deterministic script in the vault's analysis folder, and its result. A statement like an aggregate or a statistical finding exists nowhere as a passage, so its anchor is the computation that yields it.
 - Distillation produces an analysis document whose core statements each name their computation.
 
 This type strengthens checking, because validation can re-run the computation and compare exactly.
 
-Images and other carriers are only sketched. Their anchor would be the image file plus a region or a documented description. The type is named as an extension point and left unelaborated.
+Images and other carriers are only sketched. An image whose text can be recognized enters as a document through an OCR converter. An image whose content is not text would need an anchor of its own, the image file plus a region or a documented description, and that type is named as an extension point and left unelaborated.
 
 The historical two-stream design this architecture generalizes from distinguished internal and external documents for reasons of confidentiality and copyright. Those reasons were project-specific. What generalizes is the anchor mechanics per type. Confidentiality and licensing live in the per-source metadata block, and a project may run a single type or several.
 
@@ -118,7 +118,7 @@ Sources are versioned by replacement. A Markdown representation is converted onc
 
 ### Acquisition channels
 
-How a source enters the vault is a dimension orthogonal to its type. The type fixes the anchor mechanics, and the channel describes the intake. The same publication type can be filled by handover from a project partner, by manual collection, by import from an existing reference library, or by agent-driven deep research. The channel is recorded in the `channel` field of the Markdown representation, or of the distillate for a publication, and changes nothing else.
+How a source enters the vault is a dimension orthogonal to its type. The type fixes the anchor mechanics, and the channel describes the intake. A document can arrive by handover from a project partner, by manual collection, by import or by agent-driven deep research. A publication, which has no original in the vault, arrives by import from a reference library or by deep research. The channel is recorded in the `channel` field of the Markdown representation, or of the distillate for a publication, and changes nothing else.
 
 The elaborated reference channel is deep research for citable-only publications. A reusable prompt, parameterized with a topic from the project's controlled topic set, searches and prioritizes candidate publications, evaluates them at full text and counter-checks each finding adversarially. It delivers the located publications with their relevant passages quoted verbatim and leaves synthesis to the vault. Priority rules favor peer-reviewed and official sources, and an explicit exclusion list names unreliable ones. Every located source is captured in a reference manager, Zotero in the reference implementation, and exported as a CSL JSON record into the vault. Credentials and library identifiers stay outside the repository. Each source then receives an ordinary distillate with verbatim quotations as anchors.
 
@@ -128,7 +128,7 @@ Two rules keep the channel compatible with the architecture. First, the research
 
 Three instances check the vault, distinguished by who or what judges and with what reliability.
 
-Validation is deterministic conformance checking of the vault against its own schema. A rule set defines what a well-formed artifact is, in machine-decidable terms, and a checker reports every violation with its location. The same input always yields the same verdict. Concretely it checks, per source type, that every core statement carries an anchor, that every block reference resolves to an existing passage, that every quotation of a publication has the required form and its distillate records the intake-time quotation check, that every computation re-runs to the stated result, that every assertion is reachable from a topic map, and that frontmatter conforms to the document type schema. The mechanism is an ordinary one, the same principle as schema validation in XML workflows, constraint languages, automated tests or referential integrity in databases. Validation runs on every change and gates everything above it.
+Validation is deterministic conformance checking of the vault against its own schema. A rule set defines what a well-formed artifact is, in machine-decidable terms, and a checker reports every violation with its location. The same input always yields the same verdict. Concretely it checks that every core statement carries an anchor of the form its source type requires, that every anchor resolves one layer down and skips none, that every computation re-runs to the stated result, that every assertion is reachable from a topic map, that frontmatter conforms to the document type schema, that no status stands above the checks recorded for it or above the status of its anchors, and that a chapter's footnotes and its structured mirror agree. The complete list of finding codes is in the operations document. The mechanism is an ordinary one, the same principle as schema validation in XML workflows, constraint languages, automated tests or referential integrity in databases. Validation runs on every change and gates everything above it.
 
 Machine review is adversarial checking by a language model. A reviewer model judges whether a source location actually supports the statement built on it, using a fixed verdict vocabulary (fully supports, partially supports, overreaches, contradicts, not in the text). Anti-anchoring is mandatory, meaning the reviewer sees only the source location and the statement, while the producing agent's reasoning stays hidden from it, so that it cannot be led. Machine review is probabilistic and is therefore its own instance. Classifying it as validation would blur the line between deterministic and judged, and classifying it as verification would claim human authority it does not have. Its role is to pre-filter for verification, so that human attention lands on the cases that survive an adversarial pass.
 
@@ -136,7 +136,7 @@ Verification is expert-in-the-loop review by humans. It alone establishes eviden
 
 The architecture fixes a check contract per instance, and the mechanism that fulfils it is a project choice. The contract names what the instance judges, the ceiling of its authority (the highest status it may set), the conditions it must observe (for machine review, anti-anchoring and the fixed verdict vocabulary, with only *fully supports* passing), and the obligation to record outcome and date on the checked document. Which validator implementation runs, which reviewer model judges and how pairs are extracted for it are instantiation decisions. The template ships the validator `tools/validate.py`, which covers the schema-level checks together with the anchor checks per source type, and for machine review the contract with its reference prompt skeletons and the pairing tool `tools/review.py`.
 
-The audit trail records the progression. A grounding relation moves through the statuses `grounded` (structurally anchored, produced by the agent), `validated` (deterministic checks passed and machine review returned *fully supports* for every pair, or for a chapter, deterministic checks passed and every cited assertion validated) and `verified` (expert review passed), with `contested` available where sources conflict. The overall state of a vault is readable as the distribution of its statements across these statuses. A freshly generated vault sits almost entirely at `grounded` and `validated`, and the human work consists of lifting statements to `verified`. No instance ever sets a status above its own authority.
+The audit trail records the progression. A document moves through the statuses `grounded` (structurally anchored, produced by the agent), `validated` (deterministic checks passed and machine review returned *fully supports* for every pair, or for a chapter, deterministic checks passed and every cited assertion validated) and `verified` (expert review passed), with `contested` beside the ladder for assertions whose sources conflict and `superseded` for distillates a revised source has replaced. The overall state of a vault is readable as the distribution of its documents across these statuses. A freshly generated vault sits almost entirely at `grounded` and `validated`, and the human work consists of lifting statements to `verified`. No instance ever sets a status above its own authority.
 
 ## 7. Governance layer and Promptotyping
 
@@ -174,7 +174,7 @@ The folder layout of the template is listed in the [README](../README.md#reposit
 
 ## 11. Instantiation
 
-A project instantiates the template by setting a small number of parameters. These are the purpose, which names the overall topic in its first sentence, the controlled topic set (which becomes the MOC set), the active source types, the output genre with its chapter register and style sheet, the working language of the content, the role that holds verification authority, and the mechanisms that fulfil the check contracts. Everything else, the layer model, the anchor mechanics per source type, the check contracts of the three instances, the status progression and the governance document set, is invariant. The instantiation mechanism is a template repository with placeholders plus the setup guide `SETUP.md`, which carries a prompt for the first agent session that fills them.
+A project instantiates the template by setting a small number of parameters. These are the purpose, which names the overall topic in its first sentence, the controlled topic set (which becomes the MOC set), the active source types, the output genre with its chapter register and style sheet, the working language of the content, the role that holds verification authority, and the mechanisms that fulfil the check contracts. Everything else, the layer model, the anchor mechanics per source type, the check contracts of the three instances and the status progression, is invariant, and the governance document set is the core an instance starts from and may grow by the split rule of section 7. The instantiation mechanism is a template repository with placeholders plus the setup guide `SETUP.md`, which carries a prompt for the first agent session that fills them.
 
 ## 12. Lineage
 

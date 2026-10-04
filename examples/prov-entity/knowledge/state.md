@@ -33,7 +33,7 @@ One row per chapter of the output. Writing status mirrors the chapter's frontmat
 
 | Chapter | File | Status | Notes |
 |---|---|---|---|
-| Entity definition | [[40_output/01-entity-definition]] | validated | Formal validation and machine review passed. Human verification has not been performed. |
+| Entity definition | [[40_output/01-entity-definition]] | validated | Chapter validation passed, and the assertion it cites stands at validated after machine review. Human verification has not been performed. |
 
 ## Open work
 

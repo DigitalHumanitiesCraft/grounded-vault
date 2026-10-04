@@ -40,7 +40,7 @@ The manuscript uses English scholarly prose. Every sentence carries concrete inf
 
 ## Source provenance
 
-The research foundation comes from the read-only repository `chpollin/grounded-vault-paper` at commit `3045fb48b4ca4570498ff8628ca9995d40aa9374`. Its Markdown representations, distillates, assertions, glossary, reference records, and analysis scripts were copied without content changes. The former validated blog chapter remains at that source commit and was used as an earlier synthesis of the same assertion layer.
+The research foundation comes from the former repository `chpollin/grounded-vault-paper` at commit `3045fb48b4ca4570498ff8628ca9995d40aa9374`. Its Markdown representations, distillates, assertions, glossary, reference records, and analysis scripts were copied without content changes. That repository no longer exists, so this directory holds the only copy of the imported foundation. The former German blog chapter was not retained, and its argument and findings are incorporated into the manuscript here. One further document, the terminology of the template at commit 79cd1d3, was ingested after the import on 2026-09-26.
 
 ## Settled decisions
 

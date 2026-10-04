@@ -72,7 +72,21 @@ BROKEN_FINDINGS = [
     ),
     ("E-LAYER", "20_distillates/documents/sideways", "distillate statement must"),
     ("E-LAYER", "30_assertions/wrong-layer-grounding", "grounding must"),
+    ("E-LAYER", "30_assertions/source-grounding", "grounding must"),
+    ("E-LAYER", "10_markdown/data/data-wrong-layer", "data must"),
+    (
+        "E-LAYER",
+        "20_distillates/documents/superseded-wrong-layer",
+        "superseded-by must",
+    ),
+    ("E-LAYER", "30_assertions/contested-sideways", "contested-with must"),
+    (
+        "E-LAYER",
+        "20_distillates/data/statement-wrong-layer",
+        "distillate statement must anchor in 10_markdown/, but points to 00_sources/",
+    ),
     ("E-LAYER", "40_output/02-layer", "chapter footnote must"),
+    ("E-LAYER", "40_output/02-layer", "assertions must"),
     ("E-GROUNDING", "30_assertions/empty-grounding", "without a single grounding"),
     ("E-DUPLICATE", "10_markdown/documents/duplicate-blocks", "duplicate block ID"),
     (
@@ -133,6 +147,12 @@ BROKEN_FINDINGS = [
     ("E-FRONTMATTER", "10_markdown/data/no-data", "missing required field: data"),
     (
         "E-FRONTMATTER",
+        "20_distillates/documents/distillate-channel",
+        "channel belongs to the representation",
+    ),
+    ("E-FRONTMATTER", "30_assertions/MOC-Wrong", "must be named MOC-Renamed-Topic.md"),
+    (
+        "E-FRONTMATTER",
         "10_markdown/documents/publication-representation",
         "publication has no Markdown representation",
     ),
@@ -158,8 +178,10 @@ BROKEN_FINDINGS = [
     ("E-STATEMENT", COMPUTATION_DEFECTS, "without computation"),
     ("E-STATUS", "30_assertions/validated-unchecked", "without checked.validation"),
     ("E-STATUS", "20_distillates/documents/checked-not-a-map", "checked must be a map"),
+    ("E-STATUS", "20_distillates/documents/checked-empty-list", "not []"),
     ("E-STATUS", "20_distillates/documents/checked-bad-date", "records no ISO date"),
     ("E-LADDER", "30_assertions/ladder-jump", "above its anchor"),
+    ("E-LADDER", "30_assertions/source-grounding", "whose status cannot be read"),
     ("E-FOOTNOTE", "40_output/01-bad", "starts with neither"),
     ("E-FOOTNOTE", "40_output/01-bad", "used but never defined"),
     ("E-FOOTNOTE", "40_output/06-footnotes", "defined but never used"),
@@ -207,15 +229,32 @@ EXPECTED_BROKEN_WARNINGS = {
     "W-DUPLICATE-GROUNDING",  # test_two_assertions_on_the_same_anchors_are_reported
     "W-ALIAS",  # test_a_footnote_alias_that_renames_its_assertion_is_reported
     "W-VERSION",  # test_a_quotation_check_without_a_text_version_is_reported
+    "W-COVERAGE",  # test_a_source_the_distillates_mostly_leave_unanchored_is_reported
 }
 
-# Codes no fixture can carry, because they need a vault state a conformant file
-# set does not have; each is asserted from a temporary vault instead.
-EXPECTED_TEMPORARY_VAULT_CODES = {
-    "E-SCOPE",  # test_an_unknown_chapter_is_a_finding
-    "W-EMPTY",  # test_an_empty_vault_says_which_checks_had_no_subject
-    "W-NO-OUTPUT",  # test_an_empty_vault_says_which_checks_had_no_subject
-    "W-COVERAGE",  # test_a_source_the_distillates_mostly_leave_unanchored_is_reported
+
+def _scope_on_a_non_chapter(tmp_path: Path) -> Report:
+    return validate(MINIMAL, chapter="30_assertions/metering-reduces-water-use")
+
+
+def _empty_vault(tmp_path: Path) -> Report:
+    return validate(tmp_path)
+
+
+def _vault_without_a_chapter(tmp_path: Path) -> Report:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "40_output" / "01-findings.md").unlink()
+    return validate(root, run_computations=False)
+
+
+# Codes no fixture can carry, because they need a vault state or a call a
+# conformant file set does not have. Each maps to the run that produces it, and
+# test_every_code_the_validator_emits_has_a_specimen executes that run.
+TEMPORARY_VAULT_FINDINGS = {
+    "E-SCOPE": _scope_on_a_non_chapter,
+    "W-EMPTY": _empty_vault,
+    "W-NO-OUTPUT": _vault_without_a_chapter,
 }
 
 EMITTED_CODE = re.compile(r"report\.(?:error|warn)\(\s*\"([EW]-[A-Z-]+)\"")
@@ -265,19 +304,21 @@ def test_every_sub_rule_fires_on_its_specimen(
     assert any(part in m for m in messages), messages
 
 
-def test_every_code_the_validator_emits_has_a_specimen() -> None:
+def test_every_code_the_validator_emits_has_a_specimen(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
     """No finding class may exist that the suite never sees fire.
 
     The registries above are the claim of coverage, and this test holds them
-    against the codes actually emitted, so that a new check without a specimen
-    fails here and a registry entry the validator no longer raises does too.
+    against the codes the source can emit and against the codes the runs
+    actually raise, so that a new check without a specimen fails here, a
+    registry entry the validator no longer raises does too, and a registered
+    specimen that has gone silent is caught rather than vouched for by a comment.
     """
     source = (REPO / "tools" / "validate.py").read_text(encoding="utf-8")
     emitted = set(EMITTED_CODE.findall(source))
     covered = (
-        EXPECTED_BROKEN_CODES
-        | EXPECTED_BROKEN_WARNINGS
-        | EXPECTED_TEMPORARY_VAULT_CODES
+        EXPECTED_BROKEN_CODES | EXPECTED_BROKEN_WARNINGS | set(TEMPORARY_VAULT_FINDINGS)
     )
     assert emitted - covered == set(), (
         f"finding classes without a specimen: {emitted - covered}"
@@ -285,6 +326,17 @@ def test_every_code_the_validator_emits_has_a_specimen() -> None:
     assert covered - emitted == set(), (
         f"specimens for codes never emitted: {covered - emitted}"
     )
+    broken = validate(BROKEN)
+    raised = {code for code, _, _ in broken.errors + broken.warnings}
+    assert raised >= EXPECTED_BROKEN_CODES | EXPECTED_BROKEN_WARNINGS
+    for code, produce in TEMPORARY_VAULT_FINDINGS.items():
+        report = produce(tmp_path_factory.mktemp(code))
+        assert code in {c for c, _, _ in report.errors + report.warnings}, code
+
+
+def test_broken_raises_exactly_its_registered_warnings() -> None:
+    report = validate(BROKEN)
+    assert {code for code, _, _ in report.warnings} == EXPECTED_BROKEN_WARNINGS
 
 
 def test_operations_documents_exactly_the_emitted_codes() -> None:
@@ -303,7 +355,33 @@ def test_every_layer_violation_is_caught_at_its_own_layer() -> None:
         "40_output/02-layer",
         "20_distillates/documents/sideways",
         "20_distillates/documents/representation-wrong-layer",
+        "30_assertions/source-grounding",
+        "10_markdown/data/data-wrong-layer",
+        "20_distillates/documents/superseded-wrong-layer",
+        "30_assertions/contested-sideways",
+        "20_distillates/data/statement-wrong-layer",
     }
+
+
+def test_a_contested_counterpart_outside_the_assertion_layer_is_only_a_layer_finding() -> (
+    None
+):
+    report = validate(BROKEN)
+    assert "30_assertions/contested-sideways" not in _rels(report.errors, "E-CONTESTED")
+
+
+def test_an_original_as_the_only_grounding_cannot_carry_validated() -> None:
+    """The ladder used to skip a target it could not load, so this passed clean."""
+    report = validate(BROKEN)
+    rel = "30_assertions/source-grounding"
+    assert rel in _rels(report.errors, "E-LAYER")
+    assert rel in _rels(report.errors, "E-LADDER")
+
+
+def test_the_source_field_of_a_representation_may_name_an_original() -> None:
+    representation = MINIMAL / "10_markdown/documents/report-garden-water-2026.md"
+    assert 'source: "[[00_sources/' in representation.read_text(encoding="utf-8")
+    assert validate(MINIMAL, run_computations=False).errors == []
 
 
 def test_an_empty_grounding_list_is_an_error() -> None:
@@ -501,7 +579,34 @@ def _raise_chain_to(tmp_path: Path, status: str) -> Path:
 
 def test_a_paragraph_without_a_footnote_marker_is_a_warning() -> None:
     report = validate(BROKEN)
-    assert _rels(report.warnings, "W-UNANCHORED") == {"40_output/03-unanchored"}
+    assert _rels(report.warnings, "W-UNANCHORED") == {
+        "40_output/03-unanchored",
+        "40_output/08-heading-prose",
+    }
+
+
+def test_prose_directly_under_a_heading_is_still_judged() -> None:
+    """A heading line used to exempt the whole paragraph it opened."""
+    report = validate(BROKEN)
+    (message,) = [
+        m
+        for c, r, m in report.warnings
+        if c == "W-UNANCHORED" and r == "40_output/08-heading-prose"
+    ]
+    # The heading itself is not part of the judged paragraph.
+    assert message.startswith(
+        "paragraph without any footnote marker: Fixture: this line follows"
+    )
+
+
+def test_a_wrapped_grounded_in_footnote_is_read_whole() -> None:
+    """The schema's own example wraps a footnote onto an indented line."""
+    chapter = MINIMAL / "40_output" / "01-findings.md"
+    assert "[^1]: Grounded in\n      [[30_assertions/" in chapter.read_text(
+        encoding="utf-8"
+    )
+    report = validate(MINIMAL, run_computations=False)
+    assert not _rels(report.errors, "E-FOOTNOTE") | _rels(report.errors, "E-MIRROR")
 
 
 def test_an_id_minted_outside_the_core_statements_is_caught() -> None:
@@ -627,6 +732,7 @@ def test_a_status_above_the_status_of_its_anchors_is_caught() -> None:
     assert _rels(report.errors, "E-LADDER") == {
         "30_assertions/ladder-jump",
         "30_assertions/validated-unchecked",
+        "30_assertions/source-grounding",
     }
 
 
@@ -696,6 +802,47 @@ def test_a_check_entry_without_a_date_is_a_finding(tmp_path: Path) -> None:
     assert "20_distillates/documents/report-garden-water-2026" in _rels(
         report.errors, "E-STATUS"
     )
+
+
+@pytest.mark.parametrize("value", ["[]", "''", "null", "{}"])
+def test_only_a_mapping_is_a_ledger(tmp_path: Path, value: str) -> None:
+    """Falsy non-mappings used to be coerced to an empty map and pass."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    rel = "20_distillates/documents/report-garden-water-2026"
+    path = root / f"{rel}.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace("checked: {}", f"checked: {value}"),
+        encoding="utf-8",
+    )
+    flagged = rel in _rels(validate(root, run_computations=False).errors, "E-STATUS")
+    assert flagged == (value != "{}")
+
+
+def test_a_representation_without_channel_is_one_finding(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    rel = "10_markdown/documents/report-garden-water-2026"
+    path = root / f"{rel}.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace("channel: handover\n", ""),
+        encoding="utf-8",
+    )
+    report = validate(root, run_computations=False)
+    assert [m for c, r, m in report.errors if r == rel] == [
+        "missing required field: channel"
+    ]
+
+
+def test_a_topic_map_name_replaces_spaces_with_hyphens(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "30_assertions" / "MOC-Water-Use.md").write_text(
+        '---\ntype: moc\ntopic: "Water Use"\ncreated: 2026-10-04\n'
+        "updated: 2026-10-04\n---\n\n# MOC: Water Use\n",
+        encoding="utf-8",
+    )
+    assert validate(root, run_computations=False).errors == []
 
 
 CHAPTER = "40_output/01-findings"
@@ -937,6 +1084,34 @@ def test_a_representation_without_a_distillate_is_not_judged_for_coverage(
     assert _rels(report.warnings, "W-COVERAGE") == set()
 
 
+def test_the_broken_fixture_carries_one_unexhausted_source() -> None:
+    report = validate(BROKEN)
+    (finding,) = [w for w in report.warnings if w[0] == "W-COVERAGE"]
+    assert finding[1] == "10_markdown/documents/thin-coverage"
+    assert "3 of 4 blocks" in finding[2]
+
+
+def test_a_distillate_anchoring_none_of_its_blocks_is_judged(tmp_path: Path) -> None:
+    """Having a distillate is read from its representation link, not from its anchors."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "20_distillates" / "documents" / "report-garden-water-2026.md"
+    text = path.read_text(encoding="utf-8")
+    statements = text.split("## Core statements\n")[1].split("\n## ")[0]
+    path.write_text(text.replace(statements, "\n"), encoding="utf-8")
+    report = validate(root, run_computations=False)
+    (finding,) = [w for w in report.warnings if w[0] == "W-COVERAGE"]
+    assert finding[1] == "10_markdown/documents/report-garden-water-2026"
+    assert "3 of 3 blocks" in finding[2]
+
+
+@pytest.mark.parametrize("value", ["-0.1", "1.5", "nan", "half"])
+def test_a_coverage_threshold_outside_zero_to_one_is_refused(value: str) -> None:
+    result = _run_cli(MINIMAL, "--no-computations", "--min-coverage", value)
+    assert result.returncode == 2
+    assert "--min-coverage" in result.stderr
+
+
 def test_coverage_stays_out_of_the_chapter_mode(tmp_path: Path) -> None:
     root = _vault_with_an_unread_source(tmp_path)
     result = _run_cli(root, "--no-computations", "--chapter", CHAPTER)
@@ -1029,6 +1204,16 @@ def test_a_single_reference_object_resolves(tmp_path: Path) -> None:
     path = root / "references" / "example-corpus.csl.json"
     records = json.loads(path.read_text(encoding="utf-8"))
     path.write_text(json.dumps(records[0]), encoding="utf-8")
+    assert validate(root, run_computations=False).errors == []
+
+
+def test_a_reference_file_with_a_byte_order_mark_resolves(tmp_path: Path) -> None:
+    """Reference managers on Windows may write a BOM, as editors do for Markdown."""
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "references" / "example-corpus.csl.json"
+    path.write_text(path.read_text(encoding="utf-8"), encoding="utf-8-sig")
+    assert path.read_bytes().startswith(b"\xef\xbb\xbf")
     assert validate(root, run_computations=False).errors == []
 
 

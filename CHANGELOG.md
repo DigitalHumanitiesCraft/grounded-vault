@@ -4,6 +4,24 @@ What changed in the template, for anyone running an instance built from it.
 
 An entry is written when a change makes an existing instance do something or lets it do something new. Everything else stays in the git history, which is the complete record. Each entry names the date, what changed, and whether a running instance has to act. Versions are dates, because instances follow the template by commit rather than by release.
 
+## 2026-10-04
+
+### Anchors into originals no longer pass as grounding (act)
+
+An anchor into `00_sources/` was exempt from resolution on every layer, and the status floor skipped a target it could not read, so an assertion whose only grounding named a file in `00_sources/` could stand at `validated` without a finding. Only the `source` field of a Markdown representation may now name an original, and any other link into `00_sources/` is `E-LAYER`. A document above `grounded` whose anchor is not a loaded document is `E-LADDER`. Every link field is layer-checked against its folder, `representation` and `data` into `10_markdown/`, `superseded-by` and `grounding` into `20_distillates/`, `contested-with` and `assertions` into `30_assertions/`. A `checked` value that is an empty list, an empty string or null is `E-STATUS`. A topic map must be named `MOC-` plus its `topic` with spaces replaced by hyphens, and a document or data distillate carrying `channel` is refused. Run `uv run python tools/validate.py .` after updating the tools and fix what it reports.
+
+### Coverage asks whether a distillate exists
+
+`W-COVERAGE` fires for a document representation that a distillate names in `representation`, so a distillate that anchors none of its blocks now warns instead of staying silent. `--min-coverage` must lie between 0 and 1. `W-UNANCHORED` judges prose that follows a heading without a blank line, and a `Grounded in` footnote may wrap onto indented continuation lines.
+
+### Review prompts keep link text (act where a statement carries a wikilink)
+
+The reviewer saw statements with their wikilinks cut out, alias text included. A wikilink now reads as its alias or its slug, inline code stays verbatim, and the statement's own anchor link is dropped. Pairs whose statement carried a wikilink produce a new `prompt_hash`, so their recorded judgements no longer bind and the pairs need a fresh review before booking. A defective record fails the whole batch, as the code always did and the contract now says.
+
+### Terminology and procedures filled in
+
+`knowledge/index.md` § Terminology gains anchor-relevant paragraph, source identity, load-bearing sentence, posit candidate, pair and processing status, separates the two senses of instance, and defines source, source type and Markdown representation so that publications and data fit them. `knowledge/operations.md` gains § Supersede for a revised source, names assertion building as the only step that sets `contested` and verification as the one that resolves it, and moves the harness-specific note on `claude -p` into the harness block of `CLAUDE.md`. The three Claude Code skills route into operations and restate no steps. The journal's entry format uses `<date>` and its instantiation sentence names the template, so an instance no longer freezes a date into the format or attaches its own URL to the template. All documented commands take the form `uv run python …`, and the README Quickstart is the command set the CI workflow runs. Instances may carry the wording into their own `knowledge/`.
+
 ## 2026-10-03
 
 ### Reviews are bound to their exact input
@@ -34,7 +52,7 @@ An instance that validated clean may now report errors, and each one names a fil
 
 ### Review and migration keep the audit trail
 
-`python tools/review.py --apply` records no `checked.machine-review` on a document that fails validation, and its JSONL records name the reviewed text `statement` instead of `claim`. A reviewer script that reads the `claim` key has to be updated. `tools/migrate.py` maps every legacy status to `grounded`, because a legacy status carries no dated check. The inventory and review tools report files whose frontmatter does not parse instead of dropping them, and the inventory keeps the line endings of `knowledge/state.md`.
+`python tools/review.py judge --apply` records no `checked.machine-review` on a document that fails validation, and its JSONL records name the reviewed text `statement` instead of `claim`. A reviewer script that reads the `claim` key has to be updated. `tools/migrate.py` maps every legacy status to `grounded`, because a legacy status carries no dated check. The inventory and review tools report files whose frontmatter does not parse instead of dropping them, and the inventory keeps the line endings of `knowledge/state.md`.
 
 ### A chapter reaches validated without a machine review of its own
 

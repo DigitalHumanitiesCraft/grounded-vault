@@ -20,7 +20,7 @@ Chronological decision history of the vault, append-only, newest entry last. Con
 ## Entry format
 
 ```markdown
-## 2026-10-03, <one-line subject>
+## <date>, <one-line subject>
 
 <What was decided or found, why, and what it replaces. Link the affected
 documents. Two to ten sentences.>
@@ -28,7 +28,7 @@ documents. Two to ten sentences.>
 
 ## 2026-10-03, vault instantiated
 
-Instantiated from the Grounded Vault template (https://github.com/DigitalHumanitiesCraft/grounded-vault/tree/main/examples/prov-entity). Parameters recorded in [[knowledge/specification]].
+Instantiated from the Grounded Vault template (https://github.com/DigitalHumanitiesCraft/grounded-vault) into https://github.com/DigitalHumanitiesCraft/grounded-vault/tree/main/examples/prov-entity. Parameters recorded in [[knowledge/specification]].
 
 ## 2026-10-03, bounded public source
 

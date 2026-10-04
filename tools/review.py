@@ -21,10 +21,15 @@ every one of its pairs came back *fully supports*. Deviating verdicts are
 reported and nothing is reformulated automatically.
 
 Usage:
-    python tools/review.py stats <vault-root>
-    python tools/review.py emit  <vault-root> --out prompts.jsonl
-    python tools/review.py judge <vault-root> --verdicts verdicts.jsonl [--apply]
-    python tools/review.py run   <vault-root> --model <model> [--apply]
+    python tools/review.py stats <vault-root> [selection]
+    python tools/review.py emit  <vault-root> [selection] [--out prompts.jsonl]
+    python tools/review.py judge <vault-root> [selection] --verdicts verdicts.jsonl
+                                 [--apply] [--date YYYY-MM-DD]
+    python tools/review.py run   <vault-root> [selection] [--model <model>]
+                                 [--out judgements.jsonl] [--apply] [--date YYYY-MM-DD]
+
+    selection: [--scope {all,source,assertion}] [--path <document-prefix>]
+    --date overrides today's date as the recorded checked.machine-review date.
 
 Parsing conventions are imported from tools/validate.py rather than restated.
 Validation gates review, so booking under --apply runs the validator first and
@@ -47,17 +52,20 @@ from pathlib import Path
 from validate import (
     ASSERTION_LAYER,
     BLOCK_ID,
-    COMPUTATION,
     DISTILLATE_LAYER,
     H1,
     REPRESENTATION_LAYER,
     WIKILINK,
     Doc,
+    block_anchors,
+    computations,
     field_links,
-    link_targets,
+    frontmatter_end,
+    h2_sections,
+    iso_date,
     load_docs,
     quotation_text,
-    split_frontmatter,
+    statement_id,
     statement_lines,
     utf8_console,
     validate,
@@ -72,6 +80,7 @@ VERDICTS = (
     "not in the text",
 )
 PASSING_VERDICT = "fully supports"
+NO_PAIRS = "no reviewable pairs; no machine review took place"
 
 SOURCE_PROMPT = """You are an adversarial reviewer. Below are a source passage and a statement
 that claims to be supported by it. Your task is to refute the statement.
@@ -100,7 +109,7 @@ STATEMENT: {statement}
 ASSERTION: {assertion}"""
 
 VERDICT_LINE = re.compile(
-    r"^(?:verdict\s*:\s*)?(fully supports|partially supports|overreaches|contradicts|not in the text)[.!]?$",
+    rf"^(?:verdict\s*:\s*)?({'|'.join(map(re.escape, VERDICTS))})[.!]?$",
     re.IGNORECASE,
 )
 CHECKED_EMPTY = re.compile(r"^checked:[ \t]*\{\s*\}[ \t]*$", re.MULTILINE)
@@ -175,6 +184,8 @@ class Outcome:
 
 
 def build_prompt(pair: Pair) -> str:
+    # An assertion pair keeps the distillate statement in `location` and the
+    # assertion in `statement`, so its skeleton takes them under those names.
     vocabulary = " | ".join(VERDICTS)
     if pair.kind == "source":
         return SOURCE_PROMPT.format(
@@ -196,11 +207,31 @@ def parse_verdict(response: str) -> str:
     raise ValueError(f"no single verdict in response: {response.strip()[:80]!r}")
 
 
+def _link_text(match: re.Match[str]) -> str:
+    """The reading text of a wikilink inside a statement.
+
+    An aliased link reads as its alias and a plain link as its slug. An
+    unaliased block link is the statement's anchor and is dropped, so the
+    reviewer never sees where the statement claims to come from.
+    """
+    if match.group(3) is not None:
+        return match.group(3)
+    if match.group(2):
+        return ""
+    return match.group(1).rsplit("/", 1)[-1]
+
+
 def _statement_text(line: str) -> str:
     """The bare statement of a bullet, stripped of its anchor and its own ID."""
     text = line.strip()
     text = text[2:] if text.startswith("- ") else text
-    text = BLOCK_ID.sub("", WIKILINK.sub("", text).strip())
+    # Link syntax inside a code span is quoted text, not a link.
+    parts = re.split(r"(`[^`]*`)", text)
+    text = "".join(
+        part if index % 2 else WIKILINK.sub(_link_text, part)
+        for index, part in enumerate(parts)
+    )
+    text = BLOCK_ID.sub("", text.strip())
     return " ".join(text.split())
 
 
@@ -238,15 +269,14 @@ def _source_pairs(
     source_type = doc.fm.get("source-type")
     pairs: list[Pair] = []
     for line, follow in statement_lines(doc.body):
-        m = BLOCK_ID.search(line)
-        if not m:
+        sid = statement_id(line)
+        if sid is None:
             problems.append(f"{doc.rel}: statement without ID, skipped")
             continue
-        sid = m.group(1)
         statement = _statement_text(line)
         anchor, location = "", ""
         if source_type == "document":
-            anchored = [(t, b) for t, b in link_targets(line) if b]
+            anchored = block_anchors(line)
             if not anchored:
                 problems.append(f"{doc.rel}#^{sid}: no block anchor, skipped")
                 continue
@@ -264,14 +294,12 @@ def _source_pairs(
                 continue
             anchor = str(doc.fm.get("reference", ""))
         elif source_type == "data":
-            declared = [c for f in follow if (c := COMPUTATION.search(f))]
+            declared = computations(follow)
             if not declared:
                 problems.append(f"{doc.rel}#^{sid}: no computation, skipped")
                 continue
-            anchor = declared[0].group(1)
-            location = (
-                f"computation: `{declared[0].group(1)}` → `{declared[0].group(2)}`"
-            )
+            anchor, result = declared[0]
+            location = f"computation: `{anchor}` → `{result}`"
         else:
             problems.append(f"{doc.rel}: unknown source-type {source_type!r}, skipped")
             return []
@@ -293,11 +321,16 @@ def _assertion_pairs(
 ) -> list[Pair]:
     title = H1.search(doc.body)
     sentence = title.group(1).strip() if title else ""
-    section = re.search(
-        r"^## Statement\s*\n(.*?)(?=^## |\Z)", doc.body, re.MULTILINE | re.DOTALL
+    section = next(
+        (
+            lines
+            for heading, lines in h2_sections(doc.body)
+            if heading == "## statement"
+        ),
+        None,
     )
-    if section:
-        sentence = section.group(1).strip()
+    if section is not None:
+        sentence = "\n".join(section).strip()
     if not sentence:
         problems.append(f"{doc.rel}: no assertion statement, skipped")
         return []
@@ -305,7 +338,10 @@ def _assertion_pairs(
     for target, block in field_links(doc.fm, "grounding"):
         key = f"{target}#^{block}" if block else target
         if key not in statements:
-            problems.append(f"{doc.rel}: grounding {key} does not resolve, skipped")
+            problems.append(
+                f"{doc.rel}: grounding {key} yielded no reviewable statement "
+                "(target missing, or its statement was skipped above), skipped"
+            )
             continue
         pairs.append(
             Pair(
@@ -330,7 +366,7 @@ def cut_pairs(root: Path, problems: list[str] | None = None) -> list[Pair]:
     docs, report = load_docs(
         root, (REPRESENTATION_LAYER, DISTILLATE_LAYER, ASSERTION_LAYER)
     )
-    problems += [f"{rel}: {code} {message}" for code, rel, message in report.errors]
+    problems += report.problem_lines()
     blocks = {
         rel: _block_locations(doc)
         for rel, doc in docs.items()
@@ -354,12 +390,9 @@ def cut_pairs(root: Path, problems: list[str] | None = None) -> list[Pair]:
 
 def set_checked_date(text: str, check: str, date: str) -> str:
     """Write one entry into the `checked` map of a frontmatter, leaving the rest alone."""
-    split = split_frontmatter(text)
-    if split is None:
+    end = frontmatter_end(text)
+    if end is None:
         raise ValueError("no frontmatter")
-    # The body follows the closing delimiter, so the frontmatter ends where
-    # the delimiter in front of the body begins.
-    end = len(text) - len(split[1]) - len("\n---")
     head, tail = text[:end], text[end:]
     entry = re.compile(rf"^([ \t]+){re.escape(check)}:[ \t]*\S.*$", re.MULTILINE)
     if m := entry.search(head):
@@ -384,18 +417,16 @@ def book_results(
     check; a document with a validation error is reported and left unbooked.
     """
     outcome = Outcome()
-    try:
-        if datetime.date.fromisoformat(date).isoformat() != date:
-            raise ValueError
-    except (TypeError, ValueError):
+    parsed = iso_date(date) if isinstance(date, str) else None
+    if parsed is None or parsed.isoformat() != date:
         outcome.problems.append("review date must use strict ISO YYYY-MM-DD format")
+        return outcome
+    if not pairs:
+        outcome.problems.append(NO_PAIRS)
         return outcome
     by_document: dict[str, list[Pair]] = {}
     for pair in pairs:
         by_document.setdefault(pair.document, []).append(pair)
-    if not pairs:
-        outcome.problems.append("no reviewable pairs; no machine review took place")
-        return outcome
     unknown = set(verdicts) - {pair.id for pair in pairs}
     if unknown:
         outcome.problems += [
@@ -652,15 +683,7 @@ def main() -> int:
     pairs = _select(cut_pairs(root, problems), args.scope, args.path)
 
     if args.command != "stats" and not pairs:
-        return _report(
-            Outcome(
-                problems=[
-                    *problems,
-                    "no reviewable pairs; no machine review took place",
-                ]
-            ),
-            pairs,
-        )
+        return _report(Outcome(problems=[*problems, NO_PAIRS]), pairs)
 
     if args.command == "stats":
         kinds = {
@@ -675,7 +698,6 @@ def main() -> int:
         if problems:
             return _report(Outcome(problems=problems), pairs)
         outcome = book_results(root, pairs, verdicts, args.date, apply=args.apply)
-        outcome.problems = problems + outcome.problems
         return _report(outcome, pairs)
     elif args.command == "run":
         records = run_claude(pairs, args.model, problems)
@@ -689,7 +711,6 @@ def main() -> int:
         if problems:
             return _report(Outcome(problems=problems), pairs)
         outcome = book_results(root, pairs, verdicts, args.date, apply=args.apply)
-        outcome.problems = problems + outcome.problems
         return _report(outcome, pairs)
 
     for problem in problems:

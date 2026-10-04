@@ -19,7 +19,7 @@ Everything volatile is kept here, so the rule documents stay stable. Update rows
 
 ## Source inventory
 
-One row per source. The processing status runs `new` → `ingested` → `distilled`. This section is generated from the real file state by `python tools/inventory.py . --write` and is never edited by hand. Everything between the two markers is overwritten on each run.
+One row per source. The processing status runs `new` → `ingested` → `distilled`. This section is generated from the real file state by `uv run python tools/inventory.py . --write` and is never edited by hand. Everything between the two markers is overwritten on each run.
 
 <!-- inventory:begin -->
 | Source | Type | Channel | Markdown representation | Distillate | Coverage | Status |
@@ -28,7 +28,7 @@ One row per source. The processing status runs `new` → `ingested` → `distill
 
 ## Chapter register
 
-One row per chapter of the output. Writing status mirrors the chapter's frontmatter.
+One row per chapter of the output. A chapter whose file does not exist yet carries `planned`, and once the file exists the column mirrors its frontmatter status.
 
 | Chapter | File | Status | Notes |
 |---|---|---|---|

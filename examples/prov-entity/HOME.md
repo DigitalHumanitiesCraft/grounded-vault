@@ -16,11 +16,7 @@ Human entry point of this vault. What this vault produces and on what topic is s
 
 ## Explore the knowledge
 
-<!-- Instantiation: replace the line below with one wikilink per topic of the controlled
-     topic set, in the same order as the MOC files created in 30_assertions/. -->
-
 - [[30_assertions/MOC-Provenance]]
-- `glossary/` holds the project's terms.
 
 ## Understand the machine room
 

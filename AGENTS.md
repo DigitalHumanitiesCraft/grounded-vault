@@ -4,4 +4,4 @@ Read `CLAUDE.md` as the canonical action layer, then follow its session-start an
 
 The repository root is the reusable template. `paper/` is a separate internal manuscript instance and has its own action layer. The public worked example is in `examples/prov-entity/`.
 
-Use `uv sync --locked` and execute Python commands through `uv run python`. Before reporting tool changes as complete, run `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, and the template, paper and worked-example validator commands from `README.md`.
+Use `uv sync --locked` and execute Python commands through `uv run python`. Before reporting tool changes as complete, run the Quickstart commands from `README.md`, which are the same set the CI workflow runs.

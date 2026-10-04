@@ -25,6 +25,7 @@ Fixture: the first anchor below points to a block ID that does not exist (defect
 - Second support of the duplicate grounding pair. [[10_markdown/documents/note#^ok01]] ^s8
 - Support for the contested specimen without counterpart. [[10_markdown/documents/note#^ok01]] ^s9
 - Support for the contested specimen with a missing counterpart. [[10_markdown/documents/note#^ok01]] ^s10
+- Support for the contested specimen whose counterpart is a distillate. [[10_markdown/documents/note#^ok01]] ^s11
 
 ## Open questions
 

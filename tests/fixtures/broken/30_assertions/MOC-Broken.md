@@ -21,3 +21,5 @@ Fixture topic map. The orphan assertion is deliberately missing here.
 - [[30_assertions/grounding-without-statement]] — grounding without statement ID fixture.
 - [[30_assertions/contested-alone]] — contested without counterpart fixture.
 - [[30_assertions/contested-missing]] — contested with a missing counterpart fixture.
+- [[30_assertions/contested-sideways]] — contested counterpart in the wrong layer fixture.
+- [[30_assertions/source-grounding]] — grounding in an original fixture.

@@ -22,9 +22,9 @@ The former German blog chapter on the support gap was not retained when the sour
 Run the instance checks from the repository root.
 
 ```text
-python tools/inventory.py paper
-python tools/validate.py paper
-python tools/validate.py paper --chapter 40_output/grounded-vault-method.md
+uv run python tools/inventory.py paper --write
+uv run python tools/validate.py paper
+uv run python tools/validate.py paper --chapter 40_output/grounded-vault-method
 ```
 
 The root test suite continues to test the shared validator and its fixtures.

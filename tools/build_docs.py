@@ -1,6 +1,7 @@
 """Generate the project page docs/index.html from the repository's own documents.
 
-Data flow: README.md, docs/concept.md and the project knowledge documents are read in a
+Data flow: README.md, docs/concept.md and the three knowledge documents
+knowledge/index.md, knowledge/schema.md and knowledge/operations.md are read in a
 fixed order, their YAML frontmatter is stripped, their Markdown is converted to
 HTML and the sections are wrapped in one self-contained page with inline CSS.
 Repository-relative links are resolved against each source document and point
@@ -28,6 +29,8 @@ import sys
 from pathlib import Path
 from urllib.parse import quote, urlsplit, urlunsplit
 
+from validate import WIKILINK, iso_date, split_frontmatter
+
 REPOSITORY_URL = "https://github.com/DigitalHumanitiesCraft/grounded-vault"
 
 # (anchor id, section title, source file relative to the vault root)
@@ -47,9 +50,7 @@ CHAIN = [
     ("40_output", "chapters footnoted to assertions"),
 ]
 
-_FRONTMATTER = re.compile(r"\A---\r?\n.*?\r?\n---\r?\n", re.DOTALL)
 _CODE_SPAN = re.compile(r"`([^`]+)`")
-_WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
 _LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 _BOLD = re.compile(r"\*\*(.+?)\*\*")
 _ITALIC = re.compile(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])")
@@ -81,7 +82,7 @@ def _inline(text: str, source: Path) -> str:
             out.append(f"<code>{html.escape(part)}</code>")
             continue
         piece = html.escape(part)
-        piece = _WIKILINK.sub(lambda m: f"<code>{m.group(1)}</code>", piece)
+        piece = WIKILINK.sub(lambda m: f"<code>{m.group(0)[2:-2]}</code>", piece)
         piece = _LINK.sub(
             lambda m: (
                 f'<a href="{_repository_href(m.group(2), source)}">{m.group(1)}</a>'
@@ -234,8 +235,11 @@ def _render_blocks(lines: list[str], source: Path) -> str:
 
 def _prepare(text: str) -> list[str]:
     """Strip frontmatter, drop the document H1 and demote the remaining headings."""
-    body = _FRONTMATTER.sub("", text).replace("\r\n", "\n")
-    lines = body.split("\n")
+    # CRLF is folded first, so a document checked out with Windows line endings
+    # still has its frontmatter recognised by the shared splitter.
+    text = text.replace("\r\n", "\n")
+    split = split_frontmatter(text)
+    lines = (split[1] if split else text).split("\n")
     out = []
     seen_title = False
     for line in lines:
@@ -371,9 +375,19 @@ def build_page(root: Path, date: str) -> str:
 """
 
 
+def _iso_date(value: str) -> str:
+    """Accept only a real calendar date in strict YYYY-MM-DD form."""
+    parsed = iso_date(value)
+    if parsed is not None and parsed.isoformat() == value:
+        return value
+    raise argparse.ArgumentTypeError(f"not a strict ISO date YYYY-MM-DD: {value!r}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--date", required=True, help="generation date, ISO 8601")
+    parser.add_argument(
+        "--date", required=True, type=_iso_date, help="generation date, YYYY-MM-DD"
+    )
     parser.add_argument(
         "--root",
         type=Path,

@@ -575,3 +575,43 @@ def test_empty_statement_section_is_reported_instead_of_reviewing_the_title(
     pairs = cut_pairs(vault, problems)
     assert not any(p.document == ASSERTION for p in pairs)
     assert f"{ASSERTION}: no assertion statement, skipped" in problems
+
+
+def test_statement_links_keep_their_reading_text(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    path = vault / f"{DOC_DISTILLATE}.md"
+    text = path.read_text(encoding="utf-8")
+    old = "- Water meters were installed on all plots"
+    assert old in text
+    path.write_text(
+        text.replace(
+            old,
+            "- [[glossary/metering|Water meters]] (`[[meter]]`) were installed"
+            " on all [[glossary/plots]]",
+        ),
+        encoding="utf-8",
+    )
+    pair = _by_id(cut_pairs(vault), f"{DOC_DISTILLATE}#^s1")
+    assert pair.statement == (
+        "Water meters (`[[meter]]`) were installed on all plots in January 2025."
+    )
+    assert "glossary" not in pair.prompt
+    assert "a1b2" not in pair.statement
+
+
+def test_grounding_without_a_pair_names_what_happened(tmp_path) -> None:
+    vault = tmp_path / "vault"
+    shutil.copytree(MINIMAL, vault)
+    path = vault / f"{DOC_DISTILLATE}.md"
+    text = path.read_text(encoding="utf-8")
+    anchor = "[[10_markdown/documents/report-garden-water-2026#^c3d4]]"
+    assert anchor in text
+    path.write_text(text.replace(anchor, "", 1), encoding="utf-8")
+    problems = []
+    cut_pairs(vault, problems)
+    assert f"{DOC_DISTILLATE}#^s2: no block anchor, skipped" in problems
+    assert any(
+        p.startswith(f"{ASSERTION}: grounding {DOC_DISTILLATE}#^s2 yielded no")
+        for p in problems
+    ), problems

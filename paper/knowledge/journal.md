@@ -91,3 +91,7 @@ Validation warns for eight document representations whose distillates anchor les
 The minimum coverage share stays at the template default of one half, so the eight warnings remain visible until the extension round runs.
 
 Provenance. Carried out by a delegated agent on 2026-09-27 under the operator's authorization, revisable.
+
+## 2026-10-04, source repository recorded as removed and instance scope stated
+
+The source repository `chpollin/grounded-vault-paper`, from which the foundation was imported at commit 3045fb48, has been deleted since 2026-09-28, which the README recorded at that time and the specification did not. The specification now states that this directory is the only remaining copy, that the former German blog chapter was not retained, and that the terminology snapshot at 79cd1d3 was ingested after the import. The action layer now names the root `CLAUDE.md` routing table as the task route and `paper` as the vault root for every root hard rule, replacing the wording that the root rules apply unchanged.

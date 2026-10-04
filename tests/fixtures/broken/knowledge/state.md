@@ -17,14 +17,18 @@ validator does not read it, so nothing here is a check.
 <!-- inventory:begin -->
 | Source | Type | Channel | Markdown representation | Distillate | Coverage | Status |
 |---|---|---|---|---|---|---|
+| Data representation whose data link leaves its layer | data | handover | [[10_markdown/data/data-wrong-layer]] | — | — | ingested |
 | Data representation with a dead data link | data | handover | [[10_markdown/data/dead-data]] | — | — | ingested |
 | Data representation without data | data | handover | [[10_markdown/data/no-data]] | — | — | ingested |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/data/computation-defects]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/data/missing-script]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/data/outside-analysis]] | 1/1 | distilled |
+| Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/data/statement-wrong-layer]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/appraisal-anchor]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/checked-bad-date]] | 1/1 | distilled |
+| Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/checked-empty-list]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/checked-not-a-map]] | 1/1 | distilled |
+| Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/distillate-channel]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/duplicate-statements]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/illegal-source-type]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/no-core-statements]] | 1/1 | distilled |
@@ -33,7 +37,9 @@ validator does not read it, so nothing here is a check.
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/sideways]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/stale]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/statement-defects]] | 1/1 | distilled |
+| Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/superseded-wrong-layer]] | 1/1 | distilled |
 | Broken fixture note | document | handover | [[10_markdown/documents/note]] | [[20_distillates/documents/unquoted-topics]] | 1/1 | distilled |
+| Broken fixture source left mostly unread | document | handover | [[10_markdown/documents/thin-coverage]] | [[20_distillates/documents/thin-coverage]] | 1/4 | distilled |
 | dead-representation | document | — | — | [[20_distillates/documents/dead-representation]] | — | distilled |
 | Duplicate block fixture note | document | handover | [[10_markdown/documents/duplicate-blocks]] | — | — | ingested |
 | incomplete-representation | document | handover | [[10_markdown/documents/incomplete-representation]] | — | — | ingested |

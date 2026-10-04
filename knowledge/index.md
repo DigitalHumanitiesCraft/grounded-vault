@@ -20,7 +20,6 @@ Human readers start at [[HOME]], and agents start at `CLAUDE.md`, which routes o
 ## Reading paths
 
 - To follow a complete public source-to-output chain, read [the worked example](../examples/prov-entity/README.md). Its original excerpt, immutable representation and review pairs remain inspectable.
-
 - To understand the project, read [[knowledge/specification]] for purpose and parameters, then [[knowledge/state]] for where work stands.
 - To produce or check content, read [[knowledge/schema]] for what a well-formed artifact is and [[knowledge/operations]] for the chain that produces it.
 - To understand a past decision, read [[knowledge/journal]], which is append-only with the newest entry last.
@@ -36,11 +35,11 @@ Human readers start at [[HOME]], and agents start at `CLAUDE.md`, which routes o
 | [[knowledge/state]] | source inventory, chapter register, everything volatile | constantly |
 | [[knowledge/journal]] | decision history | append-only |
 
-A document is split only when its sections develop divergent update rhythms or divergent readers.
+A document is split only when its sections develop divergent update rhythms or divergent readers. An instance that lives inside the template repository, as `paper/` does, holds only specification, state and journal and points at the root for index, schema and operations, so that the invariant documents exist once.
 
 ## Terminology
 
-Each term of the vault is defined here and nowhere else. [[knowledge/schema]] fixes the form of what these terms name, [[knowledge/operations]] the procedures that produce and check it.
+Each term of the vault is defined here and nowhere else. [[knowledge/schema]] fixes the form of what these terms name, [[knowledge/operations]] the procedures that produce and check it, and both use the terms without defining them again. The word instance is used in two senses, the checking instance (validation, machine review, verification) and the vault instance created from the template, and each occurrence is qualified where the context does not settle it.
 
 ### Documents and layers
 
@@ -54,15 +53,15 @@ One of the six documents in `knowledge/`, which describe the vault itself, its t
 
 #### Source
 
-The original file exactly as it arrived, kept untouched so that every later form of its content can be checked against it.
+The original material a statement chain rests on. For a document or a data file it is the original file exactly as it arrived, kept untouched in `00_sources/` or, for a data file that is itself the original, in `10_markdown/data/`, so that every later form of its content can be checked against it. For a publication the original stays outside the vault, and the bibliographic record in `references/` stands for it.
 
 #### Source type
 
-A class of sources defined by its Markdown representation, its distillation operation and its grounding anchor. The source types are `document`, `publication` and `data`.
+A class of sources, assigned by whether the content of a source may be stored in the vault, and defined by what then stands in the vault for it (a Markdown representation or a bibliographic record), by its distillation operation and by the form of its grounding anchor. The source types are `document`, `publication` and `data`, and the assignment criterion is set out in [[knowledge/schema]] § Source types.
 
 #### Markdown representation
 
-The uniform Markdown form of a source, produced once by converting the original and given block IDs so that later layers anchor into passages that never change afterwards.
+The uniform form of a source inside the vault, produced once and never edited afterwards. For a document it is the converted full text with a block ID on every anchor-relevant paragraph, so that later layers anchor into passages that never change. For a data file it is the file itself together with a Markdown description of its schema, and the anchor into it is a computation rather than a block.
 
 #### Distillate
 
@@ -70,7 +69,7 @@ The source-bound knowledge document, one per source. It condenses what the sourc
 
 #### Appraisal
 
-The optional section of a distillate that holds the vault's judgment of the source, such as the standing of its venue, the limits of its method and its relevance. It is a posit, mints no IDs and can therefore never serve as grounding.
+The optional section of a distillate that holds the vault's judgment of the source, such as the standing of its venue, the limits of its method and its relevance. It is the vault's own judgment rather than a report of the source, mints no IDs and can therefore never serve as grounding. Where it shapes the output, it enters there as a posit.
 
 #### Assertion
 
@@ -78,7 +77,7 @@ A single source-supported statement synthesized from the distillates of a topic 
 
 #### Topic map
 
-The file `MOC-<Topic>.md` in `30_assertions/`, one per topic, which registers the assertions of that topic, while each distillate names its topics in its own `topics` field. The set of topic maps is the controlled topic set.
+The file `MOC-<Topic>.md` in `30_assertions/`, one per topic, which registers the assertions of that topic, while distillates and assertions name their topics in their own `topics` field. The set of topic maps is the controlled topic set.
 
 #### Output
 
@@ -96,15 +95,19 @@ A conclusion in the output without source support, explicitly marked with its ra
 
 #### Anchor
 
-A machine-resolvable reference from a statement to the location it rests on, one layer down. Each layer carries its own form, block IDs in the Markdown representation, grounding anchors and statement IDs in the distillate, grounding anchors into distillate statements in the assertion, and footnote anchors into assertions in the chapter.
+A machine-resolvable reference from a statement to the location it rests on, one layer down. The target of an anchor is an ID that the lower layer minted, a block ID in a Markdown representation or a statement ID in a distillate, or a whole assertion in the case of a chapter footnote. Minting therefore concerns IDs, and anchoring concerns the references that point at them. Each layer carries its own anchor form, a block reference, quotation or computation in the distillate, a grounding anchor into a distillate statement in the assertion, and a footnote anchor into an assertion in the chapter.
 
 #### Block ID
 
 The ID (`^a1b2`) minted once at ingest on a passage of a document representation, the target distillate anchors bind to.
 
+#### Anchor-relevant paragraph
+
+A paragraph of a document representation that carries a statement a distillate could reproduce, and therefore receives a block ID at ingest. Headings, captions, table cells, navigation text and boilerplate carry none. The share of these paragraphs that distillate statements anchor is the coverage, so stamping a block on text no statement could rest on lowers coverage without adding anything checkable.
+
 #### Core statement
 
-A statement in the Core statements section of a distillate that reproduces its source within the source's literal sense. It carries exactly one grounding anchor, whose form follows the source type, a block reference for a document, a verbatim quotation for a publication and a declared computation for data. Only core statements can support an assertion.
+A statement in the Core statements section of a distillate that reproduces its source within the source's literal sense. The schema and the operations also call it a distillate statement when they look at it from the assertion layer. It carries exactly one grounding anchor, whose form follows the source type, a block reference for a document, a verbatim quotation for a publication and a declared computation for data. Only core statements can support an assertion.
 
 #### Statement ID
 
@@ -114,13 +117,25 @@ The ID (`^s1`) that ends a core statement, minted only in a distillate, the targ
 
 The anchor relation between a statement and what it rests on one layer down, source locations for a core statement and distillate statements for an assertion. The anchors that carry it are grounding anchors. It is a structural property an agent can produce and says nothing about whether the statement is true.
 
+#### Source identity
+
+What makes two distillates distillates of the same source. For a document or a data source it is the Markdown representation they name, for a publication it is the bibliographic record together with the text version named in `checked-against`. Two distillates with the same source identity fail validation.
+
+#### Load-bearing sentence
+
+A sentence of a chapter whose claim the chapter would lose if the sentence were struck. Every such sentence carries a footnote to an assertion or, where no source supports it, a posit footnote. Sentences that only connect, announce or summarize what the footnoted sentences already carry are free of footnotes, and a paragraph without any footnote marker raises `W-UNANCHORED`.
+
+#### Posit candidate
+
+A conclusion noted during assertion building that no distillate statement carries, kept in the open questions of the topic map until a chapter either writes it as a posit or a later source lets an assertion carry it.
+
 #### Displaced subject
 
 The case in which a passage supports a statement while its subject is not the matter the assertion is about. Its two named cases are the self-report, in which a source speaks about itself, and the state report, in which a source shows its matter in one state at one time.
 
 #### Provenance chain
 
-The unbroken anchor path from an output sentence through assertions and distillates to source locations. A break anywhere is a defect that validation detects.
+The unbroken anchor path from an output sentence through assertions and distillates to source locations. A break anywhere is a defect. Validation detects an anchor that does not resolve, and the quotation check at intake detects a quotation that deviates from a source the vault does not hold.
 
 ### Checking
 
@@ -142,7 +157,11 @@ Deterministic conformance checking of every file against the schema, by `tools/v
 
 #### Machine review
 
-Adversarial checking by a language model under anti-anchoring, the condition that the reviewer sees only the pair and never the producing agent's reasoning, which judges per pair of source location and statement whether the location supports the statement, with one verdict from a fixed vocabulary. Together with validation it lifts a distillate or an assertion to `validated`, never higher.
+Adversarial checking by a language model under anti-anchoring, the condition that the reviewer sees only the pair and never the producing agent's reasoning. It judges per pair whether the lower element supports the upper one, with one verdict from a fixed vocabulary. Together with validation it lifts a distillate or an assertion to `validated`, never higher.
+
+#### Pair
+
+The unit machine review judges. A source pair is a source location (a block with its heading path, a quotation, or a computation with its result) and the core statement anchored to it. An assertion pair is a distillate statement and the assertion grounded in it, the assertion given as the prose of its Statement section. Nothing else enters a pair.
 
 #### Verification
 
@@ -150,7 +169,7 @@ Human expert review by the verification role named in [[knowledge/specification]
 
 #### Evidence
 
-A grounding relation that has passed verification. It is relational and deliberately rare. A fresh vault contains grounding, and evidence arises only through review.
+A grounding relation that has passed verification. It is relational and deliberately rare. A fresh vault contains grounding, and evidence arises only through review. Where verification samples, only the sampled relations are evidence, and the document status `verified` records that the sampling rule in the journal was applied to it.
 
 #### Status ladder
 
@@ -159,4 +178,8 @@ The sequence `grounded` → `validated` → `verified`, with `contested` for ass
 #### Audit trail
 
 The principle that status fields record outcomes of checks that actually ran, each with its date on the checked document.
+
+#### Processing status
+
+The column of the source inventory that records how far a source has travelled along the chain, `new`, `ingested` or `distilled`. It is derived from the file state and is distinct from the status ladder, which records checking.
 
