@@ -36,7 +36,7 @@ The three source types `document`, `publication` and `data`, and the criterion t
 The five numbered folders form the production chain, each one holding the layer that the folder name announces. What each layer and its parts are is defined once in `knowledge/index.md` § Terminology.
 
 - `00_sources/` holds the sources, the originals as they arrived. Whether an original is committed is set out in `knowledge/operations.md` § Acquire.
-- `10_markdown/` holds the Markdown representations, the full texts in `documents/` and the datasets plus their schema description in `data/`.
+- `10_markdown/` holds the Markdown representations, the full texts in `documents/` and the datasets plus their schema description in `data/`. An optional `manifest.json` at the vault root records their digests, so that the rule that a representation is never edited after ingest is checked, as `knowledge/schema.md` § Source manifest sets out.
 - `20_distillates/` holds the distillates, one per source, in one subfolder per source type.
 - `30_assertions/` holds the assertions, one file each, together with one topic map (`MOC-*.md`) per topic of the controlled topic set.
 - `40_output/` holds the output, one or more documents such as a report, proposal, thesis or paper, kept as one file per chapter.
