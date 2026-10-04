@@ -43,12 +43,12 @@ The five numbered folders form the production chain, each one holding the layer 
 
 The remaining folders lie across the chain rather than inside it.
 
-- `knowledge/` is the governance layer, six project knowledge documents in the Promptotyping sense, holding terminology, parameters, schema, procedures, volatile state and the decision history. A nested instance inside this repository may hold only the three instance-specific documents and point at the root for the other three, as `paper/` does.
+- `knowledge/` is the governance layer, six project knowledge documents in the Promptotyping sense, holding terminology, parameters, schema, procedures, volatile state and the decision history. The two instances nested in this repository carry their own copies of the three invariant documents, and `tests/test_instances.py` holds every copy equal to the root apart from its frontmatter values.
 - `references/` holds the bibliographic records of citable-only sources as CSL JSON, one array per file, and is needed only while the source type `publication` is active.
 - `glossary/` holds one file per central technical term of the content, serving as definition, wikilink hub and tag keyword, and is filled as the need arises.
-- `tools/` holds the validator `validate.py`, the source inventory generator `inventory.py`, the machine review tool `review.py`, the migration tool `migrate.py` for vaults built before the template chain, and the project page generator `build_docs.py`. An instance with data sources adds `tools/analysis/`, the one folder from which data anchors re-run their deterministic scripts, one script per task.
+- `tools/` holds the validator `validate.py`, the source inventory generator `inventory.py`, the machine review tool `review.py` and the project page generator `build_docs.py`. An instance with data sources adds `tools/analysis/`, the one folder from which data anchors re-run their deterministic scripts, one script per task.
 - `tests/` holds the pytest suite of all tools, with the fixture vaults the validator tests run against in `tests/fixtures/`, a minimal conformant vault and a deliberately broken one that carries one specimen per finding class. A coverage test holds every finding code the validator emits against those specimens, so a check added without one fails the suite.
-- `docs/` holds the concept paper, the generated project page `index.html` and a dated field report from an instance, all addressed to the template rather than to any instance, so an instance may delete the folder.
+- `docs/` holds the concept paper, the template's decision record `decisions.md`, the generated project page `index.html` and a dated field report from an instance, all addressed to the template rather than to any instance, so an instance may delete the folder.
 - `.github/` holds the CI workflow `checks.yml`, which runs the Quickstart commands above on every push and pull request.
 - `.claude/` holds the harness-specific skills that the action layer `CLAUDE.md` routes into, exchangeable together with that file.
 

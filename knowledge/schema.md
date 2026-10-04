@@ -100,6 +100,30 @@ The criterion is storability, and the publication status of a source decides not
 
 The `reference` field of a publication distillate names one such `id`, and validation raises `E-ANCHOR` when no record in `references/` carries it. The folder is needed only while the source type `publication` is active.
 
+## Source manifest
+
+The rule that a Markdown representation is never edited after ingest becomes checkable through an optional file `manifest.json` at the vault root. It records, for every retained original in `00_sources/` and every Markdown representation, the vault-relative path with forward slashes and the SHA-256 digest of the file.
+
+```json
+{
+  "source_url": "",
+  "source_status": "",
+  "source_date": "",
+  "source_scope": "",
+  "source_license": "",
+  "source_copyright": "",
+  "authored_license": "",
+  "files": [
+    { "path": "00_sources/<slug>.<ext>", "sha256": "<64 hexadecimal digits>" },
+    { "path": "10_markdown/documents/<slug>.md", "sha256": "<64 hexadecimal digits>" }
+  ]
+}
+```
+
+Only `files` carries rules. The keys beside it are optional free metadata about the source and the rights under which the vault holds it, and validation does not interpret them. A `NOTICE` file beside the manifest carries the rights notices that third-party terms require, and validation does not read it at all. The folder `checks/` at the vault root holds the returned machine review batches as JSONL, one file per review run named by its date, as the record the machine review contract in [[knowledge/operations]] lets a batch retain.
+
+A vault without a manifest has no defect. Once a manifest exists, every path it lists must exist and match its digest, and every Markdown representation must be listed. Validation raises `E-MANIFEST` for an entry that fails and `W-MANIFEST` for a representation the manifest leaves out.
+
 ## Document types
 
 Each type carries its frontmatter as a code block, followed by the section skeleton where one is fixed. Fields not marked optional are required. Wikilink values are quoted, block IDs unquoted, as Obsidian requires for YAML.

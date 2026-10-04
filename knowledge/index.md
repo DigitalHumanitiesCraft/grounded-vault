@@ -19,7 +19,6 @@ Human readers start at [[HOME]], and agents start at `CLAUDE.md`, which routes o
 
 ## Reading paths
 
-- To follow a complete public source-to-output chain, read [the worked example](../examples/prov-entity/README.md). Its original excerpt, immutable representation and review pairs remain inspectable.
 - To understand the project, read [[knowledge/specification]] for purpose and parameters, then [[knowledge/state]] for where work stands.
 - To produce or check content, read [[knowledge/schema]] for what a well-formed artifact is and [[knowledge/operations]] for the chain that produces it.
 - To understand a past decision, read [[knowledge/journal]], which is append-only with the newest entry last.
@@ -35,7 +34,7 @@ Human readers start at [[HOME]], and agents start at `CLAUDE.md`, which routes o
 | [[knowledge/state]] | source inventory, chapter register, everything volatile | constantly |
 | [[knowledge/journal]] | decision history | append-only |
 
-A document is split only when its sections develop divergent update rhythms or divergent readers. An instance that lives inside the template repository, as `paper/` does, holds only specification, state and journal and points at the root for index, schema and operations, so that the invariant documents exist once.
+A document is split only when its sections develop divergent update rhythms or divergent readers.
 
 ## Terminology
 

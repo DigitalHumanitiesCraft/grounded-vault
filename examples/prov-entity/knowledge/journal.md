@@ -37,3 +37,7 @@ The example retains only the entity definition selected from the dated W3C Recom
 ## 2026-10-03, recorded machine review
 
 A fresh-context Codex subagent judged only the exported source and assertion prompts and returned fully-supporting verdicts. The original results and prompt hashes are preserved in `checks/review-2026-10-03.jsonl`, and the review tool booked them after matching the current pairs. Clean validation was recorded before the distillate, assertion and chapter advanced to validated. Model-family independence was not established, and human verification remains unperformed.
+
+## 2026-10-04, governance copies held equal to the root
+
+The copies of index, schema and operations are refreshed from the root and from now on held equal to it by `tests/test_instances.py`, so that a rule change at the root fails the suite until the copies follow. The example gains an action layer `CLAUDE.md` derived from the root one, with the template-only routing rows removed and the harness rules filled.

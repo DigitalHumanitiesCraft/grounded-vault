@@ -24,97 +24,33 @@ The vault is dual-readable by design. A human reads it as a linked Markdown coll
 
 ## 3. Terminology
 
-The vocabulary is chosen to keep an epistemological distinction visible that generated knowledge tends to blur, the distinction between material and evidence.
+The vocabulary is chosen to keep an epistemological distinction visible that generated knowledge tends to blur, the distinction between material and evidence. Every term is defined once, in the terminology section of the index document in `knowledge/`, and this paper uses the terms in that sense without defining them again. Three choices behind that vocabulary need their reasons stated here.
 
-### Source
+A source is where information comes from, and nothing about being a source implies being checked or being true. Grounding names the structural relation an agent can produce, a resolvable anchor from a statement to what it rests on, and evidence names the same relation after a human expert has judged that it holds. The word evidence is reserved for that final state so that it stays rare and expensive inside the architecture, and a freshly generated vault contains grounding only.
 
-The original file exactly as it arrived in the vault, whether a document, a publication or a dataset, kept untouched so that every later form of its content can be checked against it. A source is where information comes from. Nothing about being a source implies being checked or being true.
+The term assertion comes from historical work practice, where an assertion is the researcher's own source-supported statement, and it connects to the nanopublication community, whose core building block is an assertion together with its provenance. It was preferred over claim, which in the attribution literature names the unit under test without saying whether it rests on anything.
 
-### Source type
-
-A class of sources defined by its representation inside the repository, which for archivable material is the Markdown representation, by its distillation operation, and by its grounding anchor, meaning the mechanism by which a statement binds to a location in the source. Section 5 defines the initial typology. Source types are configuration, and a project activates the types it needs.
-
-### Distillate
-
-The source-bound knowledge document of exactly one source, condensing it into core statements that each carry a grounding anchor into that source. The core statements reproduce their source without merging it with other sources. What the source is worth stays out of them and goes into a separate optional appraisal section, which is the vault's own judgment, mints no anchors and can therefore never be grounded in. Production runs as a three-stage chain, LLM extraction with a canonical prompt, deterministic formatting, and a fidelity check against the source. Every content document type carries a fixed frontmatter and section skeleton defined in the schema. Knowledge document is meant in the Promptotyping sense, a bounded, maintained document distilled from fuller material. The six documents in `knowledge/` are the other kind, project knowledge documents, which rest on no source and stay outside the content schema. The skeleton follows the general shape of a knowledge document (title, lead summary, key statements, open questions, related links) with one deliberate omission. The distillate has no synthesis section, because synthesis is promoted to its own document type, the assertion, where it becomes subject to grounding.
-
-### Assertion
-
-An atomic, source-supported statement relevant to the output, held in one file, synthesized from the distillates of one or more sources. It is supported by sources without being bound to any single one. Where a distillate statement reports what one source says, the assertion states the matter itself, and further sources can join its grounding without changing it. The term comes from historical work practice, where an assertion is the researcher's own source-supported statement, and it connects to the nanopublication community, whose core building block is an assertion together with its provenance. The assertion layer is where sources of different types converge.
-
-### Grounding
-
-The anchor relation between a statement and what it rests on one layer down, source locations for a distillate statement and distillate statements for an assertion. A statement is grounded when its anchors resolve. Grounding is a structural property that an agent can produce. It says nothing about whether the statement is true.
-
-### Evidence
-
-A grounding relation that has passed human expert verification. Evidence is relational. No document is evidence in itself. A source location becomes evidence with respect to a specific assertion, and only through verification. The word is deliberately reserved for this final state, which keeps it rare and expensive inside the architecture. A freshly generated vault contains grounding, and evidence arises only through subsequent human review.
-
-### Provenance chain
-
-The unbroken anchor path from a sentence in the output through the supporting assertions and their distillates to the source locations. Breaking it anywhere is a defect. Validation detects an anchor that no longer resolves, and the quotation check at intake detects a quotation that deviates from its source.
-
-### Audit trail
-
-The principle that status fields record the outcomes of checks that actually ran. A status is never set because it seems appropriate. Every check leaves its outcome and date on the document it checked, so reading a document reveals which checking instances have passed and when.
-
-### Validation, machine review, verification
-
-The three checking instances, defined in section 6. In this architecture, validation is deterministic checking against formal rules, and verification is human expert judgment. Readers from software engineering should note that this assignment inverts the IEEE convention. The definitions here follow the epistemology of the domain, where establishing truth is a human act and establishing formal conformance is a mechanical one.
+The three checking instances are named validation, machine review and verification. Validation is deterministic checking against formal rules, and verification is human expert judgment. Readers from software engineering should note that this assignment inverts the IEEE convention. The definitions follow the epistemology of the domain, where establishing truth is a human act and establishing formal conformance is a mechanical one.
 
 ## 4. Layer model
 
-The vault is organized in ascending layers. Each layer is checkable on its own, so the vault can be handed over even when upper layers are incomplete.
+The vault is organized in ascending layers, sources, Markdown representations, distillates, assertions and output, each with the anchor form the schema fixes for it. Each layer is checkable on its own, so the vault can be handed over even when upper layers are incomplete, and the numbered folder names keep the stratification visible in any file listing.
 
-| Layer | Content | Anchor it carries |
-|---|---|---|
-| Sources | Original material per source type | none, this is the ground |
-| Markdown representation | Archived full texts, datasets with their schema description | stable anchors (block IDs, file plus schema) |
-| Distillates | One distillate per source | grounding anchors into that source |
-| Assertions | Atomic statements plus topic maps (MOCs) | grounding anchors into distillates |
-| Output | The final output of the vault, one or more documents such as a report, proposal, thesis or paper | footnote anchors into assertions, own conclusions marked as posits |
-
-The bibliographic records of citable-only publications and the glossary lie across the chain rather than in one of its layers.
-
-Two rules constrain the chain. IDs are minted only at the layer they belong to, so a distillate references existing block IDs, mints only its own statement IDs and has no authority to mint a block. And each layer references only the layer directly beneath it, so the output binds to assertions, and every statement therefore passes through the synthesis and checking machinery before it can reach a source.
+Two rules constrain the chain, and both exist for the same reason. IDs are minted only at the layer they belong to, and each layer anchors only into the layer directly beneath it. Together they force every statement through the synthesis and checking machinery before it can reach a source, so that no output sentence can quote a passage the distillate layer has not reproduced and no assertion can rest on a passage no statement has been checked against.
 
 A conclusion that emerges during synthesis without source support does not enter an assertion. It enters the output as an explicitly marked posit, with its rationale and its open evidence question. The vault thereby shows exactly where it leaves its sources. Posit and assertion differ in kind and not in ripeness. An assertion rests on sources and carries a status that records how far it has been checked, while a posit rests on the author and carries no status, because it makes no claim about a source that a check could test. A posit therefore never matures into an assertion. What it leaves behind is its open evidence question, a research task rather than a defect, and the posit count of a chapter measures how much of the text stands on the author alone.
 
-Contradictions between sources are preserved. Assertions that cannot be reconciled are marked as contested and linked to each other in both directions. A contradictory source situation is itself information for the output.
+Contradictions between sources are preserved. Assertions that cannot be reconciled are marked as contested and linked to each other, and a chapter that reports the matter grounds in both sides. A contradictory source situation is itself information for the output, and only human verification settles it.
 
 ## 5. Source types
 
-The initial typology covers three source types, with a fourth sketched. Each is defined by its representation in the repository, its distillation operation and its grounding anchor. The criterion that assigns a source to a type is whether its content may be stored in the vault, and the publication status of a source decides nothing by itself, so an open-access article that may be stored is treated as a document.
+The initial typology covers three source types, document, publication and data, with a fourth sketched. The criterion that assigns a source to a type is whether its content may be stored in the vault, and the publication status of a source decides nothing by itself. The reason is that the anchor form follows from what the vault can hold. Where a full text may be stored, the anchor is a block reference into it, which resolves inside the vault and can be re-read at any time. Where only a bibliographic record may be stored, the anchor is a verbatim quotation, which the vault cannot re-check later, so the quotation check happens once at intake and is recorded with the text version it ran on. Where the source is a dataset, a statement like an aggregate exists at no passage, so the anchor is a deterministic computation that validation can re-run and compare exactly. The document type is therefore preferred wherever storage is permitted, and the publication type is the fallback.
 
-Every Markdown representation carries a compact metadata block in its frontmatter, with Dublin-Core-compatible field names (title, creator, date, format, identifier, license) plus a confidentiality flag, and records its acquisition channel as a provenance note in a field of its own. Licensing and confidentiality are thereby metadata of the individual source. Whether a full text may be archived, versioned or published is read off these fields instead of being wired into the architecture. A publication has no Markdown representation and therefore no metadata block, and its bibliographic substance lives in the CSL JSON record.
-
-Documents are sources whose full text may be stored in the vault and is therefore converted into a Markdown representation, typically material produced by or for the project owner, but equally any externally published text whose license permits storage.
-
-- The Markdown representation is a Markdown full text, converted once from the original and never edited afterwards, so that its anchors stay stable.
-- The anchor is a block reference, a short stable ID attached to each passage, addressable per passage.
-- Distillation extracts core statements, each bound to the passage that supports it.
-
-Whether the originals and full texts may be versioned or published is read off the source's license and confidentiality metadata, independent of the mechanics.
-
-Publications are sources that are only cited, because their full text may not or cannot be stored, whether for licensing or practical reasons. What lies in the vault is the bibliographic record, and the anchor is the verbatim quotation. This is the fallback case. Where a full text may be stored, the document type is preferred, because its anchors resolve inside the vault.
-
-- The representation is a bibliographic record (CSL JSON) with a persistent identifier, DOI preferred.
-- The anchor is a verbatim quotation together with the identifier. The quotation must appear character for character in the source, which is checked at intake time, while the full text is at hand, and recorded with its date on the distillate.
-- Distillation extracts core statements, each carrying its quotation.
-
-Data sources are datasets such as CSV, spreadsheets or XML, whose anchor is a deterministic computation over the file.
-
-- The Markdown representation is the data file plus a description of its schema.
-- The anchor is a reproducible computation, meaning the data file, a deterministic script in the vault's analysis folder, and its result. A statement like an aggregate or a statistical finding exists nowhere as a passage, so its anchor is the computation that yields it.
-- Distillation produces an analysis document whose core statements each name their computation.
-
-This type strengthens checking, because validation can re-run the computation and compare exactly.
+Licensing and confidentiality are metadata of the individual source, recorded in a Dublin-Core-compatible block on its Markdown representation. Whether a full text may be archived, versioned or published is read off these fields instead of being wired into the architecture. The historical two-stream design this architecture generalizes from distinguished internal and external documents for reasons of confidentiality and copyright. Those reasons were project-specific. What generalizes is the anchor mechanics per type, and a project may run a single type or several.
 
 Images and other carriers are only sketched. An image whose text can be recognized enters as a document through an OCR converter. An image whose content is not text would need an anchor of its own, the image file plus a region or a documented description, and that type is named as an extension point and left unelaborated.
 
-The historical two-stream design this architecture generalizes from distinguished internal and external documents for reasons of confidentiality and copyright. Those reasons were project-specific. What generalizes is the anchor mechanics per type. Confidentiality and licensing live in the per-source metadata block, and a project may run a single type or several.
-
-Sources are versioned by replacement. A Markdown representation is converted once and never edited, so its anchors stay stable. A revised source enters as a new representation file with a date-suffixed slug, existing anchors keep resolving against the old file, and the old distillate is marked as superseded by the new one.
+Sources are versioned by replacement. A Markdown representation is converted once and never edited, so its anchors stay stable. A revised source enters as a new representation with a date-suffixed slug, existing anchors keep resolving against the old file, and the old distillate is marked as superseded by the new one. A manifest of digests makes the immutability checkable.
 
 ### Acquisition channels
 

@@ -8,8 +8,9 @@ chapter mirror and footnote keywords, status discipline including the ladder
 against the anchors a document rests on, assertions that rest on the same
 anchors as another, footnote aliases that rename the assertion they cite, a
 production chain that holds no document at all, checks older than the content
-they judge, sources whose blocks the distillates mostly leave unanchored, and
-quotation checks that do not name the text version they ran on. The rules are
+they judge, sources whose blocks the distillates mostly leave unanchored,
+quotation checks that do not name the text version they ran on, and the digests
+of the source manifest against the files it lists. The rules are
 defined in knowledge/schema.md; this script only enforces them.
 
 Warnings report that a check found nothing to check, or found something that
@@ -17,7 +18,7 @@ needs a human decision rather than a verdict. They are always printed and
 counted.
 
 The module is also the shared parsing layer of the other tools. review.py,
-inventory.py, migrate.py and build_docs.py import the frontmatter split,
+inventory.py and build_docs.py import the frontmatter split,
 document loading, the wikilink pattern, statement and section parsing, source
 identity, the ISO date check and the folder constants from here, so that what
 counts as a document, a link or a statement cannot drift between them.
@@ -43,6 +44,7 @@ answers whether this chapter is ready for acceptance.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -114,7 +116,9 @@ LAYER_BELOW = {
     "assertion": DISTILLATE_LAYER,
     "distillate": REPRESENTATION_LAYER,
 }
-VAULT_WIDE_CHECKS = ("W-EMPTY", "W-NO-OUTPUT", "W-COVERAGE")
+VAULT_WIDE_CHECKS = ("W-EMPTY", "W-NO-OUTPUT", "W-COVERAGE", "E-MANIFEST", "W-MANIFEST")
+MANIFEST_FILE = "manifest.json"
+SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 # Below this share of anchored blocks a source counts as unexhausted. Half is
 # the point where more of a source is unread than read; an instance moves it.
 DEFAULT_MIN_COVERAGE = 0.5
@@ -269,7 +273,7 @@ def split_frontmatter(text: str) -> tuple[str, str] | None:
     """The raw YAML block and the body of a Markdown file, None when it has no frontmatter.
 
     Together with frontmatter_end the one place the frontmatter delimiter is
-    read; migrate and build_docs import it and review imports frontmatter_end,
+    read; build_docs imports it and review imports frontmatter_end,
     so that what counts as frontmatter cannot drift between tools.
     """
     end = frontmatter_end(text)
@@ -1344,6 +1348,76 @@ def _check_coverage(docs: dict[str, Doc], report: Report, minimum: float) -> Non
             )
 
 
+def _file_digests(path: Path) -> set[str]:
+    """The SHA-256 of the bytes on disk and of the same bytes with LF line ends.
+
+    A git checkout with autocrlf turns the LF of a text file into CRLF, which
+    changes no content but every digest, so a digest recorded over the committed
+    form must still match a Windows working tree. A binary original matches by
+    its raw bytes, the digest sha256sum prints.
+    """
+    data = path.read_bytes()
+    return {
+        hashlib.sha256(data).hexdigest(),
+        hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest(),
+    }
+
+
+def _check_manifest(root: Path, report: Report) -> None:
+    """A representation is never edited after ingest, which only a digest can show.
+
+    The manifest is optional. Once it exists, every entry must hold, and every
+    Markdown representation must be listed, so that an unlisted file cannot
+    escape the check.
+    """
+    path = root / MANIFEST_FILE
+    if not path.is_file():
+        return
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        report.error("E-MANIFEST", MANIFEST_FILE, f"not valid JSON: {exc}")
+        return
+    files = manifest.get("files") if isinstance(manifest, dict) else None
+    if not isinstance(files, list):
+        report.error("E-MANIFEST", MANIFEST_FILE, "no files list")
+        return
+    listed: set[str] = set()
+    for index, entry in enumerate(files):
+        rel = entry.get("path") if isinstance(entry, dict) else None
+        digest = entry.get("sha256") if isinstance(entry, dict) else None
+        if not isinstance(rel, str) or not (
+            isinstance(digest, str) and SHA256_HEX.match(digest)
+        ):
+            report.error(
+                "E-MANIFEST",
+                MANIFEST_FILE,
+                f"entry {index} needs a string path and a 64-hex sha256",
+            )
+            continue
+        listed.add(rel)
+        target = (root / rel).resolve()
+        # A path that leaves the vault is treated as absent, so the manifest
+        # cannot make the validator hash files outside the root it was given.
+        if not target.is_relative_to(root) or not target.is_file():
+            report.error(
+                "E-MANIFEST", MANIFEST_FILE, f"listed path does not exist: {rel}"
+            )
+        elif digest not in _file_digests(target):
+            report.error("E-MANIFEST", MANIFEST_FILE, f"sha256 differs for {rel}")
+    representations = sorted(
+        p.relative_to(root).as_posix()
+        for p in (root / REPRESENTATION_LAYER).rglob("*.md")
+    )
+    for rel in representations:
+        if rel not in listed:
+            report.warn(
+                "W-MANIFEST",
+                rel.removesuffix(".md"),
+                f"Markdown representation not listed in {MANIFEST_FILE}",
+            )
+
+
 def _check_output_present(docs: dict[str, Doc], report: Report) -> None:
     """A validator must not report green on a contract that had no subject."""
     if not any(doc.fm.get("type") == "chapter" for doc in docs.values()):
@@ -1458,6 +1532,7 @@ def validate(
         _check_chain_populated(docs, report)
         _check_output_present(docs, report)
         _check_coverage(docs, report, min_coverage)
+        _check_manifest(root, report)
     else:
         _check_placeholders(root, report, [doc.path for doc in scope.values()])
     return report

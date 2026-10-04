@@ -46,6 +46,7 @@ EXPECTED_BROKEN_CODES = {
     "E-MIRROR",
     "E-COMPUTATION",
     "E-QUOTE",
+    "E-MANIFEST",
 }
 
 DOC_DEFECTS = "20_distillates/documents/statement-defects"
@@ -217,6 +218,12 @@ BROKEN_FINDINGS = [
         "stated result '41' but computation yields '42'",
     ),
     ("E-QUOTE", "20_distillates/publications/no-quote-check", "checked.quote"),
+    ("E-MANIFEST", "manifest.json", "sha256 differs for 10_markdown/documents/note.md"),
+    (
+        "E-MANIFEST",
+        "manifest.json",
+        "does not exist: 10_markdown/documents/withdrawn.md",
+    ),
 ]
 
 # Warnings the broken fixture carries; each has its own test below, because the
@@ -230,6 +237,7 @@ EXPECTED_BROKEN_WARNINGS = {
     "W-ALIAS",  # test_a_footnote_alias_that_renames_its_assertion_is_reported
     "W-VERSION",  # test_a_quotation_check_without_a_text_version_is_reported
     "W-COVERAGE",  # test_a_source_the_distillates_mostly_leave_unanchored_is_reported
+    "W-MANIFEST",  # test_a_representation_missing_from_the_manifest_is_reported
 }
 
 
@@ -1333,3 +1341,78 @@ def test_unrelated_reference_import_errors_stay_out_of_chapter_scope(
     report = validate(root, run_computations=False, chapter=CHAPTER)
     assert report.errors == []
     assert report.warnings == []
+
+
+def test_a_representation_missing_from_the_manifest_is_reported() -> None:
+    report = validate(BROKEN, run_computations=False)
+    unlisted = _rels(report.warnings, "W-MANIFEST")
+    assert "10_markdown/documents/thin-coverage" in unlisted
+    assert "10_markdown/documents/note" not in unlisted
+
+
+@pytest.mark.parametrize(
+    ("content", "part"),
+    [
+        ("{not json", "not valid JSON"),
+        ('{"source_url": "x"}', "no files list"),
+        ('{"files": [{"path": "a.md", "sha256": "ABC"}]}', "64-hex sha256"),
+        ('{"files": [{"sha256": "' + "0" * 64 + '"}]}', "string path"),
+        (
+            '{"files": [{"path": "../outside.md", "sha256": "' + "0" * 64 + '"}]}',
+            "does not exist: ../outside.md",
+        ),
+    ],
+)
+def test_a_malformed_manifest_is_an_error(
+    tmp_path: Path, content: str, part: str
+) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (tmp_path / "outside.md").write_text("outside\n", encoding="utf-8")
+    (root / "manifest.json").write_text(content, encoding="utf-8")
+    report = validate(root, run_computations=False)
+    messages = [m for c, _, m in report.errors if c == "E-MANIFEST"]
+    assert any(part in m for m in messages), messages
+
+
+def test_an_edited_representation_breaks_its_digest(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    path = root / "10_markdown" / "documents" / "report-garden-water-2026.md"
+    path.write_bytes(path.read_bytes() + b"\nAn edit after ingest.\n")
+    report = validate(root, run_computations=False)
+    assert report.errors == [
+        (
+            "E-MANIFEST",
+            "manifest.json",
+            "sha256 differs for 10_markdown/documents/report-garden-water-2026.md",
+        )
+    ]
+
+
+def test_line_endings_alone_do_not_break_a_digest(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    for path in (root / "10_markdown").rglob("*.md"):
+        lf = path.read_bytes().replace(b"\r\n", b"\n")
+        path.write_bytes(lf.replace(b"\n", b"\r\n"))
+    assert validate(root, run_computations=False).errors == []
+    for path in (root / "10_markdown").rglob("*.md"):
+        path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
+    assert validate(root, run_computations=False).errors == []
+
+
+def test_a_vault_without_a_manifest_is_no_defect(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "manifest.json").unlink()
+    report = validate(root, run_computations=False)
+    assert report.errors == [] and report.warnings == []
+
+
+def test_the_manifest_stays_out_of_the_chapter_mode(tmp_path: Path) -> None:
+    root = tmp_path / "vault"
+    shutil.copytree(MINIMAL, root)
+    (root / "manifest.json").write_text("{not json", encoding="utf-8")
+    report = validate(root, run_computations=False, chapter=CHAPTER)
+    assert report.errors == []

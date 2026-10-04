@@ -2,7 +2,7 @@
 
 What changed in the template, for anyone running an instance built from it.
 
-An entry is written when a change makes an existing instance do something or lets it do something new. Everything else stays in the git history, which is the complete record. Each entry names the date, what changed, and whether a running instance has to act. Versions are dates, because instances follow the template by commit rather than by release.
+An entry is written when a change makes an existing instance do something or lets it do something new. Everything else stays in the git history, which is the complete record. Each entry names the date, what changed, and whether a running instance has to act. Versions are dates, because instances follow the template by commit rather than by release. The reasons behind template decisions are in [docs/decisions.md](docs/decisions.md).
 
 ## 2026-10-04
 
@@ -17,6 +17,10 @@ An anchor into `00_sources/` was exempt from resolution on every layer, and the 
 ### Review prompts keep link text (act where a statement carries a wikilink)
 
 The reviewer saw statements with their wikilinks cut out, alias text included. A wikilink now reads as its alias or its slug, inline code stays verbatim, and the statement's own anchor link is dropped. Pairs whose statement carried a wikilink produce a new `prompt_hash`, so their recorded judgements no longer bind and the pairs need a fresh review before booking. A defective record fails the whole batch, as the code always did and the contract now says.
+
+### Nested instances copy the invariant documents, and the concept paper stops restating rules
+
+The worked example and the internal manuscript carry their own copies of `knowledge/index.md`, `schema.md` and `operations.md`, held equal to the root by `tests/test_instances.py`. The example gains an action layer `CLAUDE.md`. `docs/concept.md` keeps motivation, rationale and lineage and points to `knowledge/` for every rule. `tools/migrate.py` and its test are removed. Template decisions and their reasons are recorded in `docs/decisions.md`.
 
 ### Terminology and procedures filled in
 

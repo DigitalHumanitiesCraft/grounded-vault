@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "10_markdown/data/water-readings-2025.md",
+      "sha256": "e476172be60b1fd51e1f3a28a4ab9d814f1e5864655c30540e654f08459165b2"
+    },
+    {
+      "path": "10_markdown/documents/report-garden-water-2026.md",
+      "sha256": "178e478b34014d044b77fa23c46ff254bae1e663697052e354ad5244c4967de7"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ profile:
 status: draft
 language: en
 created: "2026-10-03"
-updated: "2026-10-03"
+updated: "2026-10-04"
 related: [index, specification, operations, state]
 ---
 
@@ -30,7 +30,7 @@ The rules of the vault cover the layer model, the controlled vocabularies, the a
 | Assertions | `30_assertions/` | atomic statements not bound to one source, topic maps | grounding anchors into distillate statements |
 | Output | `40_output/` | one file per chapter | footnote anchors into assertions, posits marked |
 
-The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `python tools/inventory.py . --write` rather than maintained by hand, so that no second bookkeeping can drift away from the files. For a document representation it also carries the coverage defined in [[knowledge/index]] § Terminology, and validation raises `W-COVERAGE` where coverage falls below the share an instance sets.
+The source inventory in `knowledge/state.md` lists every Markdown representation and every distillate, and it is generated from the file state by `uv run python tools/inventory.py . --write` rather than maintained by hand, so that no second bookkeeping can drift away from the files. For a document representation it also carries the coverage defined in [[knowledge/index]] § Terminology, and validation raises `W-COVERAGE` where coverage falls below the share an instance sets.
 
 The terms for the layers and their parts are defined once in [[knowledge/index]] § Terminology. The schema fixes the form of what they name.
 
@@ -42,11 +42,11 @@ Two rules constrain the chain. Anchors are minted only at the layer they belong 
 - `source-type` takes one of the values `document`, `publication` and `data`.
 - `channel` takes one of the values `handover`, `collection`, `import` and `deep-research`.
 - `status` takes one of the values `grounded`, `validated` and `verified`, plus `contested` (assertions only) and `superseded` (distillates only).
-- Each value of `topics` must name an existing topic map, and the set of `MOC-*.md` files in `30_assertions/` is the controlled topic set.
+- Each value of `topics` must name an existing topic map, and the set of `MOC-*.md` files in `30_assertions/` is the controlled topic set. A topic map's file name is `MOC-` followed by its `topic` value with spaces replaced by hyphens, and an entry of `topics` names that `topic` value.
 
 ## Audit trail
 
-A status records the outcome of checks that actually ran. Every check writes its date into the `checked` map of the document it checked:
+A status records the outcome of checks that actually ran. Every check leaves its date in the `checked` map of the document it checked, written by the tool where the tool books (machine review through `judge --apply`) and by the agent after a clean run where the tool only reports (validation), and for verification by or on behalf of the verifying role:
 
 ```yaml
 status: validated
@@ -82,7 +82,7 @@ The criterion is storability, and the publication status of a source decides not
 
 ## Bibliographic records
 
-`references/` holds the bibliographic records of the citable-only sources as CSL JSON, exported from the reference manager. Each file is a JSON array of records, with a single-record object accepted for an export of one record. Each record carries a nonempty string or integer `id` alongside its bibliographic fields. IDs are unique across the entire reference directory. Malformed records fail validation even when unused, and a duplicate ID resolves to no record.
+`references/` holds the bibliographic records of the citable-only sources as CSL JSON, exported from the reference manager. Each file is a JSON array of records, with a single-record object accepted for an export of one record. Each record carries a nonempty string or integer `id` alongside its bibliographic fields. IDs are unique across the entire reference directory. Malformed records fail whole-vault validation even when unused, and a duplicate ID resolves to no record. In chapter scope only the records the scope cites are checked.
 
 ```json
 [
@@ -99,6 +99,30 @@ The criterion is storability, and the publication status of a source decides not
 ```
 
 The `reference` field of a publication distillate names one such `id`, and validation raises `E-ANCHOR` when no record in `references/` carries it. The folder is needed only while the source type `publication` is active.
+
+## Source manifest
+
+The rule that a Markdown representation is never edited after ingest becomes checkable through an optional file `manifest.json` at the vault root. It records, for every retained original in `00_sources/` and every Markdown representation, the vault-relative path with forward slashes and the SHA-256 digest of the file.
+
+```json
+{
+  "source_url": "",
+  "source_status": "",
+  "source_date": "",
+  "source_scope": "",
+  "source_license": "",
+  "source_copyright": "",
+  "authored_license": "",
+  "files": [
+    { "path": "00_sources/<slug>.<ext>", "sha256": "<64 hexadecimal digits>" },
+    { "path": "10_markdown/documents/<slug>.md", "sha256": "<64 hexadecimal digits>" }
+  ]
+}
+```
+
+Only `files` carries rules. The keys beside it are optional free metadata about the source and the rights under which the vault holds it, and validation does not interpret them. A `NOTICE` file beside the manifest carries the rights notices that third-party terms require, and validation does not read it at all. The folder `checks/` at the vault root holds the returned machine review batches as JSONL, one file per review run named by its date, as the record the machine review contract in [[knowledge/operations]] lets a batch retain.
+
+A vault without a manifest has no defect. Once a manifest exists, every path it lists must exist and match its digest, and every Markdown representation must be listed. Validation raises `E-MANIFEST` for an entry that fails and `W-MANIFEST` for a representation the manifest leaves out.
 
 ## Document types
 
@@ -259,19 +283,19 @@ updated: 2026-01-01
 
 A conclusion without source support never becomes an assertion. It enters the output as a posit in the sense of [[knowledge/index]] § Terminology, and where a source turns up later, a new assertion is written and the posit falls away. Assertions that cannot be reconciled are both set to `contested` and linked to each other in `contested-with`.
 
-A passage can support a statement whose subject is not the subject the assertion is about, and the support relation still holds. Validation cannot see this, and machine review separates it only because its contract in [[knowledge/operations]] § Check names the two cases below.
+A displaced subject in the sense of [[knowledge/index]] § Terminology, a passage that supports the statement while its subject is not the matter the assertion is about, escapes validation, and machine review separates it only because its contract in [[knowledge/operations]] § Check names the two cases. The rule for the assertion in each case is this.
 
 #### Self-report
 
-Where a source speaks about itself, about its own priority, reach or achievement, its passage covers the claim and never the matter the claim is about. The distillate holds such a statement as what the source asserts. An assertion built from it either carries the speaker along, in the form that the source claims something, or it rests on a second and independent source.
+Where a source speaks about itself, about its own priority, reach or achievement, its passage covers the claim and never the matter the claim is about. The distillate holds such a statement as what the source asserts. An assertion built from it either carries the speaker along, in the form that the source claims something, or it drops the self-report anchor and rests on a second and independent source. Keeping the self-report anchor beside the independent one leaves a pair that machine review marks as overreaching, and the assertion then never reaches `validated`.
 
 #### State report
 
-Where a source shows the matter in one state at one time, its passage covers that state and never the matter across time. A restored object witnesses the restoration, a dated inventory witnesses the day it was taken, a plan witnesses what was intended when it was written. The distillate holds such a statement together with the state and its date. An assertion built from it either names the state and its date, or it rests on a source that establishes the property for the span the assertion claims.
+Where a source shows the matter in one state at one time, its passage covers that state and never the matter across time. A restored object witnesses the restoration, a dated inventory witnesses the day it was taken, a plan witnesses what was intended when it was written. The distillate holds such a statement together with the state and its date. An assertion built from it either names the state and its date, or it drops the state-report anchor and rests on a source that establishes the property for the span the assertion claims, for the same reason as above.
 
 ### 5. Topic map (MOC)
 
-One file per topic of the controlled topic set, named `MOC-<Topic>.md` in `30_assertions/`. The set of these files is the topic vocabulary.
+One file per topic of the controlled topic set, named `MOC-<Topic>.md` in `30_assertions/`. The set of these files is the controlled topic set.
 
 ```yaml
 ---
@@ -348,7 +372,7 @@ Validation cross-checks the footnotes against the `assertions` mirror and the `p
 
 Where a chapter reports a matter the sources disagree on, it grounds in both sides of the contested pair. A chapter that names one assertion of such a pair and none of its counterparts presents the dispute as settled, and validation raises `W-CONTESTED`.
 
-## Meta documents
+## Project knowledge documents
 
 The six project knowledge documents in `knowledge/` carry the Promptotyping header, as at the top of this file, instead of a content `type`, and they are exempt from the content schema, as [[knowledge/index]] § Terminology sets out.
 

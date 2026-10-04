@@ -95,3 +95,7 @@ Provenance. Carried out by a delegated agent on 2026-09-27 under the operator's 
 ## 2026-10-04, source repository recorded as removed and instance scope stated
 
 The source repository `chpollin/grounded-vault-paper`, from which the foundation was imported at commit 3045fb48, has been deleted since 2026-09-28, which the README recorded at that time and the specification did not. The specification now states that this directory is the only remaining copy, that the former German blog chapter was not retained, and that the terminology snapshot at 79cd1d3 was ingested after the import. The action layer now names the root `CLAUDE.md` routing table as the task route and `paper` as the vault root for every root hard rule, replacing the wording that the root rules apply unchanged.
+
+## 2026-10-04, governance documents copied into the instance
+
+Index, schema and operations now exist as copies inside this instance, filled with its name, repository and dates, and a test holds every copy equal to the root document apart from those frontmatter values. The earlier choice to reference the root avoided a second copy but left the instance's wikilinks resolving to the uninstantiated template documents and left the root unable to describe an instance with three knowledge documents. The copy model is what every external instance has anyway, so the two nested instances now follow it too.

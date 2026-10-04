@@ -44,7 +44,7 @@ Three things are written rather than substituted. One `MOC-<Topic>.md` per topic
 
 ## Conditional folders
 
-Two folders across the chain are used only where the project calls for them. `references/` holds the CSL JSON records of citable-only sources and is needed only when the source type `publication` is active. `glossary/` holds one document per central technical term of the content and is used as the need arises, and an empty glossary is no defect.
+Two folders across the chain are used only where the project calls for them. `references/` holds the CSL JSON records of citable-only sources and is needed only when the source type `publication` is active. `glossary/` holds one document per central technical term of the content and is used as the need arises, and an empty glossary is no defect. The source manifest `manifest.json`, the rights file `NOTICE` and the review record folder `checks/` at the vault root are optional in the same sense, as defined in `knowledge/schema.md` § Source manifest.
 
 ## Continuous checking
 

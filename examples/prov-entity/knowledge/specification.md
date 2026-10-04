@@ -48,3 +48,4 @@ Use concise English prose. Preserve the scope of the quoted definition and attri
 <!-- One line per decision with date. The reasoning behind each lives in the journal. -->
 
 - 2026-10-03: Vault instantiated from the Grounded Vault template.
+- 2026-10-04: Governance copies are held equal to the root by `tests/test_instances.py`, and the example carries its own action layer `CLAUDE.md`.

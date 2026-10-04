@@ -19,10 +19,10 @@ This instance contains one English manuscript that develops the Grounded Vault m
 - [[knowledge/specification]] records purpose, parameters, and the single manuscript decision.
 - [[knowledge/state]] records the source inventory and manuscript status.
 - [[knowledge/journal]] records provenance and decisions.
-- The root `knowledge/` directory defines the shared schema and operations.
+- [[knowledge/index]], [[knowledge/schema]] and [[knowledge/operations]] carry the terminology, schema and procedures, as copies of the root documents.
 
 ## Glossary
 
 - [[glossary/distillate]], [[glossary/excerpt]], [[glossary/grounding]], [[glossary/evidence]] and [[glossary/provenance]] define the terms the manuscript argues with.
 
-The status ladder and its states are defined in the root `knowledge/index.md` § Terminology.
+The status ladder and its states are defined in [[knowledge/index]] § Terminology.
