@@ -19,7 +19,8 @@ function renderHeader(t, lang) {
       h("span", { text: "Grounded Vault" })),
     h("nav", { class: "site-nav", "aria-label": t.nav.top },
       h("ul", {}, ...NAV.map((id) => h("li", {}, h("a", { href: `#${id}`, text: t.nav[id] }))))),
-    h("div", { class: "head-actions" }, toggle, h("a", { class: "pill", href: REPO, text: t.template })),
+    h("div", { class: "head-actions" }, toggle, h("a", { class: "pill", href: REPO, "aria-label": t.template },
+      h("span", { class: "long", text: t.template }), h("span", { class: "short", "aria-hidden": "true", text: "GitHub" }))),
   );
   document.querySelector(".skip").textContent = t.skip;
 }

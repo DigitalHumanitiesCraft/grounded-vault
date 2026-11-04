@@ -79,14 +79,17 @@ export function createTrace(host, text) {
   });
   const column = h("ol", { class: "layers" }, ...rows.map(({ row }) => row));
 
-  const caption = h("p", { class: "trace-caption", "aria-live": "polite" });
+  // The visible caption moves between layers, which screen readers do not announce reliably,
+  // so a fixed hidden live region carries the same text.
+  const caption = h("p", { class: "trace-caption" });
+  const live = h("p", { class: "visually-hidden", "aria-live": "polite" });
   const prev = h("button", { type: "button", class: "btn", text: t.prev });
   const play = h("button", { type: "button", class: "btn primary", text: t.play });
   const next = h("button", { type: "button", class: "btn", text: t.next });
   const controls = h("div", { class: "trace-controls" }, prev, play, next);
 
   // The caption sits under the layer it explains; the controls stay at the foot of the figure.
-  host.replaceChildren(h("p", { class: "trace-title", text: t.title }), stepNav, ladder, column, controls);
+  host.replaceChildren(h("p", { class: "trace-title", text: t.title }), stepNav, ladder, column, controls, live);
 
   let index = 0;
   let timer = 0;
@@ -122,7 +125,10 @@ export function createTrace(host, text) {
     const [title, body] = t.steps[step.id];
     caption.replaceChildren(h("strong", { text: `${t.actors[step.actor]}. ${title}. ` }), body);
     anchor.body.append(caption);
-    if (follow) keepInView();
+    if (follow) {
+      live.textContent = caption.textContent;
+      keepInView();
+    }
     prev.disabled = index === 0;
     next.disabled = index === STEPS.length - 1;
   }

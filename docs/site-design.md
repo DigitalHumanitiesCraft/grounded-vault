@@ -17,6 +17,7 @@ One sentence of a synthetic annual report of a city archive is followed down the
 - Each step is a complete state, so any step can be shown directly. Play advances with a delay derived from the caption length.
 - The layers form one column. The vertical thread is the anchor path and lights up as layers are reached. A layer shows its excerpt once reached and its gloss before.
 - The caption stands under the layer it explains. The controls stick to the foot of the viewport, and a computed scroll keeps the caption between header and controls.
+- Because the visible caption moves between layers, a fixed visually hidden live region carries the same text for screen readers.
 - Step pills distinguish done (check mark), current (filled) and next (plain). The human step has its own group and a green outline once reached.
 - The status ladder shows `grounded`, `validated` and `verified` with a gloss each. Reached statuses keep a check mark and are never struck through, because they accumulate.
 - The machine review step shows a real catch. Minutes that only announce the reopening would make “has been open again” overreach, which is why the example's source is the April minutes recorded after the reopening.
@@ -24,7 +25,7 @@ One sentence of a synthetic annual report of a city archive is followed down the
 
 ## Visual system
 
-Tokens, fonts (Sora, Instrument Sans, vendored under `docs/assets/fonts/` with their licences), pill buttons and the white DHCraft mark are those of the Second Brain page. The hero stands on the navy night ground, reading sections on paper. Lines appear only on interactive elements and as the anchor thread. Check results carry the colour of their authority (script blue, language model amber, person green) together with a symbol, so they do not rest on colour alone.
+Tokens, fonts (Sora, Instrument Sans, vendored under `docs/assets/fonts/` with their licences), pill buttons and the white DHCraft mark are those of the Second Brain page. The hero stands on the navy night ground, reading sections on paper. Lines appear only on interactive elements and as the anchor thread. Below 48rem the repository link in the header shortens to GitHub, and below 22.5rem the mark alone names the site. Check results carry the colour of their authority (script blue, language model amber, person green) together with a symbol, so they do not rest on colour alone.
 
 ## Terms
 
@@ -55,7 +56,9 @@ On 2026-11-04 three model readers (separate subagents in the roles of a historia
 - The readers stopped at cloning, uv and step 5 of the start section. The section now names the terminal, links GitHub Desktop and the uv installer, and says where `verdicts.jsonl` comes from and where `verified` is written.
 - The reviewer found moving controls, too short autoplay, struck-through statuses and a caption far from its layer on phones. These were changed as described above.
 
-Still open from these readings are time and cost per source, and a human reading and the operator's acceptance.
+A browser check on the same day exercised the keyboard path (tab order, Enter on a step, Space on Next, visible focus ring on the night ground), the 720 by 450 view that corresponds to 200 percent zoom, a 320 pixel phone in both languages without horizontal scrolling, reduced motion (no smooth scrolling, no autoplay without a click) and blocked browser storage. At 320 pixels the German Next button wraps to a second row and keeps its position across steps. A Jekyll build serves the page, its scripts and assets, `concept.md` and `decisions.md`, and neither this document nor the field report.
+
+Still open are time and cost per source, for which no measurement exists, a run with a real screen reader and real touch input, a human reading and the operator's acceptance.
 
 ## Decisions
 

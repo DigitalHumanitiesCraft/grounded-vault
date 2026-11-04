@@ -106,10 +106,12 @@
     color: var(--ink); text-decoration: none; font-size: var(--step--1); cursor: pointer; white-space: nowrap; min-block-size: 2.2rem; display: inline-flex; align-items: center;
   }
   .lang:hover, .pill:hover { border-color: var(--accent); }
+  .pill .short { display: none; }
   @media (max-width: 47.99rem) {
     .site-nav { flex-basis: 100%; order: 3; }
     .site-head { gap: 0 1rem; justify-content: space-between; }
-    .head-actions .pill { display: none; }
+    .pill .long { display: none; }
+    .pill .short { display: inline; }
   }
 
   .night-glass {
@@ -256,4 +258,13 @@
 
 @layer utilities {
   .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+@layer layout {
+  /* Very narrow phones: the mark alone names the site, and the player buttons stay on one row. */
+  @media (max-width: 22.5rem) {
+    .brand span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .trace-controls { gap: 0.35rem; }
+    .trace-controls .btn { padding-inline: 0.6rem; font-size: 0.95rem; }
+  }
 }
