@@ -17,8 +17,8 @@ Warnings report that a check found nothing to check, or found something that
 needs a human decision rather than a verdict. They are always printed and
 counted.
 
-The module is also the shared parsing layer of the other tools. review.py,
-inventory.py and build_docs.py import the frontmatter split,
+The module is also the shared parsing layer of the other tools. review.py
+and inventory.py import the frontmatter split,
 document loading, the wikilink pattern, statement and section parsing, source
 identity, the ISO date check and the folder constants from here, so that what
 counts as a document, a link or a statement cannot drift between them.
@@ -273,7 +273,7 @@ def split_frontmatter(text: str) -> tuple[str, str] | None:
     """The raw YAML block and the body of a Markdown file, None when it has no frontmatter.
 
     Together with frontmatter_end the one place the frontmatter delimiter is
-    read; build_docs imports it and review imports frontmatter_end,
+    read; review imports frontmatter_end,
     so that what counts as frontmatter cannot drift between tools.
     """
     end = frontmatter_end(text)

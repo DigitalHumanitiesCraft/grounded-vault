@@ -4,6 +4,12 @@ What changed in the template, for anyone running an instance built from it.
 
 An entry is written when a change makes an existing instance do something or lets it do something new. Everything else stays in the git history, which is the complete record. Each entry names the date, what changed, and whether a running instance has to act. Versions are dates, because instances follow the template by commit rather than by release. The reasons behind template decisions are in [docs/decisions.md](docs/decisions.md).
 
+## 2026-11-04
+
+### The project page generator is removed (act where an instance runs it)
+
+`tools/build_docs.py` and its test are gone, and `docs/index.html` is now a hand-written method page addressed to the template. An instance that regenerated its own page should delete the step from its action layer `CLAUDE.md` and remove `build_docs` from `known-first-party` in `pyproject.toml`. An instance that never used it has nothing to do.
+
 ## 2026-10-04
 
 ### Anchors into originals no longer pass as grounding (act)

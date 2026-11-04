@@ -35,7 +35,7 @@ Read `knowledge/index.md` (terminology) first, then `knowledge/state.md` (where 
 
 ## Harness block (exchangeable)
 
-This block is specific to Claude Code and may be replaced for another harness. For Claude Code the three skills `ingest-source`, `distill-source` and `build-assertions` live under `.claude/skills/` and route to the corresponding sections of `knowledge/operations.md`, which stays the single place the rules are written down. The `run` subcommand of `tools/review.py` judges through the local `claude -p` command line, which in this harness calls a model of the producer's own family, so a reviewer from another family goes through `emit` and `judge`. After a milestone commit that changes `README.md`, `docs/concept.md`, `knowledge/index.md`, `knowledge/schema.md` or `knowledge/operations.md`, run `uv run python tools/build_docs.py --date <YYYY-MM-DD>` to regenerate the project page `docs/index.html` from exactly these files.
+This block is specific to Claude Code and may be replaced for another harness. For Claude Code the three skills `ingest-source`, `distill-source` and `build-assertions` live under `.claude/skills/` and route to the corresponding sections of `knowledge/operations.md`, which stays the single place the rules are written down. The `run` subcommand of `tools/review.py` judges through the local `claude -p` command line, which in this harness calls a model of the producer's own family, so a reviewer from another family goes through `emit` and `judge`.
 
 - Commit at milestones with concise English imperative messages, and stage explicit paths.
 - {{HARNESS_RULES}}
