@@ -55,7 +55,7 @@ function renderHero(t, onPlay) {
 function copyButton(t, value) {
   // Without the Clipboard API the prompt stays selectable text and no button appears.
   if (!navigator.clipboard?.writeText) return null;
-  const copy = h("button", { type: "button", class: "btn ghost small", text: t.copy });
+  const copy = h("button", { type: "button", class: "btn small", text: t.copy });
   copy.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(value);

@@ -9,9 +9,7 @@ export const REPO = "https://github.com/DigitalHumanitiesCraft/grounded-vault";
 const BLOB = `${REPO}/blob/main`;
 
 export const LINKS = {
-  repo: REPO,
   useTemplate: `${REPO}/generate`,
-  setup: `${BLOB}/SETUP.md`,
   setupPrompt: `${BLOB}/SETUP.md#prompt-for-the-first-agent-session`,
   firstCycle: `${BLOB}/SETUP.md#first-production-cycle`,
   concept: `${BLOB}/docs/concept.md`,
@@ -21,14 +19,12 @@ export const LINKS = {
   example: `${BLOB}/examples/prov-entity/README.md`,
   changelog: `${BLOB}/CHANGELOG.md`,
   licence: `${BLOB}/LICENSE`,
-  licenceMit: `${BLOB}/LICENSE-MIT`,
   uv: "https://docs.astral.sh/uv/getting-started/installation/",
   githubDesktop: "https://desktop.github.com/",
   pricing: "https://claude.com/pricing",
   git: "https://git-scm.com/downloads",
   claudeCode: "https://code.claude.com/docs/en/setup",
   claudeData: "https://code.claude.com/docs/en/data-usage",
-  codex: "https://learn.chatgpt.com/docs/codex/cli",
   obsidian: "https://obsidian.md",
   docling: "https://github.com/docling-project/docling",
   promptotyping: "https://dhcraft.org/Promptotyping/",

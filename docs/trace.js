@@ -80,9 +80,9 @@ export function createTrace(host, text) {
   const column = h("ol", { class: "layers" }, ...rows.map(({ row }) => row));
 
   const caption = h("p", { class: "trace-caption", "aria-live": "polite" });
-  const prev = h("button", { type: "button", class: "btn ghost", text: t.prev });
+  const prev = h("button", { type: "button", class: "btn", text: t.prev });
   const play = h("button", { type: "button", class: "btn primary", text: t.play });
-  const next = h("button", { type: "button", class: "btn ghost", text: t.next });
+  const next = h("button", { type: "button", class: "btn", text: t.next });
   const controls = h("div", { class: "trace-controls" }, prev, play, next);
 
   // The caption sits under the layer it explains; the controls stay at the foot of the figure.
