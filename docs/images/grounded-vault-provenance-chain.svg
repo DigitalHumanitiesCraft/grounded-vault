@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-labelledby="t d" lang="en">
   <title id="t">Grounded Vault, provenance chain and checks</title>
-  <desc id="d">An agent builds a chain of five layers. The output holds chapters whose load-bearing sentences carry a footnote anchor into an assertion, and an own conclusion stands as a posit without anchor. An assertion is grounded in core statements of distillates through their statement IDs and is registered in a topic map. A distillate holds the core statements of one source, each with one anchor into the Markdown representation, a block ID for a document, a verbatim quotation for a publication or a computation for data. The Markdown representation is converted once, never edited, and names its original in the sources layer. Three checks cover the chain. Validation by a script checks resolvability and form from the Markdown representations up to the output. Machine review by a second Large Language Model judges each pair of an assertion with its statement and of a statement with its passage. Verification by the verification role, a person, confirms grounding as evidence. The status ladder runs from grounded, built by the agent, through validated, machine checks passed, to verified, now evidence. Contested and superseded stand beside the ladder.</desc>
+  <desc id="d">An agent builds a chain of five layers, each anchored into the layer below. The output holds chapters whose load-bearing sentences carry a footnote anchor into an assertion, and an own conclusion stands beside it as a posit without anchor. An assertion is grounded in core statements of distillates through their statement IDs and is listed in a topic map. A distillate holds the core statements of one source, each with one anchor into the Markdown representation, a block ID for a document or a computation for data. The Markdown representation is converted once, never edited, and names its original in the sources layer. Three checks cover the chain. Validation by a script checks resolvability and form from the Markdown representations up to the output, and reaches the originals only through the optional manifest. Machine review by a second Large Language Model gives one verdict per pair, and only fully supports passes. Verification by the verification role, a person, confirms grounding as evidence. The status ladder runs from grounded, built by the agent, through validated, machine checks passed, to verified, now evidence. Contested and superseded stand beside the ladder.</desc>
   <defs>
     <marker id="ar" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
       <path d="M1,1 L11,6 L1,11 Z" fill="#1e2749"/>
@@ -14,129 +14,106 @@
     @font-face { font-family: "Sora"; src: url("../assets/dhcraft/fonts/sora-latin-700-normal.woff2") format("woff2"); font-weight: 700; }
     @font-face { font-family: "Instrument Sans"; src: url("../assets/dhcraft/fonts/instrument-sans-latin-400-normal.woff2") format("woff2"); font-weight: 400; }
     @font-face { font-family: "Instrument Sans"; src: url("../assets/dhcraft/fonts/instrument-sans-latin-600-normal.woff2") format("woff2"); font-weight: 600; }
-    text { font-family: "Instrument Sans", system-ui, "Segoe UI", sans-serif; fill: #1e2749; font-size: 18px; }
-    .h { font-family: "Sora", "Instrument Sans", system-ui, sans-serif; font-weight: 700; font-size: 24px; }
+    text { font-family: "Instrument Sans", system-ui, "Segoe UI", sans-serif; fill: #1e2749; font-size: 19px; }
+    .h { font-family: "Sora", "Instrument Sans", system-ui, sans-serif; font-weight: 700; font-size: 26px; }
     .h6 { font-family: "Sora", "Instrument Sans", system-ui, sans-serif; font-weight: 600; font-size: 22px; }
     .soft { fill: #576078; }
     .rel { font-weight: 600; }
-    .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 16px; }
+    .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 17px; }
     .end { text-anchor: end; }
     .mid { text-anchor: middle; }
     .caps { font-weight: 600; letter-spacing: 2px; fill: #576078; font-size: 14px; }
-    .layer { fill: #ffffff; stroke: #1e2749; stroke-width: 1.8; }
+    .layer { fill: #f3f1e9; }
     .anchor { fill: none; stroke: #1e2749; stroke-width: 2.5; }
     .source { fill: none; stroke: #576078; stroke-width: 2; stroke-dasharray: 7 5; }
-    .posit { fill: #fdfcf8; stroke: #576078; stroke-width: 1.5; stroke-dasharray: 6 5; }
-    .validation { fill: #eef3fa; stroke: #4a7ab8; stroke-width: 3; }
-    .review { fill: #fbf2e6; stroke: #b8701a; stroke-width: 3; }
-    .verification { fill: #eef5eb; stroke: #5c9e4a; stroke-width: 3; }
-    .pill { fill: #ffffff; stroke: #1e2749; stroke-width: 1.5; }
+    .posit { fill: none; stroke: #576078; stroke-width: 1.5; stroke-dasharray: 6 5; }
+    .pill { fill: #ffffff; stroke-width: 2.5; }
+    .step { fill: none; stroke: #7f8499; stroke-width: 1.5; }
   </style>
   <rect width="1600" height="900" fill="#fdfcf8"/>
 
-  <text class="caps" x="60" y="30">PROVENANCE CHAIN, BUILT BY AN AGENT</text>
-  <text class="caps" x="890" y="30">CHECKS</text>
+  <text class="caps" x="80" y="48">PROVENANCE CHAIN, BUILT BY AN AGENT</text>
+  <text class="caps" x="900" y="48">CHECKS</text>
 
-  <!-- Output -->
-  <rect class="layer" x="60" y="48" width="600" height="106" rx="12"/>
-  <text class="h" x="84" y="86">Output</text>
-  <text class="mono soft end" x="636" y="84">40_output/</text>
-  <text x="84" y="116">Chapters whose load-bearing sentences carry a</text>
-  <text x="84" y="140">footnote anchor into an assertion.</text>
-  <rect class="posit" x="680" y="56" width="180" height="90" rx="10"/>
-  <text class="h6" x="698" y="86" style="font-size:19px">Posit</text>
-  <text class="soft" x="698" y="112" style="font-size:16px">own conclusion,</text>
-  <text class="soft" x="698" y="132" style="font-size:16px">marked, no anchor</text>
-  <path d="M660,101 H676" stroke="#576078" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <!-- Layers: a light ground without frame, name, folder and one line each -->
+  <rect class="layer" x="80" y="76" width="600" height="96" rx="12"/>
+  <text class="h" x="108" y="116">Output</text>
+  <text class="mono soft end" x="652" y="114">40_output/</text>
+  <text class="soft" x="108" y="150">Chapters, every load-bearing sentence footnoted</text>
 
-  <path class="anchor" d="M110,154 V210" marker-end="url(#ar)"/>
-  <text class="rel" x="130" y="180">footnote anchor into an assertion</text>
-  <text class="mono" x="130" y="202">Grounded in [[assertion]]</text>
+  <path class="anchor" d="M120,174 V234" marker-end="url(#ar)"/>
+  <text class="mono" x="148" y="212">Grounded in [[assertion]]</text>
 
-  <!-- Assertions -->
-  <rect class="layer" x="60" y="212" width="600" height="106" rx="12"/>
-  <text class="h" x="84" y="250">Assertions</text>
-  <text class="mono soft end" x="636" y="248">30_assertions/</text>
-  <text x="84" y="280">One source-supported statement per file,</text>
-  <text x="84" y="304">listed in the topic map of its topic.</text>
+  <rect class="layer" x="80" y="240" width="600" height="96" rx="12"/>
+  <text class="h" x="108" y="280">Assertions</text>
+  <text class="mono soft end" x="652" y="278">30_assertions/</text>
+  <text class="soft" x="108" y="314">One statement per file, listed in its topic map</text>
 
-  <path class="anchor" d="M110,318 V374" marker-end="url(#ar)"/>
-  <text class="rel" x="130" y="344">grounding anchor into a statement ID</text>
-  <text class="mono" x="130" y="366">[[distillate#^s1]]</text>
+  <path class="anchor" d="M120,338 V398" marker-end="url(#ar)"/>
+  <text class="mono" x="148" y="376">[[distillate#^s1]]</text>
 
-  <!-- Distillates -->
-  <rect class="layer" x="60" y="376" width="600" height="106" rx="12"/>
-  <text class="h" x="84" y="414">Distillates</text>
-  <text class="mono soft end" x="636" y="412">20_distillates/</text>
-  <text x="84" y="444">One per source, each core statement with one anchor</text>
-  <text x="84" y="468">and a statement ID. Publications are quoted verbatim.</text>
+  <rect class="layer" x="80" y="404" width="600" height="96" rx="12"/>
+  <text class="h" x="108" y="444">Distillates</text>
+  <text class="mono soft end" x="652" y="442">20_distillates/</text>
+  <text class="soft" x="108" y="478">Core statements of one source, each with an ID</text>
 
-  <path class="anchor" d="M110,482 V538" marker-end="url(#ar)"/>
-  <text class="rel" x="130" y="508">grounding anchor into a block ID, for data a computation</text>
-  <text class="mono" x="130" y="530">[[representation#^a1b2]]</text>
+  <path class="anchor" d="M120,502 V562" marker-end="url(#ar)"/>
+  <text class="mono" x="148" y="540">[[representation#^a1b2]]</text>
+  <text class="soft" x="420" y="540">or a computation for data</text>
 
-  <!-- Markdown representations -->
-  <rect class="layer" x="60" y="540" width="600" height="106" rx="12"/>
-  <text class="h" x="84" y="578">Markdown representations</text>
-  <text class="mono soft end" x="636" y="576">10_markdown/</text>
-  <text x="84" y="608">Converted once and never edited. A block ID on</text>
-  <text x="84" y="632">each anchor-relevant paragraph, data with its schema.</text>
+  <rect class="layer" x="80" y="568" width="600" height="96" rx="12"/>
+  <text class="h" x="108" y="608">Markdown representations</text>
+  <text class="mono soft end" x="652" y="606">10_markdown/</text>
+  <text class="soft" x="108" y="642">Converted once, never edited, block IDs on passages</text>
 
-  <path class="source" d="M110,646 V702" marker-end="url(#as)"/>
-  <text class="soft" x="130" y="680">names its original in the field source</text>
+  <path class="source" d="M120,666 V726" marker-end="url(#as)"/>
+  <text class="soft" x="148" y="704">names its original in the field source</text>
 
-  <!-- Sources -->
-  <rect class="layer" x="60" y="704" width="600" height="106" rx="12"/>
-  <text class="h" x="84" y="742">Sources</text>
-  <text class="mono soft end" x="636" y="740">00_sources/</text>
-  <text x="84" y="772">The originals as they arrived. A publication enters</text>
-  <text x="84" y="796">as its bibliographic record in references/.</text>
+  <rect class="layer" x="80" y="732" width="600" height="96" rx="12"/>
+  <text class="h" x="108" y="772">Sources</text>
+  <text class="mono soft end" x="652" y="770">00_sources/</text>
+  <text class="soft" x="108" y="806">Originals as they arrived, publications as records</text>
 
-  <!-- Checks -->
-  <rect class="validation" x="890" y="48" width="210" height="598" rx="14"/>
-  <text class="h6" x="910" y="86">Validation</text>
-  <text class="soft" x="910" y="112">a script</text>
-  <text x="910" y="150">Every anchor</text>
-  <text x="910" y="174">resolves one layer</text>
-  <text x="910" y="198">down, no layer is</text>
-  <text x="910" y="222">skipped, each file</text>
-  <text x="910" y="246">has the form the</text>
-  <text x="910" y="270">schema fixes.</text>
-  <text class="soft" x="910" y="604" style="font-size:16px">originals only through</text>
-  <text class="soft" x="910" y="626" style="font-size:16px">the optional manifest</text>
+  <!-- Posit beside the output -->
+  <rect class="posit" x="712" y="80" width="156" height="88" rx="10"/>
+  <text class="h6" x="730" y="110" style="font-size:19px">Posit</text>
+  <text class="soft" x="730" y="134" style="font-size:16px">own conclusion,</text>
+  <text class="soft" x="730" y="154" style="font-size:16px">no anchor</text>
 
-  <rect class="review" x="1120" y="212" width="210" height="434" rx="14"/>
-  <text class="h6" x="1140" y="250">Machine review</text>
-  <text class="soft" x="1140" y="276">a second LLM</text>
-  <text x="1140" y="314">One verdict per pair,</text>
-  <text x="1140" y="338">an assertion with its</text>
-  <text x="1140" y="362">statement or a</text>
-  <text x="1140" y="386">statement with its</text>
-  <text x="1140" y="410">location. Only</text>
-  <text x="1140" y="434" class="rel">fully supports</text>
-  <text x="1140" y="458">passes.</text>
+  <!-- Checks: one bar each over the layers it covers -->
+  <rect x="900" y="76" width="8" height="588" rx="4" fill="#4a7ab8"/>
+  <text class="h6" x="928" y="104">Validation</text>
+  <text class="soft" x="928" y="132">a script</text>
+  <text x="928" y="174">anchors resolve,</text>
+  <text x="928" y="198">form holds</text>
+  <text class="soft" x="928" y="640" style="font-size:16px">originals only through</text>
+  <text class="soft" x="928" y="660" style="font-size:16px">the optional manifest</text>
 
-  <rect class="verification" x="1350" y="48" width="210" height="598" rx="14"/>
-  <text class="h6" x="1370" y="86">Verification</text>
-  <text class="soft" x="1370" y="112">the verification role,</text>
-  <text class="soft" x="1370" y="134">a person</text>
-  <text x="1370" y="172">Reads statements</text>
-  <text x="1370" y="196">beside their passages,</text>
-  <text x="1370" y="220">all or by a recorded</text>
-  <text x="1370" y="244">sample. Confirmed</text>
-  <text x="1370" y="268">grounding becomes</text>
-  <text x="1370" y="292" class="rel">evidence.</text>
+  <rect x="1120" y="240" width="8" height="424" rx="4" fill="#b8701a"/>
+  <text class="h6" x="1148" y="268">Machine review</text>
+  <text class="soft" x="1148" y="296">a second LLM</text>
+  <text x="1148" y="338">one verdict per pair,</text>
+  <text x="1148" y="362">only <tspan class="rel">fully supports</tspan></text>
+  <text x="1148" y="386">passes</text>
+
+  <rect x="1340" y="76" width="8" height="588" rx="4" fill="#5c9e4a"/>
+  <text class="h6" x="1368" y="104">Verification</text>
+  <text class="soft" x="1368" y="132">a person</text>
+  <text x="1368" y="174">confirmed grounding</text>
+  <text x="1368" y="198">becomes <tspan class="rel">evidence</tspan></text>
 
   <!-- Status ladder -->
-  <text class="caps" x="890" y="704">STATUS LADDER</text>
-  <rect class="pill" x="890" y="722" width="120" height="36" rx="18"/>
-  <text class="mono mid" x="950" y="746">grounded</text>
-  <text class="soft" x="1024" y="746">built by the agent</text>
-  <rect class="pill" x="890" y="770" width="120" height="36" rx="18" style="stroke:#4a7ab8;stroke-width:2.5"/>
-  <text class="mono mid" x="950" y="794">validated</text>
-  <text class="soft" x="1024" y="794">machine checks passed</text>
-  <rect class="pill" x="890" y="818" width="120" height="36" rx="18" style="stroke:#5c9e4a;stroke-width:2.5"/>
-  <text class="mono mid" x="950" y="842">verified</text>
-  <text class="soft" x="1024" y="842">confirmed by verification, now evidence</text>
-  <text class="soft" x="890" y="884" style="font-size:16px">contested and superseded stand beside the ladder</text>
+  <text class="caps" x="900" y="740">STATUS LADDER</text>
+  <rect class="pill" x="900" y="760" width="140" height="38" rx="19" style="stroke:#1e2749"/>
+  <text class="mono mid" x="970" y="785">grounded</text>
+  <path class="step" d="M1052,779 H1106" marker-end="url(#as)"/>
+  <rect class="pill" x="1120" y="760" width="140" height="38" rx="19" style="stroke:#4a7ab8"/>
+  <text class="mono mid" x="1190" y="785">validated</text>
+  <path class="step" d="M1272,779 H1326" marker-end="url(#as)"/>
+  <rect class="pill" x="1340" y="760" width="140" height="38" rx="19" style="stroke:#5c9e4a"/>
+  <text class="mono mid" x="1410" y="785">verified</text>
+  <text class="soft" x="900" y="828" style="font-size:16px">built by the agent</text>
+  <text class="soft" x="1120" y="828" style="font-size:16px">machine checks passed</text>
+  <text class="soft" x="1340" y="828" style="font-size:16px">now evidence</text>
+  <text class="soft" x="900" y="868" style="font-size:16px">contested and superseded stand beside the ladder</text>
 </svg>
