@@ -77,6 +77,7 @@
   <h2 id="origin-title" data-t="origin.title">Origin</h2>
   <div class="dh-prose">
     <p data-t="origin.p" data-t-html>Grounded Vault is a profile of <a href="https://dhcraft.org/Promptotyping/">Promptotyping</a> for knowledge work under an evidence obligation. It takes over the maintained project knowledge in <code>knowledge/</code> and adds the anchor from every statement to its source. It draws on historical source criticism for the relational concept of evidence, on historical work practice and nanopublications for the assertion paired with its provenance, on scholarly digital editing for validating a corpus against its own schema, and on data management for provenance as a machine-traversable relation, as W3C PROV standardises it. The <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/docs/concept.md">concept paper</a> gives the reasons, and the repository is cited as given under <a href="#citation">Citation</a>.</p>
+    <p data-t="origin.terms" data-t-html>The Promptotyping manuscript divides checking into the same three positions under other names. What this repository calls validation, the check by a script, the manuscript calls verification, and the judgement of a person, here verification, is its scholarly validation. Machine review stands in the place of its agentic review, in a narrower form, because the reviewing LLM judges only the pair it is given.</p>
   </div>
 </section>
 
@@ -199,7 +200,7 @@ uv run python tools/validate.py .</code></pre>
         <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-terminal"/></svg><span data-t="label.shell">Shell, in the repository root</span></figcaption>
 <pre lang="en"><code>uv run python tools/review.py judge . --verdicts verdicts.jsonl --apply</code></pre>
       </figure>
-      <p class="step-result" data-t="ex.r8" data-t-html><code>checked.machine-review</code> with the date on distillate and assertion. The batch is kept under <code>checks/</code>, as in the example's <code>checks/review-2026-10-03.jsonl</code>.</p>
+      <p class="step-result" data-t="ex.r8" data-t-html><code>checked.machine-review</code> with the date on distillate and assertion. Status and <code>checked.validation</code> stay unchanged.</p>
     </li>
     <li>
       <h3 data-t="ex.s9">Record the statuses</h3>
@@ -207,7 +208,7 @@ uv run python tools/validate.py .</code></pre>
         <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
 <pre lang="en"><code>judge --apply has booked every document. Record the validation dates and set the statuses as SETUP.md describes under First production cycle, step 9, and keep verdicts.jsonl under checks/ as review-&lt;date&gt;.jsonl.</code></pre>
       </figure>
-      <p class="step-result" data-t="ex.r9" data-t-html>Distillate and assertion at <code>validated</code> with both dates, the chapter at <code>validated</code> with its validation date.</p>
+      <p class="step-result" data-t="ex.r9" data-t-html>Distillate and assertion at <code>validated</code> with both dates, the chapter at <code>validated</code> with its validation date, and the verdicts under <code>checks/</code>, as in the example's <code>checks/review-2026-10-03.jsonl</code>.</p>
     </li>
     <li>
       <h3 data-t="ex.s10">Verification</h3>

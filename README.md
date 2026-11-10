@@ -56,6 +56,8 @@ The remaining folders lie across the chain rather than inside it.
 
 Three instances check the vault, with strictly separated authority. Validation (`tools/validate.py`) judges resolvability and form, machine review by a language model judges whether a source location supports the statement built on it, and human verification alone establishes evidence. A status is only ever set by a check that actually ran, and a document never stands higher than the anchors it rests on. The terms are defined in `knowledge/index.md` § Terminology. The contracts, the finding codes, the chapter scope and the status discipline are set out in `knowledge/operations.md` § Check.
 
+The Promptotyping manuscript divides checking into the same three positions under other names. What this repository calls validation, the check by a script, the manuscript calls verification, and the judgement of a person, here verification, is its scholarly validation. Machine review stands in the place of its agentic review, in a narrower form, because the reviewing LLM judges only the pair it is given.
+
 ## Dual readability
 
 Humans read the vault in Obsidian, following wikilinks from an output footnote down to the supporting passage. Agents enter through `CLAUDE.md`, an imperative action layer that routes every task onto the declarative rule documents in `knowledge/`. The Markdown stays portable, and beyond wikilinks and block references no plugin-specific syntax is used.

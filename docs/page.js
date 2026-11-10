@@ -37,6 +37,7 @@ const PAGE_DE = {
 
   "origin.title": "Herkunft",
   "origin.p": `Grounded Vault ist ein Profil von <a href="https://dhcraft.org/Promptotyping/">Promptotyping</a> für Wissensarbeit unter Belegpflicht. Es übernimmt das gepflegte Projektwissen in <code>knowledge/</code> und ergänzt den Anker von jeder Aussage zu ihrer Quelle. Es schöpft aus der historischen Quellenkritik den relationalen Begriff des Belegs, aus der historischen Arbeitspraxis und den Nanopublikationen die mit ihrer Provenienz gepaarte Assertion, aus der digitalen Edition die Validierung eines Korpus gegen das eigene Schema und aus dem Datenmanagement Provenienz als maschinell durchlaufbare Relation, wie W3C PROV sie standardisiert. Das <a href="${REPO}/docs/concept.md">Konzeptpapier</a> (englisch) begründet die Architektur, und zitiert wird das Repository wie unter <a href="#citation">Zitation</a> angegeben.`,
+  "origin.terms": "Das Manuskript zu Promptotyping ordnet die Prüfung in dieselben drei Stellen unter anderen Namen. Was dieses Repository Validierung nennt, die Prüfung durch ein Skript, heißt dort <span lang=\"en\">verification</span>, und das Urteil einer Person, hier Verifikation, heißt dort <span lang=\"en\">scholarly validation</span>. Die Maschinenprüfung steht an der Stelle der <span lang=\"en\">agentic review</span>, in engerer Form, weil das prüfende LLM nur das ihm vorgelegte Paar beurteilt.",
 
   "reuse.title": "Nachnutzung",
   "reuse.lead": "Das Template braucht <a href=\"https://git-scm.com/downloads\">Git</a>, <a href=\"https://docs.astral.sh/uv/getting-started/installation/\">uv</a> und einen Coding-Agenten, der Dateien liest und schreibt, etwa <a href=\"https://code.claude.com/docs/en/setup\">Claude Code</a> oder Codex. <a href=\"https://obsidian.md\">Obsidian</a> ist optional, zum Verfolgen der Links.",
@@ -78,9 +79,9 @@ const PAGE_DE = {
   "ex.r7": "<code>verdicts.jsonl</code>, eine Zeile je Paar, im Beispiel beide <code>fully supports</code>.",
   "ex.s8": "Die Urteile verbuchen",
   "ex.s8.text": "<code>verdicts.jsonl</code> in die Wurzel des Repositorys kopieren. Den zweiten Befehl erst ausführen, wenn der erste kein abweichendes Urteil meldet.",
-  "ex.r8": "<code>checked.machine-review</code> mit Datum an Destillat und Assertion. Der Batch bleibt unter <code>checks/</code>, wie im Beispiel <code>checks/review-2026-10-03.jsonl</code>.",
+  "ex.r8": "<code>checked.machine-review</code> mit Datum an Destillat und Assertion. Status und <code>checked.validation</code> bleiben unverändert.",
   "ex.s9": "Den Status eintragen",
-  "ex.r9": "Destillat und Assertion auf <code>validated</code> mit beiden Daten, das Kapitel auf <code>validated</code> mit seinem Validierungsdatum.",
+  "ex.r9": "Destillat und Assertion auf <code>validated</code> mit beiden Daten, das Kapitel auf <code>validated</code> mit seinem Validierungsdatum und die Urteile unter <code>checks/</code>, wie im Beispiel <code>checks/review-2026-10-03.jsonl</code>.",
   "ex.s10": "Verifikation",
   "ex.s10.text": "Die Verifikationsrolle liest die Assertion neben ihrer Passage und setzt, wo sie trägt, <code>status: verified</code> mit <code>checked.verification</code>. Im eingecheckten Beispiel ist dieser Schritt nicht erfolgt.",
   "ex.check": "Das eingecheckte Beispiel prüfen, in der Wurzel dieses Repositorys",
