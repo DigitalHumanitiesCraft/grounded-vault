@@ -1,270 +1,96 @@
-@layer reset, base, tokens, layout, components, utilities;
+/* Site layer of the Grounded Vault method page. Tokens and building blocks come from the
+   shared DHCraft files in assets/dhcraft/ (copied from brand-assets/web, unchanged). Layout and
+   look follow the Promptotyping start page, the reference the owner set on 2026-11-10. */
 
-@font-face { font-family: "Instrument Sans"; src: url("assets/fonts/instrument-sans-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Instrument Sans"; src: url("assets/fonts/instrument-sans-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
-@font-face { font-family: "Sora"; src: url("assets/fonts/sora-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
-@font-face { font-family: "Sora"; src: url("assets/fonts/sora-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
-
-@layer tokens {
-  /* DHCraft house palette (dhcraft-site global.css) in OKLCH, shared with the Second Brain
-     method page. Paper is the reading ground, the night is navy ink where the example plays. */
-  :root {
-    color-scheme: light;
-    --ground: oklch(99.1% 0.005 95);
-    --ground-alt: oklch(96.6% 0.01 95);
-    --surface: oklch(100% 0 0);
-    --edge: oklch(28.3% 0.064 271 / 0.12);
-    --edge-hi: oklch(28.3% 0.064 271 / 0.25);
-    --ink: oklch(28.3% 0.064 271);
-    --ink-soft: oklch(42% 0.05 271);
-    --ink-faint: oklch(52% 0.04 271);
-    --accent: oklch(53.1% 0.14 315);
-    --on-accent: oklch(99% 0.005 95);
-
-    /* The three checking authorities and the status they lead to. */
-    --st-script: oklch(57.4% 0.11 255);
-    --st-model: oklch(70% 0.138 69);
-    --st-person: oklch(63.5% 0.136 139);
-    --focus: oklch(53.1% 0.14 315);
-
-    --font: "Instrument Sans", system-ui, sans-serif;
-    --display: "Sora", "Instrument Sans", system-ui, sans-serif;
-    --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
-    --step--1: clamp(0.84rem, 0.82rem + 0.1vw, 0.9rem);
-    --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.08rem);
-    --step-1: clamp(1.15rem, 1.08rem + 0.35vw, 1.35rem);
-    --step-2: clamp(1.45rem, 1.25rem + 0.9vw, 1.95rem);
-    --step-3: clamp(2.2rem, 1.6rem + 2.6vw, 3.5rem);
-    --space: clamp(1rem, 0.8rem + 1vw, 1.6rem);
-    --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
-    --measure: 42rem;
-    --wide: 80rem;
-    --head-h: 3.6rem;
-  }
-
-  .night {
-    color-scheme: dark;
-    --ground: oklch(17% 0.045 271);
-    --ground-alt: oklch(14% 0.04 271);
-    --surface: oklch(22% 0.05 271);
-    --edge: oklch(100% 0 0 / 0.1);
-    --edge-hi: oklch(100% 0 0 / 0.22);
-    --ink: oklch(95% 0.01 95);
-    --ink-soft: oklch(82% 0.03 271);
-    --ink-faint: oklch(70% 0.03 271);
-    --accent: oklch(74% 0.13 315);
-    --on-accent: oklch(17% 0.045 271);
-    --st-script: oklch(80% 0.09 253);
-    --st-model: oklch(82% 0.13 69);
-    --st-person: oklch(78% 0.14 139);
-    --focus: oklch(84% 0.09 315);
-  }
+:root {
+  /* The three checks keep one hue each, as in the figure, always with a text label. */
+  --cat-validation: light-dark(#4a7ab8, #85aede);
+  --cat-review: light-dark(#b8701a, #e39a3b);
+  --cat-verification: light-dark(#5c9e4a, #8cc47a);
 }
 
-@layer reset {
-  *, *::before, *::after { box-sizing: border-box; }
-  body, h1, h2, h3, p, ol, ul, figure, pre { margin: 0; }
-  ol, ul { padding: 0; list-style: none; }
-  img, svg { display: block; max-inline-size: 100%; }
-  button { font: inherit; color: inherit; }
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.icon-set { position: absolute; inline-size: 0; block-size: 0; overflow: hidden; }
+.visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.icon { inline-size: 1.1em; block-size: 1.1em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* Header: the four hues of the mark as a hairline under it. */
+.site-head { position: sticky; inset-block-start: 0; z-index: 10; border-block-end: 0; }
+.site-head::after {
+  content: ""; position: absolute; inset-inline: 0; inset-block-end: -2px; block-size: 2px;
+  background: linear-gradient(90deg, var(--dh-green), var(--dh-blue-deep) 33%, var(--dh-purple) 66%, var(--dh-orange));
+}
+.head-tools { display: flex; align-items: center; gap: var(--dh-space-1); margin-inline-start: auto; }
+.head-lang { padding: var(--dh-space-2) var(--dh-space-3); color: var(--dh-ink-soft); text-decoration: none; }
+.head-lang:hover, .head-lang:focus-visible { color: var(--dh-ink); text-decoration: underline; }
+.icon-button {
+  display: inline-grid; place-items: center; inline-size: var(--dh-tap); block-size: var(--dh-tap);
+  padding: 0; border: 0; border-radius: var(--dh-radius-pill); background: transparent; color: var(--dh-ink-soft); cursor: pointer;
+}
+.icon-button:hover { color: var(--dh-ink); }
+.icon-button svg { inline-size: 1.15rem; block-size: 1.15rem; }
+:root:not(.js) #theme-toggle { display: none; }
+@media (max-width: 47.99rem) {
+  .site-head { position: relative; }
+  .site-head .dh-nav { order: 3; }
 }
 
-@layer base {
-  html { scroll-padding-block-start: calc(var(--head-h) + 1rem); }
-  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
-  body { background: var(--ground); color: var(--ink); font-family: var(--font); font-size: var(--step-0); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-  .night { background-color: var(--ground); color: var(--ink); }
-  h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -0.01em; }
-  h1 { font-size: var(--step-3); line-height: 1.05; letter-spacing: -0.02em; }
-  h2 { font-size: var(--step-2); line-height: 1.2; }
-  h3 { font-size: var(--step-1); line-height: 1.3; font-weight: 600; }
-  a { color: var(--accent); text-underline-offset: 0.18em; }
-  code, pre { font-family: var(--mono); font-size: 0.88em; }
-  :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.part { padding-block: var(--dh-space-7) 0; scroll-margin-block-start: 5rem; }
+.part > h2 { margin-block: 0 var(--dh-space-4); }
+.intro { padding-block-start: var(--dh-space-6); }
+.intro h1 { margin: 0 0 var(--dh-space-3); }
+.lead { font-size: var(--dh-step-1); line-height: 1.5; margin-block: 0 var(--dh-space-5); }
+.part p { margin-block: 0 var(--dh-space-3); }
+
+/* Main figure: the standalone SVG on its own paper ground, scrolling sideways inside the
+   frame on narrow screens so its text stays legible. */
+.main-figure { margin-block: 0 var(--dh-space-5); }
+.main-figure .dh-figure__canvas { padding: 0; background-color: #fdfcf8; border-color: var(--dh-line); }
+.main-figure img { display: block; inline-size: 100%; min-inline-size: 56rem; block-size: auto; }
+.figure-prose p { margin-block: 0 var(--dh-space-4); }
+
+.cat { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 0.22em; }
+.cat-validation { text-decoration-color: var(--cat-validation); }
+.cat-review { text-decoration-color: var(--cat-review); }
+.cat-verification { text-decoration-color: var(--cat-verification); }
+
+.rows { padding-inline-start: 1.1rem; }
+.rows li + li { margin-block-start: var(--dh-space-2); }
+
+/* Steps with a circled number, as on the Promptotyping start page. */
+.steps { margin: var(--dh-space-5) 0 0; padding: 0; list-style: none; counter-reset: step; max-inline-size: 62rem; }
+.steps > li { position: relative; counter-increment: step; padding-inline-start: 2.75rem; }
+.steps > li + li { margin-block-start: var(--dh-space-6); }
+.steps > li::before {
+  content: counter(step); position: absolute; inset-inline-start: 0; inset-block-start: 0;
+  display: grid; place-items: center; inline-size: 1.9rem; block-size: 1.9rem;
+  border: 1.5px solid var(--dh-ink-soft); border-radius: 50%;
+  font-size: var(--dh-step--1); font-weight: 600;
 }
+.steps h3 { margin: 0.15rem 0 var(--dh-space-2); font-size: var(--dh-step-1); }
+.steps p { max-inline-size: var(--dh-measure); }
 
-@layer layout {
-  .skip { position: absolute; inset-inline-start: 1rem; inset-block-start: -3rem; background: var(--surface); padding: 0.5rem 1rem; z-index: 40; }
-  .skip:focus { inset-block-start: 0.5rem; }
+.dh-code { margin-block: var(--dh-space-2) var(--dh-space-3); }
+.dh-code figcaption { display: flex; align-items: center; gap: var(--dh-space-2); }
+.dh-code pre { white-space: pre; }
+/* Prompts are prose for an agent, so they wrap and use the text face on a white card. */
+.dh-code.prompt pre { white-space: pre-wrap; overflow-wrap: anywhere; background-color: var(--dh-surface); }
+.dh-code.prompt code { font-family: var(--dh-font-text); font-size: var(--dh-step-0); line-height: 1.55; }
+.step-result { position: relative; padding-inline-start: 1.4rem; color: var(--dh-ink-soft); font-size: var(--dh-step--1); }
+.step-result::before { content: "→" / ""; position: absolute; inset-inline-start: 0; }
+.step-result code { overflow-wrap: anywhere; }
 
-  .site-head {
-    position: sticky; inset-block-start: 0; z-index: 20;
-    display: flex; align-items: center; gap: 0.4rem 2rem; flex-wrap: wrap;
-    min-block-size: var(--head-h); padding: 0.35rem var(--gutter);
-    background: oklch(15% 0.042 271 / 0.97); color: var(--ink);
-  }
-  .brand { display: flex; align-items: center; gap: 0.6rem; font-family: var(--display); font-weight: 700; color: var(--ink); text-decoration: none; }
-  .brand img { inline-size: 1.75rem; block-size: 1.75rem; }
-  .site-nav { flex: 1; min-inline-size: 0; }
-  .site-nav ul { display: flex; gap: 0.2rem; overflow-x: auto; scrollbar-width: none; }
-  .site-nav a { display: block; padding: 0.55rem 0.7rem; color: var(--ink-soft); text-decoration: none; white-space: nowrap; border-block-end: 2px solid transparent; }
-  .site-nav a:hover { color: var(--ink); }
-  .site-nav a[aria-current="true"] { color: var(--ink); border-block-end-color: var(--accent); }
-  .head-actions { display: flex; gap: 0.5rem; align-items: center; }
-  .lang, .pill {
-    padding: 0.3rem 0.85rem; border-radius: 999px; border: 1px solid var(--edge-hi); background: transparent;
-    color: var(--ink); text-decoration: none; font-size: var(--step--1); cursor: pointer; white-space: nowrap; min-block-size: 2.2rem; display: inline-flex; align-items: center;
-  }
-  .lang:hover, .pill:hover { border-color: var(--accent); }
-  .pill .short { display: none; }
-  @media (max-width: 47.99rem) {
-    .site-nav { flex-basis: 100%; order: 3; }
-    .site-head { gap: 0 1rem; justify-content: space-between; }
-    .pill .long { display: none; }
-    .pill .short { display: inline; }
-  }
-
-  .night-glass {
-    background:
-      radial-gradient(55rem 38rem at 80% -10%, oklch(45% 0.13 315 / 0.32), transparent 70%),
-      radial-gradient(40rem 30rem at -10% 50%, oklch(40% 0.09 255 / 0.22), transparent 70%),
-      var(--ground);
-  }
-  .hero {
-    display: grid; gap: calc(var(--space) * 1.5); align-items: start; max-inline-size: var(--wide); margin-inline: auto;
-    padding: calc(var(--space) * 2) var(--gutter) calc(var(--space) * 2.5); grid-template-columns: minmax(0, 1fr);
-  }
-  @media (min-width: 62rem) {
-    .hero { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); min-block-size: calc(100svh - var(--head-h)); align-items: center; }
-  }
-  .hero-text { display: grid; gap: 1.2rem; align-content: center; }
-
-  .band { padding: calc(var(--space) * 3) var(--gutter); }
-  .band.alt { background: var(--ground-alt); }
-  .inner { max-inline-size: var(--wide); margin-inline: auto; display: grid; gap: calc(var(--space) * 1.1); }
-
-  .site-foot { padding: calc(var(--space) * 2) var(--gutter); font-size: var(--step--1); }
-  .foot-grid { max-inline-size: var(--wide); margin-inline: auto; display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
-  .foot-grid > div { display: grid; gap: 0.6rem; }
-  .foot-links { display: grid; gap: 0.35rem; align-content: start; }
-  .quiet { color: var(--ink-faint); }
+/* Files to take away: a block of its own, one download control per file and one for all. */
+.downloads {
+  margin-block: var(--dh-space-6) 0; padding: var(--dh-space-5);
+  background-color: var(--dh-surface);
+  border: var(--dh-hairline) solid var(--dh-line-strong); border-radius: var(--dh-radius-m);
 }
-
-@layer components {
-  .btn {
-    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 999px;
-    border: 1px solid var(--edge-hi); background: transparent; cursor: pointer; font-weight: 600; text-decoration: none; color: var(--ink); min-block-size: 2.5rem;
-  }
-  .btn:hover { border-color: var(--accent); }
-  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
-  .night .btn.primary { box-shadow: 0 0 2rem oklch(74% 0.13 315 / 0.35); }
-  .btn.small { min-block-size: 2.1rem; padding: 0.2rem 0.8rem; font-size: var(--step--1); font-weight: 400; }
-  .btn:disabled { opacity: 0.4; cursor: default; }
-  .actions { display: flex; flex-wrap: wrap; gap: 0.7rem; }
-  .lead { font-size: var(--step-1); line-height: 1.5; color: var(--ink-soft); max-inline-size: 34rem; }
-  .who { color: var(--ink-faint); max-inline-size: 34rem; }
-
-  /* The trace. Layers are separated by space, the thread on the left is the anchor path. */
-  .trace { display: grid; gap: 1rem; align-content: start; }
-  .trace-title { font-family: var(--display); font-weight: 600; }
-  .trace-steps { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; }
-  .step-group { display: grid; gap: 0.35rem; }
-  .step-group-label { font-size: var(--step--1); color: var(--ink-faint); }
-  .step-group ol { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-  .step-pill {
-    display: inline-flex; align-items: center; gap: 0.45rem; min-block-size: 2.4rem; padding: 0.3rem 0.85rem 0.3rem 0.35rem;
-    border-radius: 999px; border: 1px solid var(--edge-hi); background: transparent; color: var(--ink-faint); cursor: pointer; font-size: var(--step--1);
-  }
-  .step-no { inline-size: 1.6rem; block-size: 1.6rem; border-radius: 50%; display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; font-weight: 600; }
-  .step-pill:hover { border-color: var(--accent); color: var(--ink); }
-  .step-pill[data-phase="done"] { color: var(--ink-soft); }
-  .step-pill[data-phase="done"] .step-no { background: var(--surface); }
-  .step-pill[data-phase="done"] .step-no::before { content: "\2713"; }
-  .step-pill[data-phase="done"] .step-no { font-size: 0; }
-  .step-pill[data-phase="done"] .step-no::before { font-size: var(--step--1); }
-  .step-pill[data-phase="current"] { background: var(--accent); border-color: transparent; color: var(--on-accent); font-weight: 600; }
-  .step-pill[data-phase="current"] .step-no { border: 0; background: oklch(100% 0 0 / 0.25); }
-  /* The person's step keeps its own outline in every phase, so the human check stands out. */
-  .step-pill.actor-person:not([data-phase="next"]) { border-color: var(--st-person); border-width: 2px; }
-
-  /* Reached statuses stay valid and accumulate, so they get a check mark, never a strike. */
-  .ladder { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; font-size: var(--step--1); }
-  .ladder li { display: grid; gap: 0.05rem; color: var(--ink-faint); }
-  .status-value { font-family: var(--mono); justify-self: start; padding: 0.05rem 0.6rem; border-radius: 999px; }
-  .status-gloss { padding-inline-start: 0.6rem; }
-  .ladder li[data-phase="done"] .status-value { color: var(--ink-soft); }
-  .ladder li[data-phase="done"] .status-value::before { content: "\2713  "; }
-  .ladder li[data-phase="current"] { color: var(--ink-soft); }
-  .ladder li[data-phase="current"] .status-value { color: var(--on-accent); background: var(--st-person); font-weight: 600; }
-  .ladder li[data-phase="current"][data-status="grounded"] .status-value { background: var(--ink-soft); }
-  .ladder li[data-phase="current"][data-status="validated"] .status-value { background: var(--st-model); }
-
-  .layers { display: grid; }
-  .layer { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); gap: 0.6rem; position: relative; padding-block-end: 0.9rem; }
-  /* The thread: a segment from each knot down to the next, drawn once the next layer is reached. */
-  .layer:not(:last-child)::before {
-    content: ""; position: absolute; inset-inline-start: calc(0.7rem - 1px); inset-block: 1.2rem -0.2rem; inline-size: 2px;
-    background: var(--edge); transition: background 0.4s;
-  }
-  .layer[data-reached="yes"]:has(+ .layer[data-reached="yes"])::before { background: var(--accent); }
-  .knot { inline-size: 1.4rem; block-size: 1.4rem; margin-block-start: 0.15rem; border-radius: 50%; border: 2px solid var(--edge-hi); background: var(--ground); position: relative; z-index: 1; }
-  .layer[data-reached="yes"] .knot { border-color: var(--accent); }
-  .layer[data-current="yes"] .knot { background: var(--accent); box-shadow: 0 0 0 4px oklch(74% 0.13 315 / 0.25); }
-  .layer-body { display: grid; gap: 0.15rem; min-inline-size: 0; }
-  .layer-head { color: var(--ink-faint); }
-  .layer-head strong { color: var(--ink-soft); font-weight: 600; }
-  .layer-head code { font-size: 0.8em; }
-  .layer[data-reached="yes"] .layer-head strong { color: var(--ink); }
-  .layer-gloss { font-size: var(--step--1); color: var(--ink-faint); }
-  .layer[data-reached="yes"] .layer-gloss { display: none; }
-  .excerpt { display: none; color: var(--ink-soft); overflow-wrap: anywhere; }
-  .layer[data-reached="yes"] .excerpt { display: block; }
-  .layer[data-current="yes"] .excerpt { color: var(--ink); }
-  .excerpt code { color: var(--ink-faint); font-size: 0.78em; }
-  .excerpt code.anchor { margin-inline-start: 0.4rem; }
-  .mark { justify-self: start; font-size: var(--step--1); font-weight: 600; }
-  .mark:empty { display: none; }
-  .mark::before { margin-inline-end: 0.35rem; }
-  .layer[data-mark="resolves"] .mark { color: var(--st-script); }
-  .layer[data-mark="resolves"] .mark::before { content: "\2713"; }
-  .layer[data-mark="pair"] .mark { color: var(--st-model); }
-  .layer[data-mark="pair"] .mark::before { content: "\25C6"; }
-  .layer[data-mark="verified"] .mark { color: var(--st-person); }
-  .layer[data-mark="verified"] .mark::before { content: "\25CF"; }
-
-  .trace-caption { color: var(--ink-soft); margin-block-start: 0.5rem; max-inline-size: var(--measure); }
-  .trace-caption strong { color: var(--ink); }
-  .trace[data-actor="script"] .trace-caption strong { color: var(--st-script); }
-  .trace[data-actor="model"] .trace-caption strong { color: var(--st-model); }
-  .trace[data-actor="person"] .trace-caption strong { color: var(--st-person); }
-  /* The controls stick to the foot of the viewport while the figure is in view. */
-  .trace-controls {
-    position: sticky; inset-block-end: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
-    padding-block: 0.6rem; background: var(--ground);
-  }
-
-  /* Start: tools line and steps. */
-  .intro { color: var(--ink-soft); max-inline-size: var(--measure); }
-  .tools { display: grid; gap: 0.4rem; color: var(--ink-soft); max-inline-size: var(--measure); }
-  .tools ul { display: grid; gap: 0.25rem; }
-  .tools a { font-weight: 600; }
-  .steps { display: grid; counter-reset: step; max-inline-size: var(--measure); }
-  .steps > li { counter-increment: step; display: grid; gap: 0.45rem; padding-block: 1.1rem 1.3rem; }
-  .steps h3::before { content: counter(step) "  "; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .steps p { color: var(--ink-soft); }
-  .step-links { display: flex; flex-wrap: wrap; gap: 1rem; font-size: var(--step--1); }
-  .prompt-box { display: grid; gap: 0.35rem; justify-items: start; }
-  .prompt { inline-size: 100%; background: var(--surface); padding: 0.7rem 0.9rem; border-radius: 0.6rem; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.84rem; }
-
-  /* Good to know: two calm columns and a short reading list. */
-  .columns { display: grid; gap: var(--space) calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
-  .columns h3, .further h3 { margin-block-end: 0.6rem; }
-  .plain { display: grid; gap: 0.7rem; color: var(--ink-soft); max-inline-size: var(--measure); }
-  .plain a { font-size: var(--step--1); }
-  .further ul { display: grid; gap: 0.35rem; }
-
-  @media (prefers-reduced-motion: reduce) { .layer::before { transition: none; } }
-}
-
-@layer utilities {
-  .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
-
-@layer layout {
-  /* Very narrow phones: the mark alone names the site, and the player buttons stay on one row. */
-  @media (max-width: 22.5rem) {
-    .brand span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    .trace-controls { gap: 0.35rem; }
-    .trace-controls .btn { padding-inline: 0.6rem; font-size: 0.95rem; }
-  }
-}
+.downloads-title { margin: 0 0 var(--dh-space-3); }
+.download-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); gap: 0 var(--dh-space-5); margin: 0 0 var(--dh-space-4); padding: 0; list-style: none; }
+.download-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--dh-space-3); padding-block: var(--dh-space-2); border-block-end: var(--dh-hairline) solid var(--dh-line); }
+.file-get { display: inline-flex; align-items: center; gap: var(--dh-space-2); min-block-size: 2rem; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.file-get:hover, .file-get:focus-visible { text-decoration: underline; }
+.file-what { color: var(--dh-ink-soft); font-size: var(--dh-step--1); }
+.download-all { gap: var(--dh-space-2); }

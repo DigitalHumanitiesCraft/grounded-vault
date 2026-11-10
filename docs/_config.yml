@@ -1,6 +1,8 @@
-# GitHub Pages builds this folder with Jekyll. Instance field reports stay in the
-# repository as template feedback but are internal material and are not served,
-# and neither is the design document of the method page.
+# GitHub Pages builds this folder with Jekyll. The method page, its scripts, stylesheets,
+# assets, slide images and the concept paper are served. Instance field reports, the design
+# document of the page and the template's decision record are working material for the
+# repository and are not served.
 exclude:
   - field-report-kisug-writing-wave.md
   - site-design.md
+  - decisions.md

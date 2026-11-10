@@ -1,31 +1,247 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Grounded Vault</title>
-<meta name="description" content="A folder structure with written rules and checking scripts in which every sentence of a report links down to the source passage it rests on, with a visible check status and human verification.">
+<meta name="description" content="A repository architecture for knowledge bases in which every substantive statement carries a machine-resolvable anchor to its source, checked by validation, machine review and human verification.">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<script>
+  // Light is the default whatever the system setting (owner decision of 2026-11-10); a stored
+  // choice from the toggle is applied before first paint so dark readers see no light flash.
+  (function () {
+    var theme = "light";
+    try { theme = localStorage.getItem("grounded-vault-theme") === "dark" ? "dark" : "light"; } catch (e) {}
+    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.classList.add("js");
+  })();
+</script>
+<link rel="stylesheet" href="assets/dhcraft/dhcraft-tokens.css">
+<link rel="stylesheet" href="assets/dhcraft/dhcraft-components.css">
 <link rel="stylesheet" href="site.css">
 <script type="module" src="page.js"></script>
+<script type="module" src="assets/dhcraft/dhcraft-copy.js"></script>
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
-<header class="site-head night" id="site-head"></header>
-<main id="main">
+<svg class="icon-set" aria-hidden="true" focusable="false">
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><path d="M4 5h16v4H4zM5.5 9v10h13V9M10 13h4"/></symbol>
+  <symbol id="i-prompt" viewBox="0 0 24 24"><path d="M5 5.5h14v10H10l-4 3.5v-3.5H5z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m5 7 4.5 4.5L5 16m7 1h7"/></symbol>
+</svg>
+<a class="dh-skip" href="#main" data-t="skip">Skip to content</a>
+<header class="dh-head site-head">
+  <a class="dh-brand" href="#top"><img src="assets/dhcraft/dhcraft-mark-watercolor-128.png" alt="" width="112" height="128">Grounded Vault</a>
+  <nav class="dh-nav site-nav" aria-label="Sections" data-t-label="nav.label">
+    <ul>
+      <li><a href="#origin" data-t="nav.origin">Origin</a></li>
+      <li><a href="#reuse" data-t="nav.reuse">Reuse</a></li>
+      <li><a href="#example" data-t="nav.example">Example</a></li>
+      <li><a href="#limits" data-t="nav.limits">Limits</a></li>
+      <li><a href="#citation" data-t="nav.citation">Citation</a></li>
+    </ul>
+  </nav>
+  <div class="head-tools">
+    <a class="head-lang" id="lang-switch" hidden href="?lang=de" hreflang="de" lang="de" aria-label="Seite auf Deutsch anzeigen">Deutsch</a>
+    <a class="icon-button" href="https://github.com/DigitalHumanitiesCraft/grounded-vault">
+      <span class="visually-hidden" data-t="head.github">Repository on GitHub</span>
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48l-.01-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85l-.01 2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+    </a>
+    <button type="button" class="icon-button" id="theme-toggle" aria-pressed="false">
+      <span class="visually-hidden" data-t="head.theme">Dark colour scheme</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 5a7 7 0 0 0 0 14z" fill="currentColor" stroke="none"/></svg>
+    </button>
+  </div>
+</header>
 
-<section id="top" class="night night-glass">
-  <div class="hero">
-    <div class="hero-text" id="hero-text"></div>
-    <figure class="trace" id="trace"></figure>
+<main id="main" class="dh-page">
+
+<section id="top" class="part intro" aria-labelledby="title">
+  <h1 id="title">Grounded Vault</h1>
+  <p class="lead dh-prose" data-t="intro.lead">A repository architecture for knowledge bases in which every substantive statement carries a machine-resolvable anchor to its source, down to the single passage, dataset row or computation. AI agents build this structure, and the architecture makes no claim that the content is true. The result is an audit object for people who write reports, proposals or studies with an AI agent and need experts to check them passage by passage.</p>
+
+  <figure class="dh-figure main-figure">
+    <div class="dh-figure__canvas" tabindex="0" role="region" aria-label="Figure of the provenance chain, scrolls sideways on narrow screens" data-t-label="figure.region">
+      <img src="images/grounded-vault-provenance-chain.svg" width="1600" height="900" alt="Five layers built by an agent, from top to bottom output, assertions, distillates, Markdown representations and sources, each anchored into the layer below. Beside them three checks, validation by a script, machine review by a second LLM and verification by a person, and the status ladder grounded, validated, verified." data-t-alt="figure.alt">
+    </div>
+  </figure>
+
+  <div class="dh-prose figure-prose">
+    <p data-t="figure.p1" data-t-html>An AI agent builds the chain from the bottom up. A <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#source">source</a> is kept as it arrived, and a publication whose full text may not be stored enters as its bibliographic record. Its <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#markdown-representation">Markdown representation</a> is converted once and never edited, with a <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#block-id">block ID</a> on each passage a statement could rest on. A <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#distillate">distillate</a> condenses one source into core statements, each with one anchor and a statement ID. An <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#assertion">assertion</a> states one matter and rests on one or more core statements, and a <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#chapter">chapter</a> of the output footnotes every load-bearing sentence to an assertion. An own conclusion stands in the chapter as a <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#posit">posit</a>, with its rationale and its open evidence question.</p>
+    <p data-t="figure.p2" data-t-html>Each anchor points one layer down and resolves by machine. This <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#grounding">grounding</a> is a structure an agent can produce and says nothing about whether a statement is true. <span class="cat cat-validation">Validation</span> by <code>tools/validate.py</code> checks resolvability and form. In <span class="cat cat-review">machine review</span> a second Large Language Model (LLM), which sees only the pair and never the producing agent's reasoning, judges each statement against the location below it. <span class="cat cat-verification">Verification</span> by the person named as verification role turns a confirmed relation into <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#evidence">evidence</a>.</p>
+    <p data-t="figure.p3" data-t-html>A status is set only after its checks ran, with their dates recorded in the file. Distillates and assertions reach <code>validated</code> through validation and machine review, a chapter through validation once every assertion it cites is <code>validated</code>, and only verification sets <code>verified</code>. A document never stands higher than the anchors it rests on, as the <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/index.md#status-ladder">status ladder</a> defines, and the procedures are fixed in <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/knowledge/operations.md#check"><code>operations.md</code></a>.</p>
   </div>
 </section>
 
-<section id="start" class="band alt"><div class="inner" id="start-body"></div></section>
-<section id="notes" class="band"><div class="inner" id="notes-body"></div></section>
+<section id="origin" class="part" aria-labelledby="origin-title">
+  <h2 id="origin-title" data-t="origin.title">Origin</h2>
+  <div class="dh-prose">
+    <p data-t="origin.p" data-t-html>Grounded Vault is a profile of <a href="https://dhcraft.org/Promptotyping/">Promptotyping</a> for knowledge work under an evidence obligation. It takes over the maintained project knowledge in <code>knowledge/</code> and adds the anchor from every statement to its source. It draws on historical source criticism for the relational concept of evidence, on historical work practice and nanopublications for the assertion paired with its provenance, on scholarly digital editing for validating a corpus against its own schema, and on data management for provenance as a machine-traversable relation, as W3C PROV standardises it. The <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/docs/concept.md">concept paper</a> gives the reasons, and the repository is cited as given under <a href="#citation">Citation</a>.</p>
+  </div>
+</section>
+
+<section id="reuse" class="part" aria-labelledby="reuse-title">
+  <h2 id="reuse-title" data-t="reuse.title">Reuse</h2>
+  <p class="dh-prose" data-t="reuse.lead" data-t-html>The template needs <a href="https://git-scm.com/downloads">Git</a>, <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a> and a coding agent that reads and writes files, such as <a href="https://code.claude.com/docs/en/setup">Claude Code</a> or Codex. <a href="https://obsidian.md">Obsidian</a> is optional for following the links.</p>
+  <ol class="steps">
+    <li>
+      <h3 data-t="reuse.s1">Create your repository</h3>
+      <p data-t="reuse.s1.text" data-t-html>Choose <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/generate">Use this template</a> on GitHub, then clone the new repository.</p>
+    </li>
+    <li>
+      <h3 data-t="reuse.s2">Install and validate</h3>
+      <p data-t="reuse.s2.text" data-t-html>A fresh template reports <code>W-EMPTY</code>, <code>W-NO-OUTPUT</code> and <code>W-PLACEHOLDER</code> until parameters and content are filled in.</p>
+      <figure class="dh-code">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-terminal"/></svg><span data-t="label.shell">Shell, in the repository root</span></figcaption>
+<pre lang="en"><code>uv sync --locked
+uv run python tools/validate.py .</code></pre>
+      </figure>
+    </li>
+    <li>
+      <h3 data-t="reuse.s3">Set the parameters with the agent</h3>
+      <p data-t="reuse.s3.text">The agent asks for purpose, topics, source types, genre, language, verification role, review mechanism, style sheet and harness rules.</p>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>Instantiate this Grounded Vault template for my project. Follow the section Prompt for the first agent session in SETUP.md and ask me one question at a time.</code></pre>
+      </figure>
+    </li>
+    <li>
+      <h3 data-t="reuse.s4">Carry one source through every layer</h3>
+      <p data-t="reuse.s4.text" data-t-html>Place one original in <code>00_sources/</code> first, where it stays out of Git by default. One full pass shows whether the rules fit the material before a second source is touched.</p>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>Take the source 00_sources/&lt;file&gt; through the first production cycle in SETUP.md, steps 1 to 6. Stop after each layer and show me the validator output.</code></pre>
+      </figure>
+    </li>
+  </ol>
+
+  <section class="downloads" aria-labelledby="downloads-title">
+    <h3 class="downloads-title" id="downloads-title" data-t="dl.title">Files to download</h3>
+    <ul class="download-list">
+      <li><a class="file-get" href="images/grounded-vault-provenance-chain.svg" download><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-download"/></svg>grounded-vault-provenance-chain.svg</a> <span class="file-what" data-t="dl.svg">the figure, for papers and slides</span></li>
+      <li><a class="file-get" href="images/grounded-vault-provenance-chain.png" download><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-download"/></svg>grounded-vault-provenance-chain.png</a> <span class="file-what" data-t="dl.png">the figure as image, 1600 by 900</span></li>
+      <li><a class="file-get" href="images/grounded-vault-entry.png" download><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-download"/></svg>grounded-vault-entry.png</a> <span class="file-what" data-t="dl.entry">this page, title and figure, 1600 by 900</span></li>
+      <li><a class="file-get" href="images/grounded-vault-example.png" download><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-download"/></svg>grounded-vault-example.png</a> <span class="file-what" data-t="dl.example">the worked example, 1600 by 900</span></li>
+    </ul>
+    <a class="dh-btn download-all" href="https://github.com/DigitalHumanitiesCraft/grounded-vault/archive/refs/heads/main.zip"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-archive"/></svg><span data-t="dl.all">All files with the template repository (ZIP)</span></a>
+  </section>
+</section>
+
+<section id="example" class="part" aria-labelledby="example-title">
+  <h2 id="example-title" data-t="example.title">Example on the PROV-DM entity definition</h2>
+  <p class="dh-prose" data-t="example.lead" data-t-html>The example carries one public source, the entity definition of the <a href="https://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-entity">W3C PROV-DM Recommendation</a>, through every layer. Run the prompts in order in a fresh copy of the template and compare each result with the committed files in <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/tree/main/examples/prov-entity"><code>examples/prov-entity/</code></a>, whose IDs and wording your agent's files need not match.</p>
+  <ol class="steps example">
+    <li>
+      <h3 data-t="ex.s1">Instantiate for the example</h3>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>Instantiate this Grounded Vault template. Follow the section Prompt for the first agent session in SETUP.md, but take the class B parameters from examples/prov-entity/knowledge/specification.md instead of asking me, write no harness rules beyond those CLAUDE.md already carries, and register one planned chapter, 40_output/01-entity-definition, in the chapter register. Keep examples/ in place and delete README.md, CITATION.cff and codemeta.json without asking. Then copy examples/prov-entity/00_sources/prov-entity.txt into 00_sources/, and read no other file under examples/ until I ask you to compare.</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r1" data-t-html><code>knowledge/specification.md</code> with the example's parameters and the topic map <code>30_assertions/MOC-Provenance.md</code>.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s2">Ingest the source</h3>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>Ingest 00_sources/prov-entity.txt. The text is short, so convert it yourself.</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r2" data-t-html><code>10_markdown/documents/prov-entity.md</code>, the definition as one paragraph ending in its block ID, in the example <code>^entity-definition</code>.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s3">Distill it</h3>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>Distill 10_markdown/documents/prov-entity.md for the topic Provenance.</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r3" data-t-html><code>20_distillates/documents/prov-entity.md</code> with one core statement, its anchor <code>[[10_markdown/documents/prov-entity#^entity-definition]]</code> and the statement ID <code>^s1</code>.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s4">Build the assertion</h3>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>Build the assertions of the topic Provenance.</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r4" data-t-html><code>30_assertions/prov-entity-definition.md</code>, grounded in <code>[[20_distillates/documents/prov-entity#^s1]]</code> and listed in the topic map.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s5">Write the chapter</h3>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>Write the chapter 40_output/01-entity-definition.md as one paragraph on the entity definition, and validate it in chapter scope.</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r5" data-t-html><code>40_output/01-entity-definition.md</code>, one sentence with the footnote <code>Grounded in [[30_assertions/prov-entity-definition]]</code>, and the validator reports <code>CHAPTER READY</code>.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s6">Export the pairs</h3>
+      <figure class="dh-code">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-terminal"/></svg><span data-t="label.shell">Shell, in the repository root</span></figcaption>
+<pre lang="en"><code>uv run python tools/review.py emit . --out prompts.jsonl</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r6" data-t-html><code>prompts.jsonl</code> with two pairs, the passage with the core statement and the core statement with the assertion.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s7">Review them in a separate session</h3>
+      <p data-t="ex.s7.text" data-t-html>Copy <code>prompts.jsonl</code> into an empty folder outside the repository and start a session of an LLM of another model family there.</p>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.reviewer">Prompt for the reviewing LLM</span></figcaption>
+<pre lang="en"><code>Each line of prompts.jsonl holds an id, a prompt_hash, a prompt and further fields. Answer only the prompt of each line, on its own and exactly as it instructs, and read no other file. Write one JSON line per record to verdicts.jsonl with the unchanged id and prompt_hash and a field response whose first line is the verdict and whose following lines give the justification the prompt asks for.</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r7" data-t-html><code>verdicts.jsonl</code>, one line per pair, in the example both <code>fully supports</code>.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s8">Book the verdicts</h3>
+      <p data-t="ex.s8.text" data-t-html>Copy <code>verdicts.jsonl</code> into the repository root. Run the second command only when the first reports no deviating verdict.</p>
+      <figure class="dh-code">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-terminal"/></svg><span data-t="label.shell">Shell, in the repository root</span></figcaption>
+<pre lang="en"><code>uv run python tools/review.py judge . --verdicts verdicts.jsonl</code></pre>
+      </figure>
+      <figure class="dh-code">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-terminal"/></svg><span data-t="label.shell">Shell, in the repository root</span></figcaption>
+<pre lang="en"><code>uv run python tools/review.py judge . --verdicts verdicts.jsonl --apply</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r8" data-t-html><code>checked.machine-review</code> with the date on distillate and assertion. The batch is kept under <code>checks/</code>, as in the example's <code>checks/review-2026-10-03.jsonl</code>.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s9">Record the statuses</h3>
+      <figure class="dh-code prompt">
+        <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-prompt"/></svg><span data-t="label.prompt">Prompt</span></figcaption>
+<pre lang="en"><code>judge --apply has booked every document. Record the validation dates and set the statuses as SETUP.md describes under First production cycle, step 9, and keep verdicts.jsonl under checks/ as review-&lt;date&gt;.jsonl.</code></pre>
+      </figure>
+      <p class="step-result" data-t="ex.r9" data-t-html>Distillate and assertion at <code>validated</code> with both dates, the chapter at <code>validated</code> with its validation date.</p>
+    </li>
+    <li>
+      <h3 data-t="ex.s10">Verification</h3>
+      <p data-t="ex.s10.text" data-t-html>The verification role reads the assertion beside its passage and, where it holds, sets <code>status: verified</code> with <code>checked.verification</code>. In the committed example this step has not been performed.</p>
+    </li>
+  </ol>
+  <figure class="dh-code">
+    <figcaption><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-terminal"/></svg><span data-t="ex.check">Check the committed example, in the root of this repository</span></figcaption>
+<pre lang="en"><code>uv sync --locked
+uv run python tools/validate.py examples/prov-entity --chapter 40_output/01-entity-definition</code></pre>
+  </figure>
+</section>
+
+<section id="limits" class="part" aria-labelledby="limits-title">
+  <h2 id="limits-title" data-t="limits.title">Limits, licence and citation</h2>
+  <ul class="rows dh-prose">
+    <li data-t="limits.check">The architecture makes each statement checkable and records how far it has been checked. Whether a grounding relation holds as evidence is decided by verification alone.</li>
+    <li data-t="limits.grounding">A freshly built vault holds grounding only. Where verification samples, only the sampled relations are evidence.</li>
+    <li data-t="limits.review">Machine review is probabilistic and pre-filters the pairs for verification. A reviewer of another model family is recommended, and the family alone does not establish independence.</li>
+    <li data-t="limits.sentence">Validation finds a paragraph without any footnote. An unsupported sentence inside a cited paragraph is found only by reading.</li>
+    <li data-t="limits.extension">Images whose content is not text, and code as output, are named extension points without a worked-out anchor.</li>
+  </ul>
+  <p class="dh-prose" data-t="limits.licence" data-t-html>Authored text is licensed under <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/LICENSE">CC BY 4.0</a>, code in <code>tools/</code>, <code>tests/</code> and executable examples under <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/LICENSE-MIT">MIT</a>, and the PROV-DM excerpt keeps the W3C document licence. The shared DHCraft files, the DHCraft logo and the fonts keep <a href="assets/dhcraft/LICENSE.md">their own terms</a>.</p>
+  <figure class="dh-code" id="citation">
+    <figcaption><span data-t="limits.cite" data-t-html>Citation, metadata in <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/CITATION.cff"><code>CITATION.cff</code></a></span></figcaption>
+<pre lang="en"><code>Pollin, C. (2026). Grounded Vault [Computer software]. https://github.com/DigitalHumanitiesCraft/grounded-vault</code></pre>
+  </figure>
+</section>
 
 </main>
-<footer class="site-foot night" id="site-foot"></footer>
-<noscript><p>This page needs JavaScript. The template itself is on <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault">GitHub</a>.</p></noscript>
+<footer class="dh-foot">
+  <p><span data-t="foot.by">Published by</span> <a href="https://dhcraft.org">Digital Humanities Craft</a></p>
+  <p data-t="foot.licence">Text CC BY 4.0, code MIT, the DHCraft logo excluded</p>
+  <p><a href="https://github.com/DigitalHumanitiesCraft/grounded-vault" data-t="foot.source">Source on GitHub</a> <a href="https://github.com/DigitalHumanitiesCraft/grounded-vault/blob/main/CHANGELOG.md">Changelog</a></p>
+</footer>
 </body>
 </html>
