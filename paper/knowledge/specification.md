@@ -9,7 +9,7 @@ method:
 status: active
 language: en
 created: 2026-08-21
-updated: 2026-09-27
+updated: 2026-10-04
 related: [index, schema, operations, state, journal]
 ---
 
