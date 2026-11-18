@@ -98,6 +98,7 @@ const PAGE_DE = {
   "foot.by": "Veröffentlicht von",
   "foot.licence": "Text CC BY 4.0, Code MIT, ausgenommen das DHCraft-Logo",
   "foot.source": "Quelle auf GitHub",
+  "foot.imprint": "Impressum:",
 };
 
 function stored(key) {
